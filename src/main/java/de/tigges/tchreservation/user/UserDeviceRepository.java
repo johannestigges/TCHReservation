@@ -6,5 +6,5 @@ import org.springframework.data.repository.CrudRepository;
 import java.util.List;
 
 public interface UserDeviceRepository extends CrudRepository<UserDevice,Long> {
-    List<UserDevice> findByUserUserId(long userId);
+//    List<UserDevice> findByUserId(long id);
 }

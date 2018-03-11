@@ -1,12 +1,12 @@
 package de.tigges.tchreservation.user.model;
 
-import javax.persistence.*;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
-import static javax.persistence.GenerationType.AUTO;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
 
 @Entity
 public class User {
@@ -29,7 +29,7 @@ public class User {
 	private UserRole role;
 	private ActivationStatus status;
 	
-	@OneToMany(mappedBy = "userId")
+	@OneToMany(mappedBy = "user")
     private Set<UserDevice> devices = new HashSet<>();
 
 

@@ -8,36 +8,48 @@ import javax.persistence.Id;
 @Entity(name = "reservation_system")
 public class ReservationSystemConfigEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    long id;
-    String name;
-    int courts;
-    int durationUnitInMinutes;
-    int openingHour;
-    int closingHour;
+	ReservationSystemConfigEntity() {
+	}
 
-    public long getId() {
-        return id;
-    }
+	public ReservationSystemConfigEntity(long id, String name, int courts, int durationUnitInminutes, int openingHour,
+			int closingHour) {
+		this.id = id;
+		this.name = name;
+		this.courts = courts;
+		this.durationUnitInMinutes = durationUnitInminutes;
+		this.openingHour = openingHour;
+		this.closingHour = closingHour;
+	}
 
-    public String getName() {
-        return name;
-    }
+	@Id
+	long id;
+	String name;
+	int courts;
+	int durationUnitInMinutes;
+	int openingHour;
+	int closingHour;
 
-    public int getCourts() {
-        return courts;
-    }
+	public long getId() {
+		return id;
+	}
 
-    public int getDurationUnitInMinutes() {
-        return durationUnitInMinutes;
-    }
+	public String getName() {
+		return name;
+	}
 
-    public int getOpeningHour() {
-        return openingHour;
-    }
+	public int getCourts() {
+		return courts;
+	}
 
-    public int getClosingHour() {
-        return closingHour;
-    }
+	public int getDurationUnitInMinutes() {
+		return durationUnitInMinutes;
+	}
+
+	public int getOpeningHour() {
+		return openingHour;
+	}
+
+	public int getClosingHour() {
+		return closingHour;
+	}
 }
