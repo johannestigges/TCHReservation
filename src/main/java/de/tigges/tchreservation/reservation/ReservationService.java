@@ -20,6 +20,7 @@ import de.tigges.tchreservation.reservation.model.ReservationSystemConfigEntity;
 import de.tigges.tchreservation.reservation.model.ReservationSystemRespoitory;
 
 @RestController
+@RequestMapping("/reservation")
 public class ReservationService {
 
 	public static final String STATUS_OK = "Ok";

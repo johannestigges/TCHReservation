@@ -11,7 +11,8 @@ import javax.persistence.OneToMany;
 @Entity
 public class User {
 
-
+	User() {}
+	
     public User(String email, String name, String password, UserRole role, ActivationStatus status) {
         this.email = email;
         this.name = name;
@@ -47,7 +48,9 @@ public class User {
 	}
     public UserRole getRole() { return role; }
     public ActivationStatus getStatus() { return status; }
-    public Set<UserDevice> getDevices() {
-		return devices;
-	}
+    public Set<UserDevice> getDevices() { return devices; }
+    public void setStatus(ActivationStatus status) {
+    	ActivationStatus.checkStatusChange(this.status, status, "user " + id);
+    	this.status = status;
+    }
 }

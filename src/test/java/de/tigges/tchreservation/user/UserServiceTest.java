@@ -1,12 +1,13 @@
 package de.tigges.tchreservation.user;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertNotNull;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
 import java.io.IOException;
@@ -41,6 +42,9 @@ public class UserServiceTest {
 			MediaType.APPLICATION_JSON.getSubtype(), Charset.forName("utf8"));
 
 	private MockMvc mockMvc;
+	
+//	@Autowired
+//	UserService userService;
 
 	private HttpMessageConverter mappingJackson2HttpMessageConverter;
 
@@ -70,15 +74,27 @@ public class UserServiceTest {
 	public void testSave() throws Exception {
 		userRepository.deleteAll();
 
-		mockMvc.perform(post("/saveUser")
+		mockMvc.perform(post("/user/add")
 				.content(
 						json(new User("test@user.org", "user", "secret", UserRole.REGISTERED, ActivationStatus.ACTIVE)))
 				.contentType(contentType))
-		.andExpect(status().isCreated())
+		.andExpect(status().isOk())
 		.andExpect(content().contentType(contentType))
 		.andExpect(jsonPath("$.id", is(notNullValue())))
 		;
-		// assertThat(actual, matcher);
+	}
+	
+	@Test
+	public void testStatus() throws Exception {
+		userRepository.deleteAll();
+		User user = userRepository.save(new User("email", "name", "password", UserRole.REGISTERED, ActivationStatus.CREATED));
+		
+	mockMvc.perform(get("/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER.toString())).andExpect(status().isOk());
+	mockMvc.perform(get("/user/setStatus/" + user.getId() + "/" + ActivationStatus.ACTIVE.toString())).andExpect(status().isOk());
+	mockMvc.perform(get("/user/setStatus/" + user.getId() + "/" + ActivationStatus.LOCKED.toString())).andExpect(status().isOk());
+	mockMvc.perform(get("/user/setStatus/" + user.getId() + "/" + ActivationStatus.ACTIVE.toString())).andExpect(status().isOk());
+	mockMvc.perform(get("/user/setStatus/" + user.getId() + "/" + ActivationStatus.REMOVED.toString())).andExpect(status().isOk());
+		
 	}
 
 	protected String json(Object o) throws IOException {
