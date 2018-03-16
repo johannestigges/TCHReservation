@@ -12,7 +12,9 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -31,6 +33,7 @@ import org.springframework.web.context.WebApplicationContext;
 import de.tigges.tchreservation.TchReservationApplication;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.User;
+import de.tigges.tchreservation.user.model.UserDevice;
 import de.tigges.tchreservation.user.model.UserRole;
 
 @RunWith(SpringRunner.class)
@@ -42,9 +45,9 @@ public class UserServiceTest {
 			MediaType.APPLICATION_JSON.getSubtype(), Charset.forName("utf8"));
 
 	private MockMvc mockMvc;
-	
-//	@Autowired
-//	UserService userService;
+
+	// @Autowired
+	// UserService userService;
 
 	private HttpMessageConverter mappingJackson2HttpMessageConverter;
 
@@ -72,29 +75,76 @@ public class UserServiceTest {
 
 	@Test
 	public void testSave() throws Exception {
-		userRepository.deleteAll();
 
 		mockMvc.perform(post("/user/add")
 				.content(
 						json(new User("test@user.org", "user", "secret", UserRole.REGISTERED, ActivationStatus.ACTIVE)))
-				.contentType(contentType))
-		.andExpect(status().isOk())
-		.andExpect(content().contentType(contentType))
-		.andExpect(jsonPath("$.id", is(notNullValue())))
-		;
+				.contentType(contentType)).andExpect(status().isOk()).andExpect(content().contentType(contentType))
+				.andExpect(jsonPath("$.id", is(notNullValue())));
 	}
-	
+
 	@Test
 	public void testStatus() throws Exception {
-		userRepository.deleteAll();
-		User user = userRepository.save(new User("email", "name", "password", UserRole.REGISTERED, ActivationStatus.CREATED));
-		
-	mockMvc.perform(get("/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER.toString())).andExpect(status().isOk());
-	mockMvc.perform(get("/user/setStatus/" + user.getId() + "/" + ActivationStatus.ACTIVE.toString())).andExpect(status().isOk());
-	mockMvc.perform(get("/user/setStatus/" + user.getId() + "/" + ActivationStatus.LOCKED.toString())).andExpect(status().isOk());
-	mockMvc.perform(get("/user/setStatus/" + user.getId() + "/" + ActivationStatus.ACTIVE.toString())).andExpect(status().isOk());
-	mockMvc.perform(get("/user/setStatus/" + user.getId() + "/" + ActivationStatus.REMOVED.toString())).andExpect(status().isOk());
-		
+		User user = userRepository
+				.save(new User("email", "name", "password", UserRole.REGISTERED, ActivationStatus.CREATED));
+
+		mockMvc.perform(get("/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER.toString()))
+				.andExpect(status().isOk());
+		mockMvc.perform(get("/user/setStatus/" + user.getId() + "/" + ActivationStatus.ACTIVE.toString()))
+				.andExpect(status().isOk());
+		mockMvc.perform(get("/user/setStatus/" + user.getId() + "/" + ActivationStatus.LOCKED.toString()))
+				.andExpect(status().isOk());
+		mockMvc.perform(get("/user/setStatus/" + user.getId() + "/" + ActivationStatus.ACTIVE.toString()))
+				.andExpect(status().isOk());
+		mockMvc.perform(get("/user/setStatus/" + user.getId() + "/" + ActivationStatus.REMOVED.toString()))
+				.andExpect(status().isOk());
+	}
+
+	@Test
+	public void testGet() throws Exception {
+		List<User> userList = new ArrayList<>();
+		for (int i = 0; i < 10; i++) {
+			userList.add(userRepository.save(
+					new User("email " + i, "name " + i, "password", UserRole.REGISTERED, ActivationStatus.ACTIVE)));
+		}
+		for (int i = 0; i < userList.size(); i++) {
+			mockMvc.perform(get("/user/get/" + userList.get(i).getId())) //
+					.andExpect(status().isOk()).andExpect(content().contentType(contentType))
+					.andExpect(jsonPath("$.id", is(userList.get(i).getId().intValue())))
+					.andExpect(jsonPath("$.name", is(userList.get(i).getName())));
+		}
+	}
+
+	@Test
+	public void testSaveDevice() throws Exception {
+		User user = userRepository
+				.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
+
+		mockMvc.perform(post("/user/addDevice")
+				.content(json(createDevice(user, 0, ActivationStatus.CREATED))))
+				.andExpect(status().isOk())
+				;
+	}
+	
+	public void testGetDevice() throws Exception {
+		List<User> userList = new ArrayList<>();
+		for (int i=0; i<5; i++) {
+			User user = createUser(i, UserRole.REGISTERED, ActivationStatus.CREATED);
+			userList.add(user);
+			for (int j=0; j<3; j++) {
+				user.getDevices().add(createDevice(user, j, ActivationStatus.CREATED));
+			}
+			user = userRepository.save(user);
+			userList.add(user);
+		}
+	}
+	
+	private User createUser(int i, UserRole role, ActivationStatus status) {
+		return new User("myEmail " + i, "myName " + i, "myPassword " + i, role, status);
+	}
+	
+	private UserDevice createDevice(User user, int i, ActivationStatus status) {
+		return new UserDevice(user, "deviceId " + i, status, "publicKey " + i);
 	}
 
 	protected String json(Object o) throws IOException {
