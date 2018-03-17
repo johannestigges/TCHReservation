@@ -3,6 +3,7 @@ package de.tigges.tchreservation.user;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -23,7 +24,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.mock.http.MockHttpInputMessage;
 import org.springframework.mock.http.MockHttpOutputMessage;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
@@ -46,16 +49,19 @@ public class UserServiceTest {
 
 	private MockMvc mockMvc;
 
-	// @Autowired
-	// UserService userService;
+	// @Autowired<T> 
+	// UserService userService;<T> 
 
 	private HttpMessageConverter mappingJackson2HttpMessageConverter;
 
 	@Autowired
 	private WebApplicationContext webApplicationContext;
-
+	
 	@Autowired
 	private UserRepository userRepository;
+	
+	@Autowired
+	private UserDeviceRepository userDeviceRepository;
 
 	@Autowired
 	void setConverters(HttpMessageConverter<?>[] converters) {
@@ -117,32 +123,42 @@ public class UserServiceTest {
 
 	@Test
 	public void testSaveDevice() throws Exception {
-		User user = userRepository
-				.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
+		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
 
-		mockMvc.perform(post("/user/addDevice")
-				.content(json(createDevice(user, 0, ActivationStatus.CREATED))))
-				.andExpect(status().isOk())
-				;
+		mockMvc.perform(post("/user/addDevice").content(json(createDevice(user, 0, ActivationStatus.CREATED))))
+				.andExpect(status().isOk());
 	}
-	
-	public void testGetDevice() throws Exception {
+
+	@Test
+	public void testGetDevices() throws Exception {
 		List<User> userList = new ArrayList<>();
-		for (int i=0; i<5; i++) {
+		for (int i = 0; i < 5; i++) {
 			User user = createUser(i, UserRole.REGISTERED, ActivationStatus.CREATED);
-			userList.add(user);
-			for (int j=0; j<3; j++) {
+			for (int j = 0; j < 3; j++) {
 				user.getDevices().add(createDevice(user, j, ActivationStatus.CREATED));
 			}
-			user = userRepository.save(user);
-			userList.add(user);
+			byte[] response = mockMvc.perform(post("/user/add").content(json(user))).andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray();
+			userList.add(jsonObject(response, User.class));
+		}
+		
+		userList.forEach(u -> u.getDevices().forEach(d -> checkDevice(d)));
+	}
+
+	private void checkDevice(UserDevice device) {
+		try {
+			mockMvc.perform(get("/user/getDevice/" + device.getId())) //
+					.andExpect(status().isOk()) //
+					.andExpect(jsonPath("$.deviceId", is(device.getDeviceId())))
+					.andExpect(jsonPath("$.publicKey", is(device.getPublicKey())));
+		} catch (Exception e) {
+			fail(e.getMessage());
 		}
 	}
-	
+
 	private User createUser(int i, UserRole role, ActivationStatus status) {
 		return new User("myEmail " + i, "myName " + i, "myPassword " + i, role, status);
 	}
-	
+
 	private UserDevice createDevice(User user, int i, ActivationStatus status) {
 		return new UserDevice(user, "deviceId " + i, status, "publicKey " + i);
 	}
@@ -151,6 +167,11 @@ public class UserServiceTest {
 		MockHttpOutputMessage mockHttpOutputMessage = new MockHttpOutputMessage();
 		this.mappingJackson2HttpMessageConverter.write(o, MediaType.APPLICATION_JSON, mockHttpOutputMessage);
 		return mockHttpOutputMessage.getBodyAsString();
+	}
+	
+	protected <T> T jsonObject(byte[] content, Class<T> c) throws HttpMessageNotReadableException, IOException {
+		MockHttpInputMessage mockHttpInputMessage = new MockHttpInputMessage(content);
+		return (T)this.mappingJackson2HttpMessageConverter.read(c, mockHttpInputMessage); 
 	}
 
 }
