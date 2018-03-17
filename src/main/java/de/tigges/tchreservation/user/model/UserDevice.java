@@ -24,13 +24,15 @@ public class UserDevice {
 	@JsonIgnore
 	@ManyToOne
 	private User user;
+	
 	private String deviceId; 	 // unique device id, such as ISME or MAC address
 	private ActivationStatus status;
 	private String publicKey;
 
 
     public long getId() { return id; }
-    public User getUserId() { return user; }
+    public void setId(long id) { this.id = id; }
+    public User getUser() { return user; }
     public String getDeviceId() { return deviceId; }
     public ActivationStatus getStatus() { return status; }
     public String getPublicKey() { return publicKey; }

@@ -15,10 +15,12 @@ public enum ActivationStatus {
 	REMOVED; // removed by user or by admin
 
 	public static void checkStatusChange(ActivationStatus from, ActivationStatus to, String id) {
- 		checkStatusInRange(from, to, id, VERIFIED_BY_USER, CREATED);
-		checkStatusInRange(from, to, id, ACTIVE, VERIFIED_BY_USER, LOCKED, REMOVED);
-		checkStatusInRange(from, to, id, LOCKED, ACTIVE);
-		checkStatusInRange(from, to, id, ActivationStatus.REMOVED, ACTIVE);
+		if (from != null && to != null) {
+			checkStatusInRange(from, to, id, VERIFIED_BY_USER, CREATED);
+			checkStatusInRange(from, to, id, ACTIVE, VERIFIED_BY_USER, LOCKED, REMOVED);
+			checkStatusInRange(from, to, id, LOCKED, ACTIVE);
+			checkStatusInRange(from, to, id, ActivationStatus.REMOVED, ACTIVE);
+		}
 	}
 
 	private static void checkStatusInRange(ActivationStatus from, ActivationStatus to, String id,

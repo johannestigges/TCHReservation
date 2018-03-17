@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -29,14 +30,13 @@ public class UserService {
 		return userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
 	}
 
-	@RequestMapping(path = "/getDevice/{deviceId}", method = RequestMethod.GET)
-	public @ResponseBody Optional<UserDevice> findDeviceById(@PathVariable Long deviceId) {
-		return userDeviceRepository.findById(deviceId);
+	@RequestMapping(path = "/getDevice/{id}", method = RequestMethod.GET)
+	public @ResponseBody Optional<UserDevice> findDeviceById(@PathVariable Long id) {
+		return userDeviceRepository.findById(id);
 	}
 
 	@RequestMapping(path = "/add", method = RequestMethod.POST)
 	public @ResponseBody User add(User user) {
-		user.getDevices().forEach(d -> add(d));
 		return userRepository.save(user);
 	}
 
