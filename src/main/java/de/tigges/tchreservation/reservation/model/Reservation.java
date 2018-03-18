@@ -1,4 +1,4 @@
-package de.tigges.tchreservation.reservation;
+package de.tigges.tchreservation.reservation.model;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -37,10 +37,10 @@ public class Reservation  {
 	private int duration;
 	private ReservationType type;
 
-	@ManyToOne
+	@ManyToOne(optional=false)
 	private ReservationSystemConfig systemConfig;
 	
-	@ManyToOne
+	@ManyToOne(optional=false)
 	private User user;
 
 	public long getId() {

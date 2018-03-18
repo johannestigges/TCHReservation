@@ -9,6 +9,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tigges.tchreservation.reservation.model.Occupation;
+import de.tigges.tchreservation.reservation.model.Reservation;
+import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
+
 @RestController
 @RequestMapping("/reservation")
 public class ReservationService {

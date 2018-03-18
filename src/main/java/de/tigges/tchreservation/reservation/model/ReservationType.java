@@ -1,4 +1,4 @@
-package de.tigges.tchreservation.reservation;
+package de.tigges.tchreservation.reservation.model;
 
 public enum ReservationType {
 	INDIVIDUAL, TRAINER, TOURNAMENT, PREPAID

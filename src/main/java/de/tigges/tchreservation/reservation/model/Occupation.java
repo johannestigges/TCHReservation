@@ -1,4 +1,4 @@
-package de.tigges.tchreservation.reservation;
+package de.tigges.tchreservation.reservation.model;
 
 import java.time.LocalDate;
 
@@ -18,7 +18,7 @@ public class Occupation {
 	private LocalDate start;
 	private int duration;
 	
-	@ManyToOne
+	@ManyToOne(optional=false)
 	private Reservation reservation;
 	
 	public int getCourt() {

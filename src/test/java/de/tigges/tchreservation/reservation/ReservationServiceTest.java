@@ -25,6 +25,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.context.WebApplicationContext;
 
 import de.tigges.tchreservation.TchReservationApplication;
+import de.tigges.tchreservation.reservation.model.Reservation;
+import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
+import de.tigges.tchreservation.reservation.model.ReservationType;
 import de.tigges.tchreservation.user.UserRepository;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.User;
@@ -40,7 +43,7 @@ public class ReservationServiceTest {
 
 	private MockMvc mockMvc;
 
-	private HttpMessageConverter mappingJackson2HttpMessageConverter;
+	private HttpMessageConverter<Object> mappingJackson2HttpMessageConverter;
 
 	@Autowired
 	private ReservationRepository reservationRepository;
@@ -66,10 +69,11 @@ public class ReservationServiceTest {
 
 	private User lockedUser;
 
+	@SuppressWarnings("unchecked")
 	@Autowired
 	void setConverters(HttpMessageConverter<?>[] converters) {
 
-		this.mappingJackson2HttpMessageConverter = Arrays.asList(converters).stream()
+		this.mappingJackson2HttpMessageConverter = (HttpMessageConverter<Object>) Arrays.asList(converters).stream()
 				.filter(hmc -> hmc instanceof MappingJackson2HttpMessageConverter).findAny().orElse(null);
 
 		assertNotNull("the JSON message converter must not be null", this.mappingJackson2HttpMessageConverter);
@@ -79,31 +83,36 @@ public class ReservationServiceTest {
 	public void setup() throws Exception {
 		this.mockMvc = webAppContextSetup(webApplicationContext).build();
 
-		this.reservationRepository.deleteAll();
 		this.occupationRepository.deleteAll();
+		this.reservationRepository.deleteAll();
 		this.reservationSystemConfigRepository.deleteAll();
 		this.userRepository.deleteAll();
 
-		system1 = this.reservationSystemConfigRepository
-				.save(new ReservationSystemConfig("Ascheplätze", 6, 30, 8, 22));
+		system1 = this.reservationSystemConfigRepository.save(new ReservationSystemConfig("Ascheplätze", 6, 30, 8, 22));
 		system2 = this.reservationSystemConfigRepository
 				.save(new ReservationSystemConfig("Hallenplätze", 2, 60, 8, 22));
 
-		admin = this.userRepository
-				.save(new User("admin@myDomain.de", "admin", "geheim", UserRole.ADMIN, ActivationStatus.ACTIVE));
-		user = this.userRepository
-				.save(new User("user@myDomain.de", "user", "geheim", UserRole.REGISTERED, ActivationStatus.ACTIVE));
-		waitingUser = this.userRepository.save(
-				new User("waiting@myDomain.de", "waiting", "geheim", UserRole.REGISTERED, ActivationStatus.CREATED));
-		lockedUser = this.userRepository
-				.save(new User("locked@myDomain.de", "locked", "geheim", UserRole.REGISTERED, ActivationStatus.LOCKED));
+		admin = this.userRepository.save(createUser(UserRole.ADMIN, ActivationStatus.ACTIVE));
+		user = this.userRepository.save(createUser(UserRole.REGISTERED, ActivationStatus.ACTIVE));
+		waitingUser = this.userRepository.save(createUser(UserRole.REGISTERED, ActivationStatus.CREATED));
+		lockedUser = this.userRepository.save(createUser(UserRole.REGISTERED, ActivationStatus.LOCKED));
 	}
 
 	@Test
 	public void addReservation() throws Exception {
 		mockMvc.perform(post("/reservation/add") //
-				.content(this.json(new Reservation(system1, user, "reservation name", LocalDateTime.now(), 1, 2, ReservationType.INDIVIDUAL)))
-				.contentType(contentType)).andExpect(status().is2xxSuccessful());
+				.content(this.json(createReservation(system1, user))).contentType(contentType))
+				.andExpect(status().is2xxSuccessful());
+	}
+
+	private User createUser(UserRole role, ActivationStatus status) {
+		String name = role.toString() + "." + status.toString();
+		return new User(name + "@myDomain.de", name, "top secret", role, status);
+	}
+
+	private Reservation createReservation(ReservationSystemConfig system, User user) {
+		return new Reservation(system, user, "reservation name", LocalDateTime.now().plusHours(1).withMinute(0), 1, 2,
+				ReservationType.INDIVIDUAL);
 	}
 
 	// @Test
