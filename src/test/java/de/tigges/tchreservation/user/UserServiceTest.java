@@ -156,6 +156,7 @@ public class UserServiceTest {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.CREATED));
 		UserDevice device0 = userDeviceRepository.save(createDevice(user, 0, ActivationStatus.CREATED));
 		UserDevice device1 = userDeviceRepository.save(createDevice(user, 1, ActivationStatus.CREATED));
+		
 		user.getDevices().add(device0);
 		checkUser(mockMvc.perform(get("/user/getByDevice/" + device0.getId())).andExpect(status().isOk()),user);
 		
