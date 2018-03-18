@@ -3,6 +3,7 @@ package de.tigges.tchreservation.user;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -49,17 +50,17 @@ public class UserServiceTest {
 
 	private MockMvc mockMvc;
 
-	// @Autowired<T> 
-	// UserService userService;<T> 
+	// @Autowired<T>
+	// UserService userService;<T>
 
 	private HttpMessageConverter mappingJackson2HttpMessageConverter;
 
 	@Autowired
 	private WebApplicationContext webApplicationContext;
-	
+
 	@Autowired
 	private UserRepository userRepository;
-	
+
 	@Autowired
 	private UserDeviceRepository userDeviceRepository;
 
@@ -137,11 +138,15 @@ public class UserServiceTest {
 			for (int j = 0; j < 3; j++) {
 				user.getDevices().add(createDevice(user, j, ActivationStatus.CREATED));
 			}
-			byte[] response = mockMvc.perform(post("/user/add").content(json(user))).andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray();
+			byte[] response = mockMvc.perform(post("/user/add").content(json(user))).andExpect(status().isOk())
+					.andReturn().getResponse().getContentAsByteArray();
 			userList.add(jsonObject(response, User.class));
 		}
-		
-		userList.forEach(u -> u.getDevices().forEach(d -> checkDevice(d)));
+
+		userList.forEach(u -> {
+			assertThat(u.getDevices().size(), is(3));
+			u.getDevices().forEach(d -> checkDevice(d));
+		});
 	}
 
 	private void checkDevice(UserDevice device) {
@@ -168,10 +173,10 @@ public class UserServiceTest {
 		this.mappingJackson2HttpMessageConverter.write(o, MediaType.APPLICATION_JSON, mockHttpOutputMessage);
 		return mockHttpOutputMessage.getBodyAsString();
 	}
-	
+
 	protected <T> T jsonObject(byte[] content, Class<T> c) throws HttpMessageNotReadableException, IOException {
 		MockHttpInputMessage mockHttpInputMessage = new MockHttpInputMessage(content);
-		return (T)this.mappingJackson2HttpMessageConverter.read(c, mockHttpInputMessage); 
+		return (T) this.mappingJackson2HttpMessageConverter.read(c, mockHttpInputMessage);
 	}
 
 }

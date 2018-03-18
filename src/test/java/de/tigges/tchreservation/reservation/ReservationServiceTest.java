@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 
 import org.junit.Before;
@@ -24,12 +25,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.context.WebApplicationContext;
 
 import de.tigges.tchreservation.TchReservationApplication;
-import de.tigges.tchreservation.reservation.model.OccupationRepository;
-import de.tigges.tchreservation.reservation.model.OccupationType;
-import de.tigges.tchreservation.reservation.model.Reservation;
-import de.tigges.tchreservation.reservation.model.ReservationRepository;
-import de.tigges.tchreservation.reservation.model.ReservationSystemConfigEntity;
-import de.tigges.tchreservation.reservation.model.ReservationSystemRespoitory;
 import de.tigges.tchreservation.user.UserRepository;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.User;
@@ -52,16 +47,16 @@ public class ReservationServiceTest {
 	@Autowired
 	private OccupationRepository occupationRepository;
 	@Autowired
-	private ReservationSystemRespoitory reservationSystemRepository;
+	private ReservationSystemConfigRepository reservationSystemConfigRepository;
 	@Autowired
 	private UserRepository userRepository;
 
 	@Autowired
 	private WebApplicationContext webApplicationContext;
 
-	private ReservationSystemConfigEntity system1;
+	private ReservationSystemConfig system1;
 
-	private ReservationSystemConfigEntity system2;
+	private ReservationSystemConfig system2;
 
 	private User admin;
 
@@ -86,13 +81,13 @@ public class ReservationServiceTest {
 
 		this.reservationRepository.deleteAll();
 		this.occupationRepository.deleteAll();
-		this.reservationSystemRepository.deleteAll();
+		this.reservationSystemConfigRepository.deleteAll();
 		this.userRepository.deleteAll();
 
-		system1 = this.reservationSystemRepository
-				.save(new ReservationSystemConfigEntity(1, "Ascheplätze", 6, 30, 8, 22));
-		system2 = this.reservationSystemRepository
-				.save(new ReservationSystemConfigEntity(2, "Hallenplätze", 2, 60, 8, 22));
+		system1 = this.reservationSystemConfigRepository
+				.save(new ReservationSystemConfig("Ascheplätze", 6, 30, 8, 22));
+		system2 = this.reservationSystemConfigRepository
+				.save(new ReservationSystemConfig("Hallenplätze", 2, 60, 8, 22));
 
 		admin = this.userRepository
 				.save(new User("admin@myDomain.de", "admin", "geheim", UserRole.ADMIN, ActivationStatus.ACTIVE));
@@ -106,9 +101,8 @@ public class ReservationServiceTest {
 
 	@Test
 	public void addReservation() throws Exception {
-		mockMvc.perform(post("/addReservation") //
-				.content(this.json(new Reservation(system1.getId(), "reservation name", user.getId(), 1, null, 2,
-						OccupationType.INDIVIDUAL)))
+		mockMvc.perform(post("/reservation/add") //
+				.content(this.json(new Reservation(system1, user, "reservation name", LocalDateTime.now(), 1, 2, ReservationType.INDIVIDUAL)))
 				.contentType(contentType)).andExpect(status().is2xxSuccessful());
 	}
 
@@ -135,5 +129,4 @@ public class ReservationServiceTest {
 		this.mappingJackson2HttpMessageConverter.write(o, MediaType.APPLICATION_JSON, mockHttpOutputMessage);
 		return mockHttpOutputMessage.getBodyAsString();
 	}
-
 }
