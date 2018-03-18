@@ -2,6 +2,8 @@ package de.tigges.tchreservation.reservation;
 
 import static org.junit.Assert.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
@@ -22,6 +24,7 @@ import org.springframework.mock.http.MockHttpOutputMessage;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.context.WebApplicationContext;
 
 import de.tigges.tchreservation.TchReservationApplication;
@@ -100,9 +103,11 @@ public class ReservationServiceTest {
 
 	@Test
 	public void addReservation() throws Exception {
-		mockMvc.perform(post("/reservation/add") //
-				.content(this.json(createReservation(system1, user))).contentType(contentType))
-				.andExpect(status().is2xxSuccessful());
+		Reservation reservation = createReservation(system1, user, 10, 1, 2);
+		checkReservation(
+				mockMvc.perform(post("/reservation/add").content(this.json(reservation)).contentType(contentType))
+						.andExpect(status().isOk()),
+				reservation);
 	}
 
 	private User createUser(UserRole role, ActivationStatus status) {
@@ -110,9 +115,19 @@ public class ReservationServiceTest {
 		return new User(name + "@myDomain.de", name, "top secret", role, status);
 	}
 
-	private Reservation createReservation(ReservationSystemConfig system, User user) {
-		return new Reservation(system, user, "reservation name", LocalDateTime.now().plusHours(1).withMinute(0), 1, 2,
+	private Reservation createReservation(ReservationSystemConfig system, User user, int hour, int court,
+			int duration) {
+		return new Reservation(system, user, "reservation name",
+				LocalDateTime.now().plusDays(1).withHour(hour).withMinute(0).withSecond(0), court, duration,
 				ReservationType.INDIVIDUAL);
+	}
+
+	private ResultActions checkReservation(ResultActions resultActions, Reservation reservation) throws Exception {
+		resultActions.andExpect(content().contentType(contentType)).andExpect(jsonPath("$.id").isNotEmpty())
+				.andExpect(jsonPath("$.type").value(reservation.getType().toString()))
+		//
+		;
+		return resultActions;
 	}
 
 	// @Test

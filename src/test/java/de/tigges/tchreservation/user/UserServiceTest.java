@@ -99,6 +99,14 @@ public class UserServiceTest {
 	}
 
 	@Test
+	public void testSaveDevice() throws Exception {
+		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
+		
+		mockMvc.perform(post("/user/addDevice").content(json(createDevice(user, 0, ActivationStatus.CREATED)))
+				.contentType(contentType)).andExpect(status().isOk());
+	}
+
+	@Test
 	public void testStatus() throws Exception {
 		User user = userRepository
 				.save(new User("email", "name", "password", UserRole.REGISTERED, ActivationStatus.CREATED));
@@ -129,14 +137,6 @@ public class UserServiceTest {
 	}
 
 	@Test
-	public void testSaveDevice() throws Exception {
-		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
-
-		mockMvc.perform(post("/user/addDevice").content(json(createDevice(user, 0, ActivationStatus.CREATED)))
-				.contentType(contentType)).andExpect(status().isOk());
-	}
-
-	@Test
 	public void testGetDevices() throws Exception {
 		List<UserDevice> devices = new ArrayList<>();
 
@@ -149,6 +149,19 @@ public class UserServiceTest {
 		}
 
 		devices.forEach(device -> checkDevice(device));
+	}
+	
+	@Test
+	public void testGetByDevice() throws Exception {
+		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.CREATED));
+		UserDevice device0 = userDeviceRepository.save(createDevice(user, 0, ActivationStatus.CREATED));
+		UserDevice device1 = userDeviceRepository.save(createDevice(user, 1, ActivationStatus.CREATED));
+		user.getDevices().add(device0);
+		checkUser(mockMvc.perform(get("/user/getByDevice/" + device0.getId())).andExpect(status().isOk()),user);
+		
+		user.getDevices().clear();
+		user.getDevices().add(device1);
+		checkUser(mockMvc.perform(get("/user/getByDevice/" + device1.getId())).andExpect(status().isOk()),user);
 	}
 
 	private void checkDevice(UserDevice device) {

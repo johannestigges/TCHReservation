@@ -26,10 +26,18 @@ public class UserService {
 	}
 
 	@RequestMapping(path = "/get/{userId}", method = RequestMethod.GET)
-	public @ResponseBody User get(@PathVariable Long userId) {
-		return userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
+	public @ResponseBody Optional<User> get(@PathVariable Long userId) {
+		return userRepository.findById(userId);
 	}
 
+	@RequestMapping(path="/getByDevice/{deviceId}", method = RequestMethod.GET)
+	public @ResponseBody User getByDevice(@PathVariable Long deviceId) {
+		UserDevice device = userDeviceRepository.findById(deviceId).orElseThrow(() -> new UserNotFoundException(deviceId));
+		User user = userRepository.findById(device.getUser().getId()).orElseThrow(() -> new UserNotFoundException(device.getUser().getId()));
+		user.getDevices().add(device);
+		return user;
+	}
+	
 	@RequestMapping(path = "/getDevice/{id}", method = RequestMethod.GET)
 	public @ResponseBody Optional<UserDevice> findDeviceById(@PathVariable Long id) {
 		return userDeviceRepository.findById(id);
@@ -52,7 +60,7 @@ public class UserService {
 
 	@RequestMapping(path = "/setStatus/{userId}/{status}", method = RequestMethod.GET)
 	public @ResponseBody void setStatus(@PathVariable long userId, @PathVariable ActivationStatus status) {
-		User user = get(userId);
+		User user = get(userId).orElseThrow(() -> new UserNotFoundException(userId));
 		user.setStatus(status);
 		userRepository.save(user);
 	}

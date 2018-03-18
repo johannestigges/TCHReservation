@@ -44,15 +44,13 @@ public class UserDevice {
 	}
 
 	public User getUser() {
-		return user;
+		// make a copy to avoid infinite loop with user.getDevices()!!
+		return new User(user);
 	}
 
 	public void setUser(User user) {
-		// make a copy of user to avoid infinite loop with user.getDevices!!
-		this.user = new User(user.getEmail(), user.getName(), user.getPassword(), user.getRole(), user.getStatus());
-		if (user.getId() != null) {
-			this.user.setId(user.getId());
-		}
+		// make a copy of user to avoid infinite loop with user.getDevices()!!
+		this.user = new User(user);
 		this.user.getDevices().clear();
 	}
 

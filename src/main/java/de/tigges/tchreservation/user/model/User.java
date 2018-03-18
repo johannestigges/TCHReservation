@@ -22,6 +22,13 @@ public class User {
 		this.role = role;
 		this.status = status;
 	}
+	
+	public User(User user) {
+		this(user.getEmail(), user.getName(), user.getPassword(), user.getRole(), user.getStatus());
+		if (user.getId() != null) {
+			setId(user.getId());
+		}
+	}
 
 	@Id
 	@GeneratedValue
