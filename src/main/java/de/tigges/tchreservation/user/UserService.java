@@ -3,9 +3,9 @@ package de.tigges.tchreservation.user;
 import java.util.Optional;
 
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -36,12 +36,17 @@ public class UserService {
 	}
 
 	@RequestMapping(path = "/add", method = RequestMethod.POST)
-	public @ResponseBody User add(User user) {
-		return userRepository.save(user);
+	public @ResponseBody User add(@RequestBody User user) {
+		User savedUser =  userRepository.save(user);
+		user.getDevices().forEach(device -> {
+			device.setUser(savedUser);
+			savedUser.getDevices().add(userDeviceRepository.save(device));
+		});
+		return savedUser;
 	}
 
 	@RequestMapping(path = "/addDevice", method = RequestMethod.POST)
-	public @ResponseBody UserDevice add(UserDevice userDevice) {
+	public @ResponseBody UserDevice add(@RequestBody UserDevice userDevice) {
 		return userDeviceRepository.save(userDevice);
 	}
 

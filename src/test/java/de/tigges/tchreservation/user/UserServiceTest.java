@@ -1,9 +1,6 @@
 package de.tigges.tchreservation.user;
 
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -18,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,6 +30,7 @@ import org.springframework.mock.http.MockHttpOutputMessage;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.context.WebApplicationContext;
 
 import de.tigges.tchreservation.TchReservationApplication;
@@ -42,6 +41,7 @@ import de.tigges.tchreservation.user.model.UserRole;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = TchReservationApplication.class)
+
 @WebAppConfiguration
 public class UserServiceTest {
 
@@ -50,10 +50,7 @@ public class UserServiceTest {
 
 	private MockMvc mockMvc;
 
-	// @Autowired<T>
-	// UserService userService;<T>
-
-	private HttpMessageConverter mappingJackson2HttpMessageConverter;
+	private HttpMessageConverter<Object> mappingJackson2HttpMessageConverter;
 
 	@Autowired
 	private WebApplicationContext webApplicationContext;
@@ -64,10 +61,11 @@ public class UserServiceTest {
 	@Autowired
 	private UserDeviceRepository userDeviceRepository;
 
+	@SuppressWarnings("unchecked")
 	@Autowired
 	void setConverters(HttpMessageConverter<?>[] converters) {
 
-		this.mappingJackson2HttpMessageConverter = Arrays.asList(converters).stream()
+		this.mappingJackson2HttpMessageConverter = (HttpMessageConverter<Object>) Arrays.asList(converters).stream()
 				.filter(hmc -> hmc instanceof MappingJackson2HttpMessageConverter).findAny().orElse(null);
 
 		assertNotNull("the JSON message converter must not be null", this.mappingJackson2HttpMessageConverter);
@@ -77,17 +75,27 @@ public class UserServiceTest {
 	public void setup() throws Exception {
 		this.mockMvc = webAppContextSetup(webApplicationContext).build();
 
+		this.userDeviceRepository.deleteAll();
 		this.userRepository.deleteAll();
 	}
 
 	@Test
 	public void testSave() throws Exception {
 
-		mockMvc.perform(post("/user/add")
-				.content(
-						json(new User("test@user.org", "user", "secret", UserRole.REGISTERED, ActivationStatus.ACTIVE)))
-				.contentType(contentType)).andExpect(status().isOk()).andExpect(content().contentType(contentType))
-				.andExpect(jsonPath("$.id", is(notNullValue())));
+		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE);
+		checkUser(mockMvc.perform(post("/user/add").content(json(user)).contentType(contentType))
+				.andExpect(status().isOk()), user);
+	}
+
+	@Test
+	public void testSaveUserWithDevices() throws Exception {
+		User user = createUser(0, UserRole.ADMIN, ActivationStatus.CREATED);
+		for (int i = 0; i < 5; i++) {
+			user.getDevices().add(createDevice(user, i, ActivationStatus.CREATED));
+		}
+
+		checkUser(mockMvc.perform(post("/user/add").content(json(user)).contentType(contentType))//
+				.andExpect(status().isOk()), user);
 	}
 
 	@Test
@@ -115,10 +123,8 @@ public class UserServiceTest {
 					new User("email " + i, "name " + i, "password", UserRole.REGISTERED, ActivationStatus.ACTIVE)));
 		}
 		for (int i = 0; i < userList.size(); i++) {
-			mockMvc.perform(get("/user/get/" + userList.get(i).getId())) //
-					.andExpect(status().isOk()).andExpect(content().contentType(contentType))
-					.andExpect(jsonPath("$.id", is(userList.get(i).getId().intValue())))
-					.andExpect(jsonPath("$.name", is(userList.get(i).getName())));
+			checkUser(mockMvc.perform(get("/user/get/" + userList.get(i).getId())).andExpect(status().isOk()),
+					userList.get(i));
 		}
 	}
 
@@ -126,13 +132,12 @@ public class UserServiceTest {
 	public void testSaveDevice() throws Exception {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
 
-		mockMvc.perform(post("/user/addDevice").content(json(createDevice(user, 0, ActivationStatus.CREATED))))
-				.andExpect(status().isOk());
+		mockMvc.perform(post("/user/addDevice").content(json(createDevice(user, 0, ActivationStatus.CREATED)))
+				.contentType(contentType)).andExpect(status().isOk());
 	}
 
 	@Test
 	public void testGetDevices() throws Exception {
-		List<User> userList = new ArrayList<>();
 		List<UserDevice> devices = new ArrayList<>();
 
 		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.CREATED);
@@ -153,12 +158,38 @@ public class UserServiceTest {
 					.andExpect(jsonPath("$.deviceId").value(device.getDeviceId()))
 					.andExpect(jsonPath("$.publicKey").value(device.getPublicKey()))
 					.andExpect(jsonPath("$.user").exists())
-					.andExpect(jsonPath("$.user.id").value(device.getUser().getId()))
-					;
-			
+					.andExpect(jsonPath("$.user.id").value(device.getUser().getId()));
+
 		} catch (Exception e) {
 			fail(e.getMessage());
 		}
+	}
+
+	private ResultActions checkUser(ResultActions resultActions, User user) throws Exception {
+		resultActions.andExpect(content().contentType(contentType)).andExpect(jsonPath("$.id").isNotEmpty())
+				.andExpect(jsonPath("$.email").value(user.getEmail()))
+				.andExpect(jsonPath("$.name").value(user.getName()))
+				.andExpect(jsonPath("$.password").value(user.getPassword()))
+				.andExpect(jsonPath("$.role").value(user.getRole().toString()))
+				.andExpect(jsonPath("$.status").value(user.getStatus().toString()))
+		//
+		;
+		checkDevices(resultActions, user);
+		return resultActions;
+	}
+
+	private ResultActions checkDevices(ResultActions resultActions, User user) throws Exception {
+		if (user.getDevices().isEmpty()) {
+			resultActions.andExpect(jsonPath("$.devices").isEmpty());
+		} else {
+			resultActions.andExpect(jsonPath("$.devices").isArray())
+			.andExpect(jsonPath("$.devices", Matchers.hasSize(user.getDevices().size())))
+			
+			;
+			
+		}
+
+		return resultActions;
 	}
 
 	private User createUser(int i, UserRole role, ActivationStatus status) {
@@ -175,6 +206,7 @@ public class UserServiceTest {
 		return mockHttpOutputMessage.getBodyAsString();
 	}
 
+	@SuppressWarnings("unchecked")
 	protected <T> T jsonObject(byte[] content, Class<T> c) throws HttpMessageNotReadableException, IOException {
 		MockHttpInputMessage mockHttpInputMessage = new MockHttpInputMessage(content);
 		return (T) this.mappingJackson2HttpMessageConverter.read(c, mockHttpInputMessage);
