@@ -24,7 +24,6 @@ public class UserDevice {
 	@GeneratedValue
 	private long id;
 
-	@JsonIgnore
 	@ManyToOne
 	private User user;
 

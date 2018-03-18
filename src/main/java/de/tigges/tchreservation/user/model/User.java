@@ -31,9 +31,6 @@ public class User {
 	private UserRole role;
 	private ActivationStatus status;
 
-	@OneToMany(mappedBy = "user")
-	private Set<UserDevice> devices = new HashSet<>();
-
 	public Long getId() {
 		return id;
 	}
@@ -76,11 +73,6 @@ public class User {
 
 	public ActivationStatus getStatus() {
 		return status;
-	}
-	
-
-	public Set<UserDevice> getDevices() {
-		return devices;
 	}
 
 	public void setStatus(ActivationStatus status) {

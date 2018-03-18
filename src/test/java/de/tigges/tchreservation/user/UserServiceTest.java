@@ -133,28 +133,29 @@ public class UserServiceTest {
 	@Test
 	public void testGetDevices() throws Exception {
 		List<User> userList = new ArrayList<>();
-		for (int i = 0; i < 5; i++) {
-			User user = createUser(i, UserRole.REGISTERED, ActivationStatus.CREATED);
-			for (int j = 0; j < 3; j++) {
-				user.getDevices().add(createDevice(user, j, ActivationStatus.CREATED));
+		List<UserDevice> devices = new ArrayList<>();
+
+		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.CREATED);
+		for (int i = 0; i < 15; i++) {
+			if (i % 3 == 0) {
+				user = userRepository.save(createUser(i, UserRole.REGISTERED, ActivationStatus.CREATED));
 			}
-			byte[] response = mockMvc.perform(post("/user/add").content(json(user))).andExpect(status().isOk())
-					.andReturn().getResponse().getContentAsByteArray();
-			userList.add(jsonObject(response, User.class));
+			devices.add(userDeviceRepository.save(createDevice(user, i, ActivationStatus.CREATED)));
 		}
 
-		userList.forEach(u -> {
-			assertThat(u.getDevices().size(), is(3));
-			u.getDevices().forEach(d -> checkDevice(d));
-		});
+		devices.forEach(device -> checkDevice(device));
 	}
 
 	private void checkDevice(UserDevice device) {
 		try {
 			mockMvc.perform(get("/user/getDevice/" + device.getId())) //
 					.andExpect(status().isOk()) //
-					.andExpect(jsonPath("$.deviceId", is(device.getDeviceId())))
-					.andExpect(jsonPath("$.publicKey", is(device.getPublicKey())));
+					.andExpect(jsonPath("$.deviceId").value(device.getDeviceId()))
+					.andExpect(jsonPath("$.publicKey").value(device.getPublicKey()))
+					.andExpect(jsonPath("$.user").exists())
+					.andExpect(jsonPath("$.user.id").value(device.getUser().getId()))
+					;
+			
 		} catch (Exception e) {
 			fail(e.getMessage());
 		}
