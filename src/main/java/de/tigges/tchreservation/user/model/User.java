@@ -104,4 +104,13 @@ public class User {
 	public Set<UserDevice> getDevices() {
 		return devices;
 	}
+	
+	public boolean hasRole (UserRole...roles) {
+		for (UserRole role: roles) {
+			if (role.equals(getRole())) {
+				return true;
+			}
+		}
+		return false;
+	}
 }

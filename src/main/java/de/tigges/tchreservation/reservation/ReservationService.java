@@ -12,6 +12,10 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tigges.tchreservation.reservation.model.Occupation;
 import de.tigges.tchreservation.reservation.model.Reservation;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
+import de.tigges.tchreservation.reservation.model.ReservationType;
+import de.tigges.tchreservation.user.UserRepository;
+import de.tigges.tchreservation.user.model.User;
+import de.tigges.tchreservation.user.model.UserRole;
 
 @RestController
 @RequestMapping("/reservation")
@@ -22,18 +26,17 @@ public class ReservationService {
 	private ReservationRepository reservationRepository;
 	private OccupationRepository occupationRepository;
 	private ReservationSystemConfigRepository systemConfigRepository;
+	private UserRepository userRespository;
 
 	/**
 	 * constructor with injection
-	 * 
-	 * @param reservationRepository
-	 * @param occupationRepository
 	 */
 	public ReservationService(ReservationRepository reservationRepository, OccupationRepository occupationRepository,
-			ReservationSystemConfigRepository systemConfigRepository) {
+			ReservationSystemConfigRepository systemConfigRepository, UserRepository userRepository) {
 		this.reservationRepository = reservationRepository;
 		this.occupationRepository = occupationRepository;
 		this.systemConfigRepository = systemConfigRepository;
+		this.userRespository = userRepository;
 	}
 
 	/**
@@ -44,7 +47,12 @@ public class ReservationService {
 	 */
 	@RequestMapping(path = "/add", method = RequestMethod.POST)
 	public @ResponseBody Reservation addReservation(@RequestBody Reservation reservation) {
+
+		// check reservation data consistency
 		checkReservation(reservation);
+
+		// check Authorization
+
 		return reservationRepository.save(reservation);
 	}
 
@@ -61,21 +69,25 @@ public class ReservationService {
 			throw new ReservationException("no reservation data");
 		}
 
+		if (isEmpty(reservation.getName())) {
+			throw new ReservationException("no reservation name");
+		}
+
 		if (reservation.getSystemConfig() == null || reservation.getSystemConfig().getId() <= 0) {
 			throw new ReservationException("no reservation system");
 		}
 
-		if (reservation.getSystemConfig().getOpeningHour() <= 0) {
-			throw new ReservationException("no reservation system config opening hour");
-		}
+		ReservationSystemConfig systemConfig = systemConfigRepository.findById(reservation.getSystemConfig().getId())
+				.orElseThrow(() -> new ReservationException("no reservation system with id %d",
+						reservation.getSystemConfig().getId()));
+		reservation.setSystemConfig(systemConfig);
 
-		if (reservation.getSystemConfig().getClosingHour() <= 0) {
-			throw new ReservationException("no reservation system config closing hour");
+		if (reservation.getUser() == null || reservation.getUser().getId() <= 0) {
+			throw new ReservationException("no user");
 		}
-
-		if (isEmpty(reservation.getName())) {
-			throw new ReservationException("no reservation name");
-		}
+		User user = userRespository.findById(reservation.getUser().getId())
+				.orElseThrow(() -> new ReservationException("no user with id %d", reservation.getUser().getId()));
+		reservation.setUser(user);
 
 		LocalDateTime start = reservation.getStart();
 		if (start == null) {
@@ -85,16 +97,15 @@ public class ReservationService {
 			throw new ReservationException("start time in the past ist not allowed");
 		}
 
-		if (start.getHour() < reservation.getSystemConfig().getOpeningHour()) {
+		if (start.getHour() < systemConfig.getOpeningHour()) {
 			throw new ReservationException("start hour %02d:00 before opening hour %02d:00 not allowed", //
-					start.getHour(), reservation.getSystemConfig().getOpeningHour());
+					start.getHour(), systemConfig.getOpeningHour());
 		}
-		if (start.getHour() > reservation.getSystemConfig().getClosingHour()) {
+		if (start.getHour() > systemConfig.getClosingHour()) {
 			throw new ReservationException("start hour %02d:00 after closing hour %02d:00 not allowed", //
-					start.getHour(), reservation.getSystemConfig().getClosingHour());
+					start.getHour(), systemConfig.getClosingHour());
 		}
-		if (start.getMinute() != 0
-				&& start.getMinute() % reservation.getSystemConfig().getDurationUnitInMinutes() != 0) {
+		if (start.getMinute() != 0 && start.getMinute() % systemConfig.getDurationUnitInMinutes() != 0) {
 			throw new ReservationException("start time with %d minutes not allowed", start.getMinute());
 		}
 		if (reservation.getDuration() < 1) {
@@ -106,9 +117,8 @@ public class ReservationService {
 		if (reservation.getCourts().length < 1) {
 			throw new ReservationException("no courts");
 		}
-		if (reservation.getCourts().length > reservation.getSystemConfig().getCourts()) {
-			throw new ReservationException("more than %d courts not allowed",
-					reservation.getSystemConfig().getCourts());
+		if (reservation.getCourts().length > systemConfig.getCourts()) {
+			throw new ReservationException("more than %d courts not allowed", systemConfig.getCourts());
 		}
 
 		for (int i = 0; i < reservation.getCourts().length; i++) {
@@ -116,9 +126,25 @@ public class ReservationService {
 			if (court < 1) {
 				throw new ReservationException("court[%d]: %d < 1 not allowed", i, reservation.getCourts()[i]);
 			}
-			if (court > reservation.getSystemConfig().getCourts()) {
-				throw new ReservationException("court[%d]: %d > %d not allowed", //
-						i, reservation.getCourts()[i], reservation.getSystemConfig().getCourts());
+			if (court > systemConfig.getCourts()) {
+				throw new ReservationException("court[%d]: %d > %d not allowed", i, reservation.getCourts()[i],
+						systemConfig.getCourts());
+			}
+		}
+
+		if (user.hasRole(UserRole.ANONYMOUS)) {
+			throw new AuthorizationException("user with role ANONYMOUS cannot add reservation.");
+		}
+
+		if (user.hasRole(UserRole.REGISTERED)) {
+			if (!ReservationType.INDIVIDUAL.equals(reservation.getType())) {
+				throw new AuthorizationException("user %s with role REGISTERED cannot add reservation of type %s.",
+						user.getName(), reservation.getType());
+			}
+			if (reservation.getDuration() > 3) {
+				throw new AuthorizationException(
+						"user %s with role REGISTERED cannot add reservation with duration %d.", user.getName(),
+						reservation.getDuration());
 			}
 		}
 	}
@@ -159,7 +185,7 @@ public class ReservationService {
 	@RequestMapping(path = "/getSystemConfig/{id}", method = RequestMethod.GET)
 	public @ResponseBody ReservationSystemConfig getSystemConfig(@RequestParam("id") long id) {
 		return systemConfigRepository.findById(id)
-				.orElseThrow(() -> new ReservationException("no reservation system config with id %d",id));
+				.orElseThrow(() -> new ReservationException("no reservation system config with id %d", id));
 	}
 
 	private boolean isEmpty(String s) {
