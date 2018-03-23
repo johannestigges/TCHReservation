@@ -45,6 +45,7 @@ public class UserService {
 
 	@RequestMapping(path = "/add", method = RequestMethod.POST)
 	public @ResponseBody User add(@RequestBody User user) {
+		checkUser(user);
 		User savedUser =  userRepository.save(user);
 		user.getDevices().forEach(device -> {
 			device.setUser(savedUser);
@@ -63,5 +64,14 @@ public class UserService {
 		User user = get(userId).orElseThrow(() -> new UserNotFoundException(userId));
 		user.setStatus(status);
 		userRepository.save(user);
+	}
+	
+	private void checkUser(User user) {
+		if (user == null) {
+			throw new UserException("no user");
+		}
+		if(user.getEmail() == null) {
+			throw new UserException("no email");
+		}
 	}
 }
