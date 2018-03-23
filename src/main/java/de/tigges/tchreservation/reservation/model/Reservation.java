@@ -15,13 +15,13 @@ public class Reservation  {
 	
 	public Reservation() {}
 	
-	public Reservation (ReservationSystemConfig config, User user, String name, LocalDateTime start, int court, int duration, ReservationType type) {
+	public Reservation (ReservationSystemConfig config, User user, String name, int court, LocalDateTime start, int duration, ReservationType type) {
 		setSystemConfig(config);
 		setUser(user);
 		setName(name);
-		setStart(start);
 		setCourts(new int[1]);
 		getCourts()[0] = court;
+		setStart(start);
 		setDuration(duration);
 		setType(type);
 	}

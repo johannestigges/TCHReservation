@@ -58,6 +58,10 @@ public class ReservationService {
 
 	/**
 	 * check a reservation
+	 * <p>
+	 * <li>data consistency checks
+	 * <li>authorization checks
+	 * <li>availibility checks 
 	 * 
 	 * @param reservation
 	 * @return error message or OK
@@ -65,6 +69,7 @@ public class ReservationService {
 	@RequestMapping(path = "/check", method = RequestMethod.POST)
 	public void checkReservation(Reservation reservation) {
 
+		// data consistency checks
 		if (reservation == null) {
 			throw new ReservationException("no reservation data");
 		}
@@ -132,6 +137,7 @@ public class ReservationService {
 			}
 		}
 
+		// authorization checks
 		if (user.hasRole(UserRole.ANONYMOUS)) {
 			throw new AuthorizationException("user with role ANONYMOUS cannot add reservation.");
 		}
@@ -147,6 +153,8 @@ public class ReservationService {
 						reservation.getDuration());
 			}
 		}
+		
+		// availibility checks
 	}
 
 	/**

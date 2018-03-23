@@ -103,7 +103,34 @@ public class ReservationServiceTest {
 
 	@Test
 	public void addReservation() throws Exception {
-		Reservation reservation = createReservation(system1, user, 10, 1, 2);
+		addReservation(createReservation(system1, user, 1, 10, 2));
+	}
+
+	@Test
+	public void addReservationOtherSystem() throws Exception {
+		addReservation(createReservation(system1, user, 1, 10, 2));
+		addReservation(createReservation(system2, admin, 1, 10, 2));
+	}
+
+	@Test
+	public void addReservationOtherCourt() throws Exception {
+		addReservation(createReservation(system1, user, 1, 10, 2));
+		addReservation(createReservation(system1, user, 2, 10, 2));
+	}
+	
+	@Test
+	public void addReservationOtherTime() throws Exception {
+		addReservation(createReservation(system1, user, 1, 10, 2));
+		addReservation(createReservation(system1, user, 1, 11, 2));
+	}
+
+	@Test
+	public void addReservationNotAvailable() throws Exception {
+		addReservation(createReservation(system1, user, 1, 10, 3));
+		addReservation(createReservation(system1, user, 1, 11, 2));
+	}
+
+	private void addReservation(Reservation reservation) throws Exception {
 		checkReservation(
 				mockMvc.perform(post("/reservation/add").content(this.json(reservation)).contentType(contentType))
 						.andExpect(status().isOk()),
@@ -115,10 +142,10 @@ public class ReservationServiceTest {
 		return new User(name + "@myDomain.de", name, "top secret", role, status);
 	}
 
-	private Reservation createReservation(ReservationSystemConfig system, User user, int hour, int court,
+	private Reservation createReservation(ReservationSystemConfig system, User user, int court, int hour,
 			int duration) {
-		return new Reservation(system, user, "reservation name",
-				LocalDateTime.now().plusDays(1).withHour(hour).withMinute(0).withSecond(0), court, duration,
+		return new Reservation(system, user, "reservation name", court,
+				LocalDateTime.now().plusDays(1).withHour(hour).withMinute(0).withSecond(0), duration,
 				ReservationType.INDIVIDUAL);
 	}
 
