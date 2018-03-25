@@ -1,6 +1,7 @@
 package de.tigges.tchreservation.reservation;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -54,6 +55,14 @@ public class ReservationService {
 		// check Authorization
 
 		return reservationRepository.save(reservation);
+	}
+
+	@RequestMapping(path = "/delete/{occupationId}", method = RequestMethod.DELETE)
+	public @ResponseBody Reservation deleteReservation(@RequestParam Long occupationId) {
+		Reservation occupation = reservationRepository.findById(occupationId)
+				.orElseThrow(() -> new ReservationException("reservation " + occupationId + " not found"));
+		reservationRepository.delete(occupation);
+		return occupation;
 	}
 
 	/**
@@ -153,12 +162,11 @@ public class ReservationService {
 						reservation.getDuration());
 			}
 		}
-		
 		// availibility checks
 	}
 
 	/**
-	 * get all occupations
+	 * get all occupations.subscribe(o => this.occupations.push(o));
 	 * 
 	 * @return list of all occupations
 	 */
