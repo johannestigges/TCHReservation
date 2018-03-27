@@ -9,7 +9,8 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Arrays;
 
 import org.junit.Before;
@@ -107,27 +108,45 @@ public class ReservationServiceTest {
 	}
 
 	@Test
-	public void addReservationOtherSystem() throws Exception {
+	public void addReservationSystems() throws Exception {
 		addReservation(createReservation(system1, user, 1, 10, 2));
 		addReservation(createReservation(system2, admin, 1, 10, 2));
 	}
 
 	@Test
-	public void addReservationOtherCourt() throws Exception {
+	public void addReservationCourts() throws Exception {
 		addReservation(createReservation(system1, user, 1, 10, 2));
 		addReservation(createReservation(system1, user, 2, 10, 2));
 	}
-	
+
 	@Test
-	public void addReservationOtherTime() throws Exception {
+	public void addReservationTimes() throws Exception {
 		addReservation(createReservation(system1, user, 1, 10, 2));
 		addReservation(createReservation(system1, user, 1, 11, 2));
 	}
 
-	@Test
-	public void addReservationNotAvailable() throws Exception {
+	@Test(expected = ReservationNotAvailableException.class)
+	public void addReservationOverlap() throws Exception {
 		addReservation(createReservation(system1, user, 1, 10, 3));
 		addReservation(createReservation(system1, user, 1, 11, 2));
+	}
+
+	@Test(expected = ReservationNotAvailableException.class)
+	public void addReservationDuplicate() throws Exception {
+		addReservation(createReservation(system1, user, 1, 10, 3));
+		addReservation(createReservation(system1, user, 1, 10, 3));
+	}
+
+	@Test(expected = ReservationNotAvailableException.class)
+	public void addReservationOverlap2() throws Exception {
+		addReservation(createReservation(system1, user, 1, 10, 6));
+		addReservation(createReservation(system1, user, 1, 11, 2));
+	}
+
+	@Test(expected = ReservationNotAvailableException.class)
+	public void addReservationOverlap3() throws Exception {
+		addReservation(createReservation(system1, user, 1, 11, 2));
+		addReservation(createReservation(system1, user, 1, 10, 6));
 	}
 
 	private void addReservation(Reservation reservation) throws Exception {
@@ -144,9 +163,8 @@ public class ReservationServiceTest {
 
 	private Reservation createReservation(ReservationSystemConfig system, User user, int court, int hour,
 			int duration) {
-		return new Reservation(system, user, "reservation name", court,
-				LocalDateTime.now().plusDays(1).withHour(hour).withMinute(0).withSecond(0), duration,
-				ReservationType.INDIVIDUAL);
+		return new Reservation(system, user, "reservation name", court, LocalDate.now().plusDays(1),
+				LocalTime.of(hour, 0), duration, ReservationType.INDIVIDUAL);
 	}
 
 	private ResultActions checkReservation(ResultActions resultActions, Reservation reservation) throws Exception {

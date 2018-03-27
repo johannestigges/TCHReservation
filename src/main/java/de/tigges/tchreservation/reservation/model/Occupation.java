@@ -1,6 +1,7 @@
 package de.tigges.tchreservation.reservation.model;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -15,9 +16,22 @@ public class Occupation {
 	private long id;
 	
 	private int court;
-	private LocalDate start;
+	private int lastCourt;
+	private LocalDate date;
+	private LocalTime start;
 	private int duration;
+	private String text;
+	private ReservationType type;
+
+	@ManyToOne(optional=false)
+	private ReservationSystemConfig systemConfig;
 	
+	public ReservationSystemConfig getSystemConfig() {
+		return systemConfig;
+	}
+	public void setSystemConfig(ReservationSystemConfig systemConfig) {
+		this.systemConfig = systemConfig;
+	}
 	@ManyToOne(optional=false)
 	private Reservation reservation;
 	
@@ -27,15 +41,20 @@ public class Occupation {
 	public void setCourt(int court) {
 		this.court = court;
 	}
-	public LocalDate getStart() {
+	public LocalDate getDate() {
+		return date;
+	}
+	public void setDate(LocalDate date) {
+		this.date = date;
+	}
+	public LocalTime getStart() {
 		return start;
 	}
-	public void setStart(LocalDate start) {
+	public void setStart(LocalTime start) {
 		this.start = start;
 	}
 	public int getDuration() {
 		return duration;	
-
 	}
 	public void setDuration(int duration) {
 		this.duration = duration;
@@ -45,6 +64,24 @@ public class Occupation {
 	}
 	public void setReservation(Reservation reservation) {
 		this.reservation = reservation;
+	}
+	public int getLastCourt() {
+		return lastCourt;
+	}
+	public void setLastCourt(int lastCourt) {
+		this.lastCourt = lastCourt;
+	}
+	public String getText() {
+		return text;
+	}
+	public void setText(String text) {
+		this.text = text;
+	}
+	public ReservationType getType() {
+		return type;
+	}
+	public void setType(ReservationType type) {
+		this.type = type;
 	}
 
 }

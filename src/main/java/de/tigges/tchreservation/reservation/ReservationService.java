@@ -1,7 +1,9 @@
 package de.tigges.tchreservation.reservation;
 
-import java.time.LocalDateTime;
-import java.util.Optional;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -54,15 +56,13 @@ public class ReservationService {
 
 		// check Authorization
 
-		return reservationRepository.save(reservation);
-	}
+		// createOccupations
+		List<Occupation> occupations = createOccupations(reservation);
+		occupations.forEach(o -> checkOccupation(o));
 
-	@RequestMapping(path = "/delete/{occupationId}", method = RequestMethod.DELETE)
-	public @ResponseBody Reservation deleteReservation(@RequestParam Long occupationId) {
-		Reservation occupation = reservationRepository.findById(occupationId)
-				.orElseThrow(() -> new ReservationException("reservation " + occupationId + " not found"));
-		reservationRepository.delete(occupation);
-		return occupation;
+		Reservation savedReservation = reservationRepository.save(reservation);
+		occupationRepository.saveAll(occupations);
+		return savedReservation;
 	}
 
 	/**
@@ -70,7 +70,6 @@ public class ReservationService {
 	 * <p>
 	 * <li>data consistency checks
 	 * <li>authorization checks
-	 * <li>availibility checks 
 	 * 
 	 * @param reservation
 	 * @return error message or OK
@@ -83,8 +82,8 @@ public class ReservationService {
 			throw new ReservationException("no reservation data");
 		}
 
-		if (isEmpty(reservation.getName())) {
-			throw new ReservationException("no reservation name");
+		if (isEmpty(reservation.getText())) {
+			throw new ReservationException("no reservation text");
 		}
 
 		if (reservation.getSystemConfig() == null || reservation.getSystemConfig().getId() <= 0) {
@@ -103,34 +102,56 @@ public class ReservationService {
 				.orElseThrow(() -> new ReservationException("no user with id %d", reservation.getUser().getId()));
 		reservation.setUser(user);
 
-		LocalDateTime start = reservation.getStart();
+		LocalDate date = reservation.getDate();
+		if (date == null) {
+			throw new ReservationException("no date");
+		}
+
+		if (date.isBefore(LocalDate.now())) {
+			throw new ReservationException("date in the past is not allowed");
+		}
+
+		LocalTime start = reservation.getStart();
 		if (start == null) {
 			throw new ReservationException("no start time");
 		}
-		if (start.isBefore(LocalDateTime.now())) {
-			throw new ReservationException("start time in the past ist not allowed");
+
+		if (date.isEqual(LocalDate.now()) && start.isBefore(LocalTime.now())) {
+			throw new ReservationException("start time in the past is not allowed");
 		}
 
 		if (start.getHour() < systemConfig.getOpeningHour()) {
 			throw new ReservationException("start hour %02d:00 before opening hour %02d:00 not allowed", //
 					start.getHour(), systemConfig.getOpeningHour());
 		}
+
 		if (start.getHour() > systemConfig.getClosingHour()) {
 			throw new ReservationException("start hour %02d:00 after closing hour %02d:00 not allowed", //
 					start.getHour(), systemConfig.getClosingHour());
 		}
+
 		if (start.getMinute() != 0 && start.getMinute() % systemConfig.getDurationUnitInMinutes() != 0) {
 			throw new ReservationException("start time with %d minutes not allowed", start.getMinute());
 		}
+
+		if (LocalTime.of(start.getHour(), start.getMinute())
+				.plusMinutes(reservation.getDuration() * systemConfig.getDurationUnitInMinutes())
+				.isAfter(LocalTime.of(systemConfig.getClosingHour(), 0))) {
+			throw new ReservationException("starttime plus duration greater than closing hour.");
+		}
+
 		if (reservation.getDuration() < 1) {
 			throw new ReservationException("duration must be > 0");
 		}
+
 		if (reservation.getCourts() == null) {
 			throw new ReservationException("no courts");
 		}
+
 		if (reservation.getCourts().length < 1) {
 			throw new ReservationException("no courts");
 		}
+
 		if (reservation.getCourts().length > systemConfig.getCourts()) {
 			throw new ReservationException("more than %d courts not allowed", systemConfig.getCourts());
 		}
@@ -145,7 +166,7 @@ public class ReservationService {
 						systemConfig.getCourts());
 			}
 		}
-
+		
 		// authorization checks
 		if (user.hasRole(UserRole.ANONYMOUS)) {
 			throw new AuthorizationException("user with role ANONYMOUS cannot add reservation.");
@@ -162,11 +183,10 @@ public class ReservationService {
 						reservation.getDuration());
 			}
 		}
-		// availibility checks
 	}
 
 	/**
-	 * get all occupations.subscribe(o => this.occupations.push(o));
+	 * get all occupations
 	 * 
 	 * @return list of all occupations
 	 */
@@ -182,10 +202,7 @@ public class ReservationService {
 	 * get all reservations for one user
 	 * 
 	 * @param userId
-	 * @return all reservations belonging to that user private boolean
-	 *         isEmpty(String s) { return s == null || s.trim().isEmpty(); }
-	 * 
-	 * 
+	 * @return all reservations belonging to that user  
 	 */
 	@RequestMapping(path = "/get/{user}", method = RequestMethod.GET)
 	public Iterable<Reservation> getReservations(@RequestParam("user") long userId) {
@@ -202,6 +219,56 @@ public class ReservationService {
 	public @ResponseBody ReservationSystemConfig getSystemConfig(@RequestParam("id") long id) {
 		return systemConfigRepository.findById(id)
 				.orElseThrow(() -> new ReservationException("no reservation system config with id %d", id));
+	}
+
+	/**
+	 * create all occupations for a reservation
+	 * 
+	 * TODO: handle multiple courts
+	 * TOTO: handle repeat weekly until
+	 * 
+	 * @param reservation
+	 * @return list of created occupations
+	 */
+	private List<Occupation> createOccupations(Reservation reservation) {
+		List<Occupation> occupations = new ArrayList<>();
+		Occupation occupation = new Occupation();
+		occupation.setSystemConfig(reservation.getSystemConfig());
+		occupation.setReservation(reservation);
+		occupation.setText(reservation.getText());
+		occupation.setType(reservation.getType());
+		occupation.setCourt(reservation.getCourts()[0]);
+		occupation.setDate(reservation.getDate());
+		occupation.setStart(reservation.getStart());
+		occupation.setDuration(reservation.getDuration());
+		occupations.add(occupation);
+		return occupations;
+	}
+
+	private void checkOccupation(Occupation occupation) {
+		occupationRepository.findBySystemConfigIdAndDate(occupation.getSystemConfig().getId(), occupation.getDate())
+				.forEach(o -> checkOverlap(occupation, o));
+	}
+
+	private void checkOverlap(Occupation o1, Occupation o2) {
+		if (o1.getSystemConfig().getId() != o2.getSystemConfig().getId()) {
+			return;
+		}
+		if (o1.getCourt() != o2.getCourt()) {
+			return;
+		}
+		if (!o1.getDate().isEqual(o2.getDate())) {
+			return;
+		}
+		// check time overlap
+		if (o1.getStart().isBefore(getEnd(o2)) && getEnd(o1).isAfter(o2.getStart())) {
+			throw new ReservationNotAvailableException("overlap!");
+		}
+	}
+
+	private LocalTime getEnd(Occupation o) {
+		return LocalTime.of(o.getStart().getHour(), o.getStart().getMinute())
+				.plusMinutes(o.getDuration() * o.getSystemConfig().getDurationUnitInMinutes());
 	}
 
 	private boolean isEmpty(String s) {

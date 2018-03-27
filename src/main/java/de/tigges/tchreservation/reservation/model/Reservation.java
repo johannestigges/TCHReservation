@@ -1,7 +1,7 @@
 package de.tigges.tchreservation.reservation.model;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -15,12 +15,13 @@ public class Reservation  {
 	
 	public Reservation() {}
 	
-	public Reservation (ReservationSystemConfig config, User user, String name, int court, LocalDateTime start, int duration, ReservationType type) {
+	public Reservation (ReservationSystemConfig config, User user, String text, int court, LocalDate date, LocalTime start, int duration, ReservationType type) {
 		setSystemConfig(config);
 		setUser(user);
-		setName(name);
+		setText(text);
 		setCourts(new int[1]);
 		getCourts()[0] = court;
+		setDate(date);
 		setStart(start);
 		setDuration(duration);
 		setType(type);
@@ -30,8 +31,9 @@ public class Reservation  {
 	@GeneratedValue
 	private long id;
 	
-	private String name;
-	private LocalDateTime start;
+	private String text;
+	private LocalDate date;
+	private LocalTime start;
 	private LocalDate weeklyRepeatUntil;
 	private int[] courts;
 	private int duration;
@@ -51,12 +53,12 @@ public class Reservation  {
 		this.id = id;
 	}
 
-	public String getName() {
-		return name;
+	public String getText() {
+		return text;
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	public void setText(String text) {
+		this.text = text;
 	}
 
 	public ReservationSystemConfig getSystemConfig() {
@@ -67,11 +69,19 @@ public class Reservation  {
 		this.systemConfig = systemConfig;
 	}
 
-	public LocalDateTime getStart() {
+	public LocalDate getDate() {
+		return date;
+	}
+	
+	public void setDate(LocalDate date) {
+		this.date = date;
+	}
+		
+	public LocalTime getStart() {
 		return start;
 	}
 
-	public void setStart(LocalDateTime start) {
+	public void setStart(LocalTime start) {
 		this.start = start;
 	}
 
