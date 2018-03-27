@@ -65,14 +65,6 @@ public class ReservationService {
 		return occupation;
 	}
 
-	@RequestMapping(path = "/delete/{occupationId}", method = RequestMethod.DELETE)
-	public @ResponseBody Reservation deleteReservation(@RequestParam Long occupationId) {
-		Reservation occupation = reservationRepository.findById(occupationId)
-				.orElseThrow(() -> new ReservationException("reservation " + occupationId + " not found"));
-		reservationRepository.delete(occupation);
-		return occupation;
-	}
-
 	/**
 	 * check a reservation
 	 * <p>
