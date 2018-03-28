@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tigges.tchreservation.exception.BadRequestException;
+import de.tigges.tchreservation.exception.NotFoundException;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.User;
 import de.tigges.tchreservation.user.model.UserDevice;
@@ -30,14 +32,16 @@ public class UserService {
 		return userRepository.findById(userId);
 	}
 
-	@RequestMapping(path="/getByDevice/{deviceId}", method = RequestMethod.GET)
+	@RequestMapping(path = "/getByDevice/{deviceId}", method = RequestMethod.GET)
 	public @ResponseBody User getByDevice(@PathVariable Long deviceId) {
-		UserDevice device = userDeviceRepository.findById(deviceId).orElseThrow(() -> new UserNotFoundException(deviceId));
-		User user = userRepository.findById(device.getUser().getId()).orElseThrow(() -> new UserNotFoundException(device.getUser().getId()));
+		UserDevice device = userDeviceRepository.findById(deviceId)
+				.orElseThrow(() -> new NotFoundException("user device", deviceId));
+		User user = userRepository.findById(device.getUser().getId())
+				.orElseThrow(() -> new NotFoundException("user", device.getUser().getId()));
 		user.getDevices().add(device);
 		return user;
 	}
-	
+
 	@RequestMapping(path = "/getDevice/{id}", method = RequestMethod.GET)
 	public @ResponseBody Optional<UserDevice> findDeviceById(@PathVariable Long id) {
 		return userDeviceRepository.findById(id);
@@ -46,7 +50,7 @@ public class UserService {
 	@RequestMapping(path = "/add", method = RequestMethod.POST)
 	public @ResponseBody User add(@RequestBody User user) {
 		checkUser(user);
-		User savedUser =  userRepository.save(user);
+		User savedUser = userRepository.save(user);
 		user.getDevices().forEach(device -> {
 			device.setUser(savedUser);
 			savedUser.getDevices().add(userDeviceRepository.save(device));
@@ -61,17 +65,17 @@ public class UserService {
 
 	@RequestMapping(path = "/setStatus/{userId}/{status}", method = RequestMethod.GET)
 	public @ResponseBody void setStatus(@PathVariable long userId, @PathVariable ActivationStatus status) {
-		User user = get(userId).orElseThrow(() -> new UserNotFoundException(userId));
+		User user = get(userId).orElseThrow(() -> new NotFoundException("user", userId));
 		user.setStatus(status);
 		userRepository.save(user);
 	}
-	
+
 	private void checkUser(User user) {
 		if (user == null) {
-			throw new UserException("no user");
+			throw new BadRequestException("no user");
 		}
-		if(user.getEmail() == null) {
-			throw new UserException("no email");
+		if (user.getEmail() == null) {
+			throw new BadRequestException("no email");
 		}
 	}
 }

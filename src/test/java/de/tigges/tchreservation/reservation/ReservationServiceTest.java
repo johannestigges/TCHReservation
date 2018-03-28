@@ -2,7 +2,6 @@ package de.tigges.tchreservation.reservation;
 
 import static org.junit.Assert.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
@@ -125,37 +124,47 @@ public class ReservationServiceTest {
 		addReservation(createReservation(system1, user, 1, 11, 2));
 	}
 
-	@Test(expected = ReservationNotAvailableException.class)
+	@Test
 	public void addReservationOverlap() throws Exception {
 		addReservation(createReservation(system1, user, 1, 10, 3));
-		addReservation(createReservation(system1, user, 1, 11, 2));
+		addReservationNoCheck(createReservation(system1, user, 1, 11, 2)).andExpect(status().isBadRequest());
 	}
 
-	@Test(expected = ReservationNotAvailableException.class)
+	@Test
 	public void addReservationDuplicate() throws Exception {
 		addReservation(createReservation(system1, user, 1, 10, 3));
-		addReservation(createReservation(system1, user, 1, 10, 3));
+		addReservationNoCheck(createReservation(system1, user, 1, 10, 3)).andExpect(status().isBadRequest());
 	}
 
-	@Test(expected = ReservationNotAvailableException.class)
+	@Test
 	public void addReservationOverlap2() throws Exception {
-		addReservation(createReservation(system1, user, 1, 10, 6));
-		addReservation(createReservation(system1, user, 1, 11, 2));
+		addReservation(createReservation(system1, admin, 1, 10, 6));
+		addReservationNoCheck(createReservation(system1, user, 1, 11, 2)).andExpect(status().isBadRequest());
 	}
 
-	@Test(expected = ReservationNotAvailableException.class)
+	@Test
 	public void addReservationOverlap3() throws Exception {
 		addReservation(createReservation(system1, user, 1, 11, 2));
-		addReservation(createReservation(system1, user, 1, 10, 6));
+		addReservationNoCheck(createReservation(system1, admin, 1, 10, 6)).andExpect(status().isBadRequest());
 	}
 
-	private void addReservation(Reservation reservation) throws Exception {
-		checkReservation(
-				mockMvc.perform(post("/reservation/add").content(this.json(reservation)).contentType(contentType))
-						.andExpect(status().isOk()),
-				reservation);
+	private ResultActions addReservationNoCheck(Reservation reservation) throws Exception {
+		return mockMvc.perform(post("/reservation/add").content(this.json(reservation)).contentType(contentType));
 	}
 
+	private ResultActions addReservation(Reservation reservation) throws Exception {
+		return checkReservation(addReservationNoCheck(reservation), reservation);
+	}
+
+	private ResultActions checkReservation(ResultActions resultActions, Reservation reservation) throws Exception {
+		return resultActions //
+				.andExpect(status().isCreated()) //
+				.andExpect(jsonPath("$.id").isNotEmpty())
+				.andExpect(jsonPath("$.type").value(reservation.getType().toString()))
+		//
+		;
+	}
+	
 	private User createUser(UserRole role, ActivationStatus status) {
 		String name = role.toString() + "." + status.toString();
 		return new User(name + "@myDomain.de", name, "top secret", role, status);
@@ -166,32 +175,6 @@ public class ReservationServiceTest {
 		return new Reservation(system, user, "reservation name", court, LocalDate.now().plusDays(1),
 				LocalTime.of(hour, 0), duration, ReservationType.INDIVIDUAL);
 	}
-
-	private ResultActions checkReservation(ResultActions resultActions, Reservation reservation) throws Exception {
-		resultActions.andExpect(content().contentType(contentType)).andExpect(jsonPath("$.id").isNotEmpty())
-				.andExpect(jsonPath("$.type").value(reservation.getType().toString()))
-		//
-		;
-		return resultActions;
-	}
-
-	// @Test
-	// public void userNotFound() throws Exception {
-	// mockMvc.perform(
-	// post("/george/bookmarks/").content(this.json(new Bookmark(null, null,
-	// null))).contentType(contentType))
-	// .andExpect(status().isNotFound());
-	// }
-
-	// @Test
-	// public void readSingleBookmark() throws Exception {
-	// mockMvc.perform(get("/" + userName + "/bookmarks/" +
-	// this.bookmarkList.get(0).getId()))
-	// .andExpect(status().isOk()).andExpect(content().contentType(contentType))
-	// .andExpect(jsonPath("$.id", is(this.bookmarkList.get(0).getId().intValue())))
-	// .andExpect(jsonPath("$.uri", is("http://bookmark.com/1/" + userName)))
-	// .andExpect(jsonPath("$.description", is("A description")));
-	// }
 
 	protected String json(Object o) throws IOException {
 		MockHttpOutputMessage mockHttpOutputMessage = new MockHttpOutputMessage();
