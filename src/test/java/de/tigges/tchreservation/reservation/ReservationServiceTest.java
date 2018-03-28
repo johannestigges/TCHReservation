@@ -65,13 +65,8 @@ public class ReservationServiceTest {
 
 	private ReservationSystemConfig system2;
 
-	private User admin;
-
 	private User user;
-
-	private User waitingUser;
-
-	private User lockedUser;
+	private User admin;
 
 	@SuppressWarnings("unchecked")
 	@Autowired
@@ -96,10 +91,8 @@ public class ReservationServiceTest {
 		system2 = this.reservationSystemConfigRepository
 				.save(new ReservationSystemConfig("Hallenplätze", 2, 60, 8, 22));
 
-		admin = this.userRepository.save(createUser(UserRole.ADMIN, ActivationStatus.ACTIVE));
-		user = this.userRepository.save(createUser(UserRole.REGISTERED, ActivationStatus.ACTIVE));
-		waitingUser = this.userRepository.save(createUser(UserRole.REGISTERED, ActivationStatus.CREATED));
-		lockedUser = this.userRepository.save(createUser(UserRole.REGISTERED, ActivationStatus.LOCKED));
+		user = insertUser(UserRole.REGISTERED, ActivationStatus.ACTIVE);
+		admin = insertUser(UserRole.ADMIN, ActivationStatus.ACTIVE);
 
 	}
 
