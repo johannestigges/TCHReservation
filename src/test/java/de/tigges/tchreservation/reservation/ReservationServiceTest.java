@@ -100,6 +100,7 @@ public class ReservationServiceTest {
 		user = this.userRepository.save(createUser(UserRole.REGISTERED, ActivationStatus.ACTIVE));
 		waitingUser = this.userRepository.save(createUser(UserRole.REGISTERED, ActivationStatus.CREATED));
 		lockedUser = this.userRepository.save(createUser(UserRole.REGISTERED, ActivationStatus.LOCKED));
+
 	}
 
 	@Test
@@ -149,6 +150,116 @@ public class ReservationServiceTest {
 		addReservationError(createReservation(system1, admin, 1, 10, 6), HttpStatus.BAD_REQUEST, "overlap!");
 	}
 
+	@Test
+	public void addReservationNoText() throws Exception {
+		Reservation reservation = createReservation(system1, user, 1, 8, 2);
+		reservation.setText(null);
+		addReservationError(reservation, HttpStatus.BAD_REQUEST, "error validation reservation");
+	}
+
+	@Test
+	public void addReservationNoSystemConfig() throws Exception {
+		addReservationError(createReservation(null, admin, 1, 10, 6), HttpStatus.BAD_REQUEST, "no reservation system");
+	}
+
+	@Test
+	public void addReservationInvalidSystemConfig() throws Exception {
+		ReservationSystemConfig config = new ReservationSystemConfig("invalid", 1, 60, 8, 20);
+		config.setId(0);
+		addReservationError(createReservation(config, admin, 1, 10, 6), HttpStatus.BAD_REQUEST,
+				"no reservation system");
+	}
+
+	@Test
+	public void addReservationUnknownSystemConfig() throws Exception {
+		ReservationSystemConfig config = new ReservationSystemConfig("invalid", 1, 60, 8, 20);
+		config.setId(10);
+		addReservationError(createReservation(config, admin, 1, 10, 6), HttpStatus.NOT_FOUND,
+				"System config with id 10 not found");
+	}
+
+	@Test
+	public void addReservationNoUser() throws Exception {
+		addReservationError(createReservation(system1, null, 1, 8, 2), HttpStatus.BAD_REQUEST, "no user");
+	}
+
+	@Test
+	public void addReservationInvalidUser() throws Exception {
+		User user = new User();
+		user.setId(0);
+		addReservationError(createReservation(system1, user, 1, 8, 2), HttpStatus.BAD_REQUEST, "no user");
+	}
+
+	@Test
+	public void addReservationUnknownUser() throws Exception {
+		User user = new User();
+		user.setId(100);
+		addReservationError(createReservation(system1, user, 1, 8, 2), HttpStatus.NOT_FOUND,
+				"user with id 100 not found");
+	}
+
+	@Test
+	public void addReservationUserInvalidStatusCreated() throws Exception {
+		addReservationError(
+				createReservation(system1, insertUser(UserRole.REGISTERED, ActivationStatus.CREATED), 1, 8, 2),
+				HttpStatus.UNAUTHORIZED, "user REGISTERED.CREATED is not active.");
+	}
+	@Test
+	public void addReservationUserInvalidStatusLocked() throws Exception {
+		addReservationError(
+				createReservation(system1, insertUser(UserRole.REGISTERED, ActivationStatus.LOCKED), 1, 8, 2),
+				HttpStatus.UNAUTHORIZED, "user REGISTERED.LOCKED is not active.");
+	}
+	@Test
+	public void addReservationUserInvalidStatusRemoved() throws Exception {
+		addReservationError(
+				createReservation(system1, insertUser(UserRole.REGISTERED, ActivationStatus.REMOVED), 1, 8, 2),
+				HttpStatus.UNAUTHORIZED, "user REGISTERED.REMOVED is not active.");
+	}
+	@Test
+	public void addReservationUserInvalidStatusVerified() throws Exception {
+		addReservationError(
+				createReservation(system1, insertUser(UserRole.REGISTERED, ActivationStatus.VERIFIED_BY_USER), 1, 8, 2),
+				HttpStatus.UNAUTHORIZED, "user REGISTERED.VERIFIED_BY_USER is not active.");
+	}
+
+	@Test
+	public void addReservationAnonymousUser() throws Exception {
+		addReservationError(
+				createReservation(system1, insertUser(UserRole.ANONYMOUS, ActivationStatus.CREATED), 1, 8, 2),
+				HttpStatus.UNAUTHORIZED, "user with role ANONYMOUS cannot add reservation.");
+	}
+
+	@Test
+	public void addReservationUnauthorizedDuration() throws Exception {
+		addReservationError(createReservation(system1, user, 1, 8, 4), HttpStatus.UNAUTHORIZED,
+				"user REGISTERED.ACTIVE with role REGISTERED cannot add reservation with duration 4.");
+	}
+
+	@Test
+	public void addReservationUnauthorizedTypePrepaid() throws Exception {
+		Reservation reservation = createReservation(system1, user, 1, 8, 2);
+		reservation.setType(ReservationType.PREPAID);
+		addReservationError(reservation, HttpStatus.UNAUTHORIZED,
+				"user REGISTERED.ACTIVE with role REGISTERED cannot add reservation of type PREPAID.");
+	}
+
+	@Test
+	public void addReservationUnauthorizedTypeTournament() throws Exception {
+		Reservation reservation = createReservation(system1, user, 1, 8, 2);
+		reservation.setType(ReservationType.TOURNAMENT);
+		addReservationError(reservation, HttpStatus.UNAUTHORIZED,
+				"user REGISTERED.ACTIVE with role REGISTERED cannot add reservation of type TOURNAMENT.");
+	}
+
+	@Test
+	public void addReservationUnauthorizedTypeTrainer() throws Exception {
+		Reservation reservation = createReservation(system1, user, 1, 8, 2);
+		reservation.setType(ReservationType.TRAINER);
+		addReservationError(reservation, HttpStatus.UNAUTHORIZED,
+				"user REGISTERED.ACTIVE with role REGISTERED cannot add reservation of type TRAINER.");
+	}
+
 	private ResultActions addReservationNoCheck(Reservation reservation) throws Exception {
 		return mockMvc.perform(post("/reservation/add").content(this.json(reservation)).contentType(contentType));
 	}
@@ -181,6 +292,10 @@ public class ReservationServiceTest {
 	private User createUser(UserRole role, ActivationStatus status) {
 		String name = role.toString() + "." + status.toString();
 		return new User(name + "@myDomain.de", name, "top secret", role, status);
+	}
+
+	private User insertUser(UserRole role, ActivationStatus status) {
+		return userRepository.save(createUser(role, status));
 	}
 
 	private Reservation createReservation(ReservationSystemConfig system, User user, int court, int hour,

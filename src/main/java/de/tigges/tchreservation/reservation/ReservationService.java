@@ -26,6 +26,7 @@ import de.tigges.tchreservation.reservation.model.Reservation;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 import de.tigges.tchreservation.reservation.model.ReservationType;
 import de.tigges.tchreservation.user.UserRepository;
+import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.User;
 import de.tigges.tchreservation.user.model.UserRole;
 
@@ -197,6 +198,10 @@ class ReservationService {
 		// authorization checks
 		if (user.hasRole(UserRole.ANONYMOUS)) {
 			throw new AuthorizationException("user with role ANONYMOUS cannot add reservation.");
+		}
+
+		if (!ActivationStatus.ACTIVE.equals(user.getStatus())) {
+			throw new AuthorizationException(String.format("user %s is not active.", user.getName()));
 		}
 
 		if (user.hasRole(UserRole.REGISTERED)) {
