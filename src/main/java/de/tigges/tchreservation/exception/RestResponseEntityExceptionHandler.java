@@ -11,6 +11,8 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
 
 	@ExceptionHandler(RestException.class)
 	public final ResponseEntity<ErrorDetails> handleRestException(RestException e, WebRequest request) {
-		return new ResponseEntity<>(new ErrorDetails(e.getMessage(), request.getDescription(false)), e.getStatus());
+		ErrorDetails errorDetails = e.getErrorDetails();
+		errorDetails.setDetails(request.getDescription(false));
+		return new ResponseEntity<>(errorDetails, e.getStatus());
 	}
 }

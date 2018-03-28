@@ -17,6 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tigges.tchreservation.exception.AuthorizationException;
 import de.tigges.tchreservation.exception.BadRequestException;
+import de.tigges.tchreservation.exception.ErrorDetails;
+import de.tigges.tchreservation.exception.FieldError;
+import de.tigges.tchreservation.exception.InvalidDataException;
 import de.tigges.tchreservation.exception.NotFoundException;
 import de.tigges.tchreservation.reservation.model.Occupation;
 import de.tigges.tchreservation.reservation.model.Reservation;
@@ -95,13 +98,15 @@ class ReservationService {
 	@RequestMapping(path = "/check", method = RequestMethod.POST)
 	public void checkReservation(Reservation reservation) {
 
+		ErrorDetails errorDetails = new ErrorDetails("error validation reservation", null);
+
 		// data consistency checks
 		if (reservation == null) {
 			throw new BadRequestException("no reservation data");
 		}
 
 		if (isEmpty(reservation.getText())) {
-			throw new BadRequestException("no reservation text");
+			errorDetails.getFieldErrors().add(new FieldError("text", "null value not allowed"));
 		}
 
 		if (reservation.getSystemConfig() == null || reservation.getSystemConfig().getId() <= 0) {
@@ -121,67 +126,75 @@ class ReservationService {
 
 		LocalDate date = reservation.getDate();
 		if (date == null) {
-			throw new BadRequestException("no date");
-		}
-
-		if (date.isBefore(LocalDate.now())) {
-			throw new BadRequestException("date in the past is not allowed");
+			errorDetails.getFieldErrors().add(new FieldError("date", "null value not allowed"));
+		} else if (date.isBefore(LocalDate.now())) {
+			errorDetails.getFieldErrors().add(new FieldError("date", "date in the past is not allowed"));
 		}
 
 		LocalTime start = reservation.getStart();
 		if (start == null) {
-			throw new BadRequestException("no start time");
+			errorDetails.getFieldErrors().add(new FieldError("start", "null value not allowed"));
 		}
 
-		if (date.isEqual(LocalDate.now()) && start.isBefore(LocalTime.now())) {
-			throw new BadRequestException("start time in the past is not allowed");
-		}
+		if (date != null && start != null) {
+			if (date.isEqual(LocalDate.now()) && start.isBefore(LocalTime.now())) {
+				errorDetails.getFieldErrors().add(new FieldError("time", "start time in the past is not allowed"));
+			}
 
-		if (start.getHour() < systemConfig.getOpeningHour()) {
-			throw new BadRequestException(String.format("start hour %02d:00 before opening hour %02d:00 not allowed", //
-					start.getHour(), systemConfig.getOpeningHour()));
-		}
+			if (start.getHour() < systemConfig.getOpeningHour()) {
+				errorDetails.getFieldErrors()
+						.add(new FieldError("start",
+								String.format("start hour %02d:00 before opening hour %02d:00 not allowed",
+										start.getHour(), systemConfig.getOpeningHour())));
+			}
 
-		if (start.getHour() > systemConfig.getClosingHour()) {
-			throw new BadRequestException(String.format("start hour %02d:00 after closing hour %02d:00 not allowed", //
-					start.getHour(), systemConfig.getClosingHour()));
-		}
+			if (start.getHour() > systemConfig.getClosingHour()) {
+				errorDetails.getFieldErrors()
+						.add(new FieldError("start",
+								String.format("start hour %02d:00 after closing hour %02d:00 not allowed", //
+										start.getHour(), systemConfig.getClosingHour())));
+			}
 
-		if (start.getMinute() != 0 && start.getMinute() % systemConfig.getDurationUnitInMinutes() != 0) {
-			throw new BadRequestException(String.format("start time with %d minutes not allowed", start.getMinute()));
-		}
+			if (start.getMinute() != 0 && start.getMinute() % systemConfig.getDurationUnitInMinutes() != 0) {
+				errorDetails.getFieldErrors().add(new FieldError("start",
+						String.format("start time with %d minutes not allowed", start.getMinute())));
+			}
 
-		if (LocalTime.of(start.getHour(), start.getMinute())
-				.plusMinutes(reservation.getDuration() * systemConfig.getDurationUnitInMinutes())
-				.isAfter(LocalTime.of(systemConfig.getClosingHour(), 0))) {
-			throw new BadRequestException("starttime plus duration greater than closing hour.");
+			if (LocalTime.of(start.getHour(), start.getMinute())
+					.plusMinutes(reservation.getDuration() * systemConfig.getDurationUnitInMinutes())
+					.isAfter(LocalTime.of(systemConfig.getClosingHour(), 0))) {
+				errorDetails.getFieldErrors()
+						.add(new FieldError("start", "starttime plus duration greater than closing hour."));
+			}
 		}
 
 		if (reservation.getDuration() < 1) {
-			throw new BadRequestException("duration must be > 0");
+			errorDetails.getFieldErrors().add(new FieldError("duration", "duration must be greater than 0"));
 		}
 
 		if (reservation.getCourts() == null) {
-			throw new BadRequestException("no courts");
+			errorDetails.getFieldErrors().add(new FieldError("court", "null value not allowed"));
 		}
 
 		if (reservation.getCourts().length < 1) {
-			throw new BadRequestException("no courts");
+			errorDetails.getFieldErrors().add(new FieldError("court", "null value not allowed"));
 		}
 
 		if (reservation.getCourts().length > systemConfig.getCourts()) {
-			throw new BadRequestException(String.format("more than %d courts not allowed", systemConfig.getCourts()));
+			errorDetails.getFieldErrors().add(new FieldError("court",
+					String.format("more than %d courts not allowed", systemConfig.getCourts())));
 		}
 
 		for (int i = 0; i < reservation.getCourts().length; i++) {
 			int court = reservation.getCourts()[i];
 			if (court < 1) {
-				throw new BadRequestException(
-						String.format("court[%d]: %d < 1 not allowed", i, reservation.getCourts()[i]));
+				errorDetails.getFieldErrors().add(new FieldError("court",
+						String.format("court[%d]: %d < 1 not allowed", i, reservation.getCourts()[i])));
 			}
 			if (court > systemConfig.getCourts()) {
-				throw new BadRequestException(String.format("court[%d]: %d > %d not allowed", i,
-						reservation.getCourts()[i], systemConfig.getCourts()));
+				errorDetails.getFieldErrors()
+						.add(new FieldError("court", String.format("court[%d]: %d > %d not allowed", i,
+								reservation.getCourts()[i], systemConfig.getCourts())));
 			}
 		}
 
@@ -201,6 +214,9 @@ class ReservationService {
 						String.format("user %s with role REGISTERED cannot add reservation with duration %d.",
 								user.getName(), reservation.getDuration()));
 			}
+		}
+		if (!errorDetails.getFieldErrors().isEmpty()) {
+			throw new InvalidDataException(errorDetails);
 		}
 	}
 

@@ -7,9 +7,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class BadRequestException extends RestException {
 	private static final long serialVersionUID = 1L;
 
-	public BadRequestException(String message) {
-		super(HttpStatus.BAD_REQUEST, message);
-		// TODO Auto-generated constructor stub
+	public BadRequestException(ErrorDetails errorDetails) {
+		super(HttpStatus.BAD_REQUEST, errorDetails);
 	}
 
+	public BadRequestException(String message) {
+		super(HttpStatus.BAD_REQUEST, message);
+	}
 }
