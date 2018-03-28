@@ -17,6 +17,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -127,25 +128,25 @@ public class ReservationServiceTest {
 	@Test
 	public void addReservationOverlap() throws Exception {
 		addReservation(createReservation(system1, user, 1, 10, 3));
-		addReservationNoCheck(createReservation(system1, user, 1, 11, 2)).andExpect(status().isBadRequest());
+		addReservationError(createReservation(system1, user, 1, 11, 2), HttpStatus.BAD_REQUEST, "overlap!");
 	}
 
 	@Test
 	public void addReservationDuplicate() throws Exception {
 		addReservation(createReservation(system1, user, 1, 10, 3));
-		addReservationNoCheck(createReservation(system1, user, 1, 10, 3)).andExpect(status().isBadRequest());
+		addReservationError(createReservation(system1, user, 1, 10, 3), HttpStatus.BAD_REQUEST, "overlap!");
 	}
 
 	@Test
 	public void addReservationOverlap2() throws Exception {
 		addReservation(createReservation(system1, admin, 1, 10, 6));
-		addReservationNoCheck(createReservation(system1, user, 1, 11, 2)).andExpect(status().isBadRequest());
+		addReservationError(createReservation(system1, user, 1, 11, 2), HttpStatus.BAD_REQUEST, "overlap!");
 	}
 
 	@Test
 	public void addReservationOverlap3() throws Exception {
 		addReservation(createReservation(system1, user, 1, 11, 2));
-		addReservationNoCheck(createReservation(system1, admin, 1, 10, 6)).andExpect(status().isBadRequest());
+		addReservationError(createReservation(system1, admin, 1, 10, 6), HttpStatus.BAD_REQUEST, "overlap!");
 	}
 
 	private ResultActions addReservationNoCheck(Reservation reservation) throws Exception {
@@ -156,6 +157,11 @@ public class ReservationServiceTest {
 		return checkReservation(addReservationNoCheck(reservation), reservation);
 	}
 
+	private ResultActions addReservationError(Reservation reservation, HttpStatus status, String message)
+			throws Exception {
+		return checkError(addReservationNoCheck(reservation), status, message);
+	}
+
 	private ResultActions checkReservation(ResultActions resultActions, Reservation reservation) throws Exception {
 		return resultActions //
 				.andExpect(status().isCreated()) //
@@ -164,7 +170,14 @@ public class ReservationServiceTest {
 		//
 		;
 	}
-	
+
+	private ResultActions checkError(ResultActions resultActions, HttpStatus status, String message) throws Exception {
+		return resultActions //
+				.andExpect(status().is(status.value())) //
+				.andExpect(jsonPath("$.message").value(message)) //
+		;
+	}
+
 	private User createUser(UserRole role, ActivationStatus status) {
 		String name = role.toString() + "." + status.toString();
 		return new User(name + "@myDomain.de", name, "top secret", role, status);
