@@ -110,13 +110,11 @@ class ReservationService {
 			addReservationFieldError(errorDetails, "text", "null value not allowed");
 		}
 
-		if (reservation.getSystemConfig() == null || reservation.getSystemConfig().getId() <= 0) {
+		if (reservation.getSystemConfigId() <= 0) {
 			throw new BadRequestException("no reservation system");
 		}
 
-		ReservationSystemConfig systemConfig = systemConfigRepository.findById(reservation.getSystemConfig().getId())
-				.orElseThrow(() -> new NotFoundException("System config", reservation.getSystemConfig().getId()));
-		reservation.setSystemConfig(systemConfig);
+		ReservationSystemConfig systemConfig = systemConfigRepository.get(reservation.getSystemConfigId());
 
 		if (reservation.getUser() == null || reservation.getUser().getId() <= 0) {
 			throw new BadRequestException("no user");
@@ -144,14 +142,14 @@ class ReservationService {
 
 			if (start.getHour() < systemConfig.getOpeningHour()) {
 				addReservationFieldError(errorDetails, "start",
-								String.format("start hour %02d:00 before opening hour %02d:00 not allowed",
-										start.getHour(), systemConfig.getOpeningHour()));
+						String.format("start hour %02d:00 before opening hour %02d:00 not allowed", start.getHour(),
+								systemConfig.getOpeningHour()));
 			}
 
 			if (start.getHour() > systemConfig.getClosingHour()) {
 				addReservationFieldError(errorDetails, "start",
-								String.format("start hour %02d:00 after closing hour %02d:00 not allowed", //
-										start.getHour(), systemConfig.getClosingHour()));
+						String.format("start hour %02d:00 after closing hour %02d:00 not allowed", //
+								start.getHour(), systemConfig.getClosingHour()));
 			}
 
 			if (start.getMinute() != 0 && start.getMinute() % systemConfig.getDurationUnitInMinutes() != 0) {
@@ -191,7 +189,7 @@ class ReservationService {
 			}
 			if (court > systemConfig.getCourts()) {
 				addReservationFieldError(errorDetails, "court", String.format("court[%d]: %d > %d not allowed", i,
-								reservation.getCourts()[i], systemConfig.getCourts()));
+						reservation.getCourts()[i], systemConfig.getCourts()));
 			}
 		}
 
@@ -253,13 +251,13 @@ class ReservationService {
 	 */
 	@RequestMapping(path = "/getSystemConfig/{id}", method = RequestMethod.GET)
 	public @ResponseBody ReservationSystemConfig getSystemConfig(@RequestParam("id") long id) {
-		return systemConfigRepository.findById(id).orElseThrow(() -> new NotFoundException("System config", id));
+		return systemConfigRepository.get(id);
 	}
 
 	private void addReservationFieldError(ErrorDetails errorDetails, String field, String message) {
 		addFieldError(errorDetails, "reservation", field, message);
 	}
-	
+
 	private void addFieldError(ErrorDetails errorDetails, String entity, String field, String message) {
 		errorDetails.getFieldErrors().add(new FieldError(entity, field, message));
 	}
@@ -275,7 +273,7 @@ class ReservationService {
 	private List<Occupation> createOccupations(Reservation reservation) {
 		List<Occupation> occupations = new ArrayList<>();
 		Occupation occupation = new Occupation();
-		occupation.setSystemConfig(reservation.getSystemConfig());
+		occupation.setSystemConfigId(reservation.getSystemConfigId());
 		occupation.setReservation(reservation);
 		occupation.setText(reservation.getText());
 		occupation.setType(reservation.getType());
@@ -288,12 +286,12 @@ class ReservationService {
 	}
 
 	private void checkOccupation(Occupation occupation) {
-		occupationRepository.findBySystemConfigIdAndDate(occupation.getSystemConfig().getId(), occupation.getDate())
+		occupationRepository.findBySystemConfigIdAndDate(occupation.getSystemConfigId(), occupation.getDate())
 				.forEach(o -> checkOverlap(occupation, o));
 	}
 
 	private void checkOverlap(Occupation o1, Occupation o2) {
-		if (o1.getSystemConfig().getId() != o2.getSystemConfig().getId()) {
+		if (o1.getSystemConfigId() != o2.getSystemConfigId()) {
 			return;
 		}
 		if (o1.getCourt() != o2.getCourt()) {
@@ -309,8 +307,9 @@ class ReservationService {
 	}
 
 	private LocalTime getEnd(Occupation o) {
+		ReservationSystemConfig config = systemConfigRepository.get(o.getSystemConfigId());
 		return LocalTime.of(o.getStart().getHour(), o.getStart().getMinute())
-				.plusMinutes(o.getDuration() * o.getSystemConfig().getDurationUnitInMinutes());
+				.plusMinutes(o.getDuration() * config.getDurationUnitInMinutes());
 	}
 
 	private boolean isEmpty(String s) {

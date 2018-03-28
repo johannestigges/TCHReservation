@@ -23,14 +23,13 @@ public class Occupation {
 	private String text;
 	private ReservationType type;
 
-	@ManyToOne(optional=false)
-	private ReservationSystemConfig systemConfig;
+	private long systemConfigId;
 	
-	public ReservationSystemConfig getSystemConfig() {
-		return systemConfig;
+	public long getSystemConfigId() {
+		return systemConfigId;
 	}
-	public void setSystemConfig(ReservationSystemConfig systemConfig) {
-		this.systemConfig = systemConfig;
+	public void setSystemConfigId(long systemConfigId) {
+		this.systemConfigId = systemConfigId;
 	}
 	@ManyToOne(optional=false)
 	private Reservation reservation;

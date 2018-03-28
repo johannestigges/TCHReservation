@@ -15,8 +15,8 @@ public class Reservation  {
 	
 	public Reservation() {}
 	
-	public Reservation (ReservationSystemConfig config, User user, String text, int court, LocalDate date, LocalTime start, int duration, ReservationType type) {
-		setSystemConfig(config);
+	public Reservation (long configId, User user, String text, int court, LocalDate date, LocalTime start, int duration, ReservationType type) {
+		setSystemConfig(configId);
 		setUser(user);
 		setText(text);
 		setCourts(new int[1]);
@@ -39,8 +39,7 @@ public class Reservation  {
 	private int duration;
 	private ReservationType type;
 
-	@ManyToOne(optional=false)
-	private ReservationSystemConfig systemConfig;
+	private long systemConfigId;
 	
 	@ManyToOne(optional=false)
 	private User user;
@@ -61,12 +60,12 @@ public class Reservation  {
 		this.text = text;
 	}
 
-	public ReservationSystemConfig getSystemConfig() {
-		return systemConfig;
+	public long getSystemConfigId() {
+		return systemConfigId;
 	}
 
-	public void setSystemConfig(ReservationSystemConfig systemConfig) {
-		this.systemConfig = systemConfig;
+	public void setSystemConfig(long systemConfigId) {
+		this.systemConfigId = systemConfigId;
 	}
 
 	public LocalDate getDate() {
