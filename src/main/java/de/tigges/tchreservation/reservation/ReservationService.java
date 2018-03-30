@@ -6,7 +6,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -41,9 +44,6 @@ class ReservationService {
 	private ReservationSystemConfigRepository systemConfigRepository;
 	private UserRepository userRespository;
 
-	/**
-	 * constructor with injection
-	 */
 	public ReservationService(ReservationRepository reservationRepository, OccupationRepository occupationRepository,
 			ReservationSystemConfigRepository systemConfigRepository, UserRepository userRepository) {
 		this.reservationRepository = reservationRepository;
@@ -52,13 +52,7 @@ class ReservationService {
 		this.userRespository = userRepository;
 	}
 
-	/**
-	 * add a reservation
-	 * 
-	 * @param reservation
-	 * @return error message or OK
-	 */
-	@RequestMapping(path = "/add", method = RequestMethod.POST)
+	@PostMapping("/add")
 	@ResponseStatus(HttpStatus.CREATED)
 	public @ResponseBody Reservation addReservation(@RequestBody Reservation reservation) {
 
@@ -77,7 +71,7 @@ class ReservationService {
 		return savedReservation;
 	}
 
-	@RequestMapping(path = "/delete/{id}", method = RequestMethod.DELETE)
+	@DeleteMapping("/delete/{id}")
 	@ResponseStatus(HttpStatus.OK)
 	public void delete(@PathVariable long id) {
 		Reservation reservation = reservationRepository.findById(id)
@@ -96,8 +90,7 @@ class ReservationService {
 	 * @param reservation
 	 * @return error message or OK
 	 */
-	@RequestMapping(path = "/check", method = RequestMethod.POST)
-	public void checkReservation(Reservation reservation) {
+	private void checkReservation(Reservation reservation) {
 
 		ErrorDetails errorDetails = new ErrorDetails("error validation reservation", null);
 
@@ -224,7 +217,7 @@ class ReservationService {
 	 * 
 	 * @return list of all occupations
 	 */
-	@RequestMapping(path = "/getOccupations", method = RequestMethod.GET)
+	@GetMapping("/getOccupations")
 	public Iterable<Occupation> getOccupations( //
 	// @RequestParam(value = "from") @DateTimeFormat(iso = ISO.DATE) Date from,
 	// @RequestParam(value = "until") @DateTimeFormat(iso = ISO.DATE) Date until
@@ -238,8 +231,8 @@ class ReservationService {
 	 * @param userId
 	 * @return all reservations belonging to that user
 	 */
-	@RequestMapping(path = "/get/{user}", method = RequestMethod.GET)
-	public Iterable<Reservation> getReservations(@RequestParam("user") long userId) {
+	@GetMapping("/get/{user}")
+	public Iterable<Reservation> getReservations(@RequestParam long userId) {
 		return reservationRepository.findByUserId(userId);
 	}
 
@@ -249,8 +242,8 @@ class ReservationService {
 	 * @param systemId
 	 * @return
 	 */
-	@RequestMapping(path = "/getSystemConfig/{id}", method = RequestMethod.GET)
-	public @ResponseBody ReservationSystemConfig getSystemConfig(@RequestParam("id") long id) {
+	@GetMapping("/getSystemConfig/{id}")
+	public @ResponseBody ReservationSystemConfig getSystemConfig(@RequestParam long id) {
 		return systemConfigRepository.get(id);
 	}
 

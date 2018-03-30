@@ -1,11 +1,11 @@
 package de.tigges.tchreservation.reservation;
 
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import de.tigges.tchreservation.exception.NotFoundException;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 
-@Service
+@Component
 public class ReservationSystemConfigRepository {
 
 	private static final ReservationSystemConfig system1 = new ReservationSystemConfig(1, "Außenplätze", 6, 30, 8, 22);
