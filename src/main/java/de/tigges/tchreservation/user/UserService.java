@@ -2,6 +2,8 @@ package de.tigges.tchreservation.user;
 
 import java.util.Optional;
 
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,10 +23,12 @@ public class UserService {
 
 	private UserRepository userRepository;
 	private UserDeviceRepository userDeviceRepository;
+	private PasswordEncoder encoder;
 
 	public UserService(UserRepository userRepository, UserDeviceRepository userDeviceRepository) {
 		this.userRepository = userRepository;
 		this.userDeviceRepository = userDeviceRepository;
+		encoder = new BCryptPasswordEncoder();
 	}
 
 	@RequestMapping(path = "/get/{userId}", method = RequestMethod.GET)
@@ -50,6 +54,9 @@ public class UserService {
 	@RequestMapping(path = "/add", method = RequestMethod.POST)
 	public @ResponseBody User add(@RequestBody User user) {
 		checkUser(user);
+		String cryptedPassword = encoder.encode(user.getPassword());
+		System.out.println(String.format("encrypt %s = %s",user.getPassword(),cryptedPassword));
+		user.setPassword(cryptedPassword);
 		User savedUser = userRepository.save(user);
 		user.getDevices().forEach(device -> {
 			device.setUser(savedUser);

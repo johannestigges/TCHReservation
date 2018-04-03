@@ -1,0 +1,8 @@
+spring:
+  datasource:
+    url: "jdbc:mysql://localhost:3306/db_example"
+    username: springuser
+    password: springpassword
+  jpa:
+    hibernate:
+      ddl-auto: validate # validate update create create-drop

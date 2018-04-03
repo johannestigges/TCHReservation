@@ -1,6 +1,7 @@
 package de.tigges.tchreservation.user;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -27,13 +28,18 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.mock.http.MockHttpInputMessage;
 import org.springframework.mock.http.MockHttpOutputMessage;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.result.JsonPathResultMatchers;
 import org.springframework.web.context.WebApplicationContext;
 
 import de.tigges.tchreservation.TchReservationApplication;
+import de.tigges.tchreservation.exception.NotFoundException;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.User;
 import de.tigges.tchreservation.user.model.UserDevice;
@@ -61,7 +67,9 @@ public class UserServiceTest {
 	@Autowired
 	private UserDeviceRepository userDeviceRepository;
 
-	@SuppressWarnings("unchecked")
+	private PasswordEncoder encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
+
+@SuppressWarnings("unchecked")
 	@Autowired
 	void setConverters(HttpMessageConverter<?>[] converters) {
 
@@ -84,7 +92,7 @@ public class UserServiceTest {
 
 		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE);
 		checkUser(mockMvc.perform(post("/user/add").content(json(user)).contentType(contentType))
-				.andExpect(status().isOk()), user);
+				.andExpect(status().isOk()), user, true);
 	}
 
 	@Test
@@ -95,13 +103,13 @@ public class UserServiceTest {
 		}
 
 		checkUser(mockMvc.perform(post("/user/add").content(json(user)).contentType(contentType))//
-				.andExpect(status().isOk()), user);
+				.andExpect(status().isOk()), user, true);
 	}
 
 	@Test
 	public void testSaveDevice() throws Exception {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
-		
+
 		mockMvc.perform(post("/user/addDevice").content(json(createDevice(user, 0, ActivationStatus.CREATED)))
 				.contentType(contentType)).andExpect(status().isOk());
 	}
@@ -132,7 +140,7 @@ public class UserServiceTest {
 		}
 		for (int i = 0; i < userList.size(); i++) {
 			checkUser(mockMvc.perform(get("/user/get/" + userList.get(i).getId())).andExpect(status().isOk()),
-					userList.get(i));
+					userList.get(i), false);
 		}
 	}
 
@@ -150,19 +158,35 @@ public class UserServiceTest {
 
 		devices.forEach(device -> checkDevice(device));
 	}
-	
+
 	@Test
 	public void testGetByDevice() throws Exception {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.CREATED));
 		UserDevice device0 = userDeviceRepository.save(createDevice(user, 0, ActivationStatus.CREATED));
 		UserDevice device1 = userDeviceRepository.save(createDevice(user, 1, ActivationStatus.CREATED));
-		
+
 		user.getDevices().add(device0);
-		checkUser(mockMvc.perform(get("/user/getByDevice/" + device0.getId())).andExpect(status().isOk()),user);
-		
+		checkUser(mockMvc.perform(get("/user/getByDevice/" + device0.getId())).andExpect(status().isOk()), user, false);
+
 		user.getDevices().clear();
 		user.getDevices().add(device1);
-		checkUser(mockMvc.perform(get("/user/getByDevice/" + device1.getId())).andExpect(status().isOk()),user);
+		checkUser(mockMvc.perform(get("/user/getByDevice/" + device1.getId())).andExpect(status().isOk()), user, false);
+	}
+
+	@Test
+	public void testGetByName() throws Exception {
+		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
+		User foundUser = userRepository.findByNameOrEmail(user.getName(), "")
+				.orElseThrow(() -> new NotFoundException("user", user.getId()));
+		assertThat(foundUser.getId(), Matchers.is(user.getId()));
+	}
+
+	@Test
+	public void testGetByEMail() throws Exception {
+		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
+		User foundUser = userRepository.findByNameOrEmail("", user.getEmail())
+				.orElseThrow(() -> new NotFoundException("user", user.getId()));
+		assertThat(foundUser.getId(), Matchers.is(user.getId()));
 	}
 
 	private void checkDevice(UserDevice device) {
@@ -179,15 +203,19 @@ public class UserServiceTest {
 		}
 	}
 
-	private ResultActions checkUser(ResultActions resultActions, User user) throws Exception {
+	private ResultActions checkUser(ResultActions resultActions, User user, boolean passwordEncoded) throws Exception {
 		resultActions.andExpect(content().contentType(contentType)).andExpect(jsonPath("$.id").isNotEmpty())
 				.andExpect(jsonPath("$.email").value(user.getEmail()))
 				.andExpect(jsonPath("$.name").value(user.getName()))
-				.andExpect(jsonPath("$.password").value(user.getPassword()))
 				.andExpect(jsonPath("$.role").value(user.getRole().toString()))
 				.andExpect(jsonPath("$.status").value(user.getStatus().toString()))
 		//
 		;
+		if (passwordEncoded) {
+//			encoder.matches(user.getPassword(), jsonPath("$.password"));
+		} else {
+			resultActions.andExpect(jsonPath("$.password").value(user.getPassword()));
+		}
 		checkDevices(resultActions, user);
 		return resultActions;
 	}
@@ -197,17 +225,17 @@ public class UserServiceTest {
 			resultActions.andExpect(jsonPath("$.devices").isEmpty());
 		} else {
 			resultActions.andExpect(jsonPath("$.devices").isArray())
-			.andExpect(jsonPath("$.devices", Matchers.hasSize(user.getDevices().size())))
-			
+					.andExpect(jsonPath("$.devices", Matchers.hasSize(user.getDevices().size())))
+
 			;
-			
+
 		}
 
 		return resultActions;
 	}
 
 	private User createUser(int i, UserRole role, ActivationStatus status) {
-		return new User("myEmail " + i, "myName " + i, "myPassword " + i, role, status);
+		return new User("myEmail " + i, "myName " + i, "mypass" + i, role, status);
 	}
 
 	private UserDevice createDevice(User user, int i, ActivationStatus status) {
