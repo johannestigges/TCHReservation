@@ -28,14 +28,10 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.mock.http.MockHttpInputMessage;
 import org.springframework.mock.http.MockHttpOutputMessage;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.test.web.servlet.result.JsonPathResultMatchers;
 import org.springframework.web.context.WebApplicationContext;
 
 import de.tigges.tchreservation.TchReservationApplication;
@@ -67,9 +63,7 @@ public class UserServiceTest {
 	@Autowired
 	private UserDeviceRepository userDeviceRepository;
 
-	private PasswordEncoder encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
-
-@SuppressWarnings("unchecked")
+	@SuppressWarnings("unchecked")
 	@Autowired
 	void setConverters(HttpMessageConverter<?>[] converters) {
 
@@ -212,7 +206,7 @@ public class UserServiceTest {
 		//
 		;
 		if (passwordEncoded) {
-//			encoder.matches(user.getPassword(), jsonPath("$.password"));
+			// encoder.matches(user.getPassword(), jsonPath("$.password"));
 		} else {
 			resultActions.andExpect(jsonPath("$.password").value(user.getPassword()));
 		}
