@@ -36,10 +36,10 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.context.WebApplicationContext;
 
 import de.tigges.tchreservation.EntityType;
+import de.tigges.tchreservation.ProtocolTest;
 import de.tigges.tchreservation.TchReservationApplication;
 import de.tigges.tchreservation.exception.NotFoundException;
 import de.tigges.tchreservation.protocol.ActionType;
-import de.tigges.tchreservation.protocol.Protocol;
 import de.tigges.tchreservation.protocol.ProtocolRepository;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.User;
@@ -50,7 +50,7 @@ import de.tigges.tchreservation.user.model.UserRole;
 @SpringBootTest(classes = TchReservationApplication.class)
 
 @WebAppConfiguration
-public class UserServiceTest {
+public class UserServiceTest extends ProtocolTest {
 
 	private MediaType contentType = new MediaType(MediaType.APPLICATION_JSON.getType(),
 			MediaType.APPLICATION_JSON.getSubtype(), Charset.forName("utf8"));
@@ -223,21 +223,12 @@ public class UserServiceTest {
 		}
 
 		if (actionType != null) {
-			checkProtocol(EntityType.USER, user.getId(), actionType, user.toString());
+			checkProtocol(user, actionType);
 		}
 		checkDevices(resultActions, user);
 		return resultActions;
 	}
 
-	private void checkProtocol(EntityType entityType, Long id, ActionType actionType, String value) {
-		protocolRepository.findByEntityTypeAndEntityId(entityType, id)
-				.forEach(p -> checkProtocol(p, actionType, value));
-	}
-
-	private void checkProtocol(Protocol p, ActionType actionType, String value) {
-		assertThat(p.getActionType(), Matchers.is(actionType));
-		assertThat(p.getValue(), Matchers.is(value));
-	}
 
 	private ResultActions checkDevices(ResultActions resultActions, User user) throws Exception {
 		if (user.getDevices().isEmpty()) {

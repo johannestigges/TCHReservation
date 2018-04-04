@@ -28,7 +28,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.context.WebApplicationContext;
 
+import de.tigges.tchreservation.ProtocolTest;
 import de.tigges.tchreservation.TchReservationApplication;
+import de.tigges.tchreservation.protocol.ActionType;
 import de.tigges.tchreservation.protocol.ProtocolRepository;
 import de.tigges.tchreservation.reservation.model.Reservation;
 import de.tigges.tchreservation.reservation.model.ReservationType;
@@ -40,7 +42,7 @@ import de.tigges.tchreservation.user.model.UserRole;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = TchReservationApplication.class)
 @WebAppConfiguration
-public class ReservationServiceTest {
+public class ReservationServiceTest extends ProtocolTest {
 
 	private MediaType contentType = new MediaType(MediaType.APPLICATION_JSON.getType(),
 			MediaType.APPLICATION_JSON.getSubtype(), Charset.forName("utf8"));
@@ -142,18 +144,15 @@ public class ReservationServiceTest {
 		addReservationError(reservation, HttpStatus.BAD_REQUEST, "error validation reservation");
 	}
 
-
 	@Test
 	public void addReservationInvalidSystemConfig() throws Exception {
-		addReservationError(createReservation(0, admin, 1, 10, 6),
-				HttpStatus.BAD_REQUEST, "no reservation system");
+		addReservationError(createReservation(0, admin, 1, 10, 6), HttpStatus.BAD_REQUEST, "no reservation system");
 	}
 
 	@Test
 	public void addReservationUnknownSystemConfig() throws Exception {
-		addReservationError(
-				createReservation(10, admin, 1, 10, 6),
-				HttpStatus.NOT_FOUND, "SYSTEM_CONFIGURATION with id 10 not found");
+		addReservationError(createReservation(10, admin, 1, 10, 6), HttpStatus.NOT_FOUND,
+				"SYSTEM_CONFIGURATION with id 10 not found");
 	}
 
 	@Test
@@ -172,28 +171,24 @@ public class ReservationServiceTest {
 	public void addReservationUnknownUser() throws Exception {
 		User user = new User();
 		user.setId(100);
-		addReservationError(createReservation(1, user, 1, 8, 2), HttpStatus.NOT_FOUND,
-				"USER with id 100 not found");
+		addReservationError(createReservation(1, user, 1, 8, 2), HttpStatus.NOT_FOUND, "USER with id 100 not found");
 	}
 
 	@Test
 	public void addReservationUserInvalidStatusCreated() throws Exception {
-		addReservationError(
-				createReservation(1, insertUser(UserRole.REGISTERED, ActivationStatus.CREATED), 1, 8, 2),
+		addReservationError(createReservation(1, insertUser(UserRole.REGISTERED, ActivationStatus.CREATED), 1, 8, 2),
 				HttpStatus.UNAUTHORIZED, "user REGISTERED.CREATED is not active.");
 	}
 
 	@Test
 	public void addReservationUserInvalidStatusLocked() throws Exception {
-		addReservationError(
-				createReservation(1, insertUser(UserRole.REGISTERED, ActivationStatus.LOCKED), 1, 8, 2),
+		addReservationError(createReservation(1, insertUser(UserRole.REGISTERED, ActivationStatus.LOCKED), 1, 8, 2),
 				HttpStatus.UNAUTHORIZED, "user REGISTERED.LOCKED is not active.");
 	}
 
 	@Test
 	public void addReservationUserInvalidStatusRemoved() throws Exception {
-		addReservationError(
-				createReservation(1, insertUser(UserRole.REGISTERED, ActivationStatus.REMOVED), 1, 8, 2),
+		addReservationError(createReservation(1, insertUser(UserRole.REGISTERED, ActivationStatus.REMOVED), 1, 8, 2),
 				HttpStatus.UNAUTHORIZED, "user REGISTERED.REMOVED is not active.");
 	}
 
@@ -206,8 +201,7 @@ public class ReservationServiceTest {
 
 	@Test
 	public void addReservationAnonymousUser() throws Exception {
-		addReservationError(
-				createReservation(1, insertUser(UserRole.ANONYMOUS, ActivationStatus.CREATED), 1, 8, 2),
+		addReservationError(createReservation(1, insertUser(UserRole.ANONYMOUS, ActivationStatus.CREATED), 1, 8, 2),
 				HttpStatus.UNAUTHORIZED, "user with role ANONYMOUS cannot add reservation.");
 	}
 
@@ -246,7 +240,7 @@ public class ReservationServiceTest {
 	}
 
 	private ResultActions addReservation(Reservation reservation) throws Exception {
-		return checkReservation(addReservationNoCheck(reservation), reservation);
+		return checkReservation(addReservationNoCheck(reservation), reservation, ActionType.CREATE);
 	}
 
 	private ResultActions addReservationError(Reservation reservation, HttpStatus status, String message)
@@ -254,7 +248,11 @@ public class ReservationServiceTest {
 		return checkError(addReservationNoCheck(reservation), status, message);
 	}
 
-	private ResultActions checkReservation(ResultActions resultActions, Reservation reservation) throws Exception {
+	private ResultActions checkReservation(ResultActions resultActions, Reservation reservation, ActionType actionType)
+			throws Exception {
+		if (actionType != null) {
+			checkProtocol(reservation, actionType);
+		}
 		return resultActions //
 				.andExpect(status().isCreated()) //
 				.andExpect(jsonPath("$.id").isNotEmpty())
@@ -279,8 +277,7 @@ public class ReservationServiceTest {
 		return userRepository.save(createUser(role, status));
 	}
 
-	private Reservation createReservation(long systemId, User user, int court, int hour,
-			int duration) {
+	private Reservation createReservation(long systemId, User user, int court, int hour, int duration) {
 		return new Reservation(systemId, user, "reservation name", court, LocalDate.now().plusDays(1),
 				LocalTime.of(hour, 0), duration, ReservationType.INDIVIDUAL);
 	}
