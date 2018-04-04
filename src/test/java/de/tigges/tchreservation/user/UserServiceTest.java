@@ -38,6 +38,8 @@ import org.springframework.web.context.WebApplicationContext;
 import de.tigges.tchreservation.EntityType;
 import de.tigges.tchreservation.TchReservationApplication;
 import de.tigges.tchreservation.exception.NotFoundException;
+import de.tigges.tchreservation.protocol.ActionType;
+import de.tigges.tchreservation.protocol.Protocol;
 import de.tigges.tchreservation.protocol.ProtocolRepository;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.User;
@@ -90,10 +92,9 @@ public class UserServiceTest {
 
 	@Test
 	public void testSave() throws Exception {
-
 		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE);
 		checkUser(mockMvc.perform(post("/user/add").content(json(user)).contentType(contentType))
-				.andExpect(status().isOk()), user, true);
+				.andExpect(status().isOk()), user, true, ActionType.CREATE);
 	}
 
 	@Test
@@ -104,7 +105,7 @@ public class UserServiceTest {
 		}
 
 		checkUser(mockMvc.perform(post("/user/add").content(json(user)).contentType(contentType))//
-				.andExpect(status().isOk()), user, true);
+				.andExpect(status().isOk()), user, true, ActionType.CREATE);
 	}
 
 	@Test
@@ -141,7 +142,7 @@ public class UserServiceTest {
 		}
 		for (int i = 0; i < userList.size(); i++) {
 			checkUser(mockMvc.perform(get("/user/get/" + userList.get(i).getId())).andExpect(status().isOk()),
-					userList.get(i), false);
+					userList.get(i), false, null);
 		}
 	}
 
@@ -167,11 +168,13 @@ public class UserServiceTest {
 		UserDevice device1 = userDeviceRepository.save(createDevice(user, 1, ActivationStatus.CREATED));
 
 		user.getDevices().add(device0);
-		checkUser(mockMvc.perform(get("/user/getByDevice/" + device0.getId())).andExpect(status().isOk()), user, false);
+		checkUser(mockMvc.perform(get("/user/getByDevice/" + device0.getId())).andExpect(status().isOk()), user, false,
+				null);
 
 		user.getDevices().clear();
 		user.getDevices().add(device1);
-		checkUser(mockMvc.perform(get("/user/getByDevice/" + device1.getId())).andExpect(status().isOk()), user, false);
+		checkUser(mockMvc.perform(get("/user/getByDevice/" + device1.getId())).andExpect(status().isOk()), user, false,
+				null);
 	}
 
 	@Test
@@ -204,7 +207,8 @@ public class UserServiceTest {
 		}
 	}
 
-	private ResultActions checkUser(ResultActions resultActions, User user, boolean passwordEncoded) throws Exception {
+	private ResultActions checkUser(ResultActions resultActions, User user, boolean passwordEncoded,
+			ActionType actionType) throws Exception {
 		resultActions.andExpect(content().contentType(contentType)).andExpect(jsonPath("$.id").isNotEmpty())
 				.andExpect(jsonPath("$.email").value(user.getEmail()))
 				.andExpect(jsonPath("$.name").value(user.getName()))
@@ -217,8 +221,22 @@ public class UserServiceTest {
 		} else {
 			resultActions.andExpect(jsonPath("$.password").value(user.getPassword()));
 		}
+
+		if (actionType != null) {
+			checkProtocol(EntityType.USER, user.getId(), actionType, user.toString());
+		}
 		checkDevices(resultActions, user);
 		return resultActions;
+	}
+
+	private void checkProtocol(EntityType entityType, Long id, ActionType actionType, String value) {
+		protocolRepository.findByEntityTypeAndEntityId(entityType, id)
+				.forEach(p -> checkProtocol(p, actionType, value));
+	}
+
+	private void checkProtocol(Protocol p, ActionType actionType, String value) {
+		assertThat(p.getActionType(), Matchers.is(actionType));
+		assertThat(p.getValue(), Matchers.is(value));
 	}
 
 	private ResultActions checkDevices(ResultActions resultActions, User user) throws Exception {
@@ -226,12 +244,8 @@ public class UserServiceTest {
 			resultActions.andExpect(jsonPath("$.devices").isEmpty());
 		} else {
 			resultActions.andExpect(jsonPath("$.devices").isArray())
-					.andExpect(jsonPath("$.devices", Matchers.hasSize(user.getDevices().size())))
-
-			;
-
+					.andExpect(jsonPath("$.devices", Matchers.hasSize(user.getDevices().size())));
 		}
-
 		return resultActions;
 	}
 

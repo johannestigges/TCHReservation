@@ -9,8 +9,11 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Transient;
 
+import de.tigges.tchreservation.EntityType;
+import de.tigges.tchreservation.protocol.ProtocolEntity;
+
 @Entity
-public class User {
+public class User implements ProtocolEntity {
 
 	public User() {
 	}
@@ -22,17 +25,15 @@ public class User {
 		this.role = role;
 		this.status = status;
 	}
-	
+
 	public User(User user) {
 		this(user.getEmail(), user.getName(), user.getPassword(), user.getRole(), user.getStatus());
-		if (user.getId() != null) {
-			setId(user.getId());
-		}
+		setId(user.getId());
 	}
 
 	@Id
 	@GeneratedValue
-	private Long id;
+	private long id;
 
 	@Column(nullable = false)
 	private String email;
@@ -52,7 +53,7 @@ public class User {
 	@Transient
 	private Set<UserDevice> devices = new HashSet<>();
 
-	public Long getId() {
+	public long getId() {
 		return id;
 	}
 
@@ -104,13 +105,31 @@ public class User {
 	public Set<UserDevice> getDevices() {
 		return devices;
 	}
-	
-	public boolean hasRole (UserRole...roles) {
-		for (UserRole role: roles) {
+
+	public boolean hasRole(UserRole... roles) {
+		for (UserRole role : roles) {
 			if (role.equals(getRole())) {
 				return true;
 			}
 		}
 		return false;
+	}
+
+	@Override
+	public String toProtocol() {
+		// @formatter:off
+		return toProtocol("name", name, "email", email, "password", password, "role", role.name(), "status",
+				status.name());
+		// @formatter:on
+	}
+
+	@Override
+	public EntityType getEntityType() {
+		return EntityType.USER;
+	}
+
+	@Override
+	public long getEntityId() {
+		return id;
 	}
 }

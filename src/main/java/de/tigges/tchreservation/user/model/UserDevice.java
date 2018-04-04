@@ -6,8 +6,11 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 
+import de.tigges.tchreservation.EntityType;
+import de.tigges.tchreservation.protocol.ProtocolEntity;
+
 @Entity
-public class UserDevice {
+public class UserDevice implements ProtocolEntity {
 
 	public UserDevice() {
 	}
@@ -76,5 +79,24 @@ public class UserDevice {
 
 	public void setPublicKey(String publicKey) {
 		this.publicKey = publicKey;
+	}
+
+	@Override
+	public String toProtocol() {
+		return toProtocol("user", user.getName(),
+				"deviceId", deviceId,
+				"publicKey", publicKey,
+				"status", status.name()
+				);
+	}
+
+	@Override
+	public EntityType getEntityType() {
+		return EntityType.USER_DEVICE;
+	}
+
+	@Override
+	public long getEntityId() {
+		return id;
 	}
 }

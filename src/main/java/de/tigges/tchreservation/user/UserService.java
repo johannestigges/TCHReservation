@@ -63,18 +63,17 @@ public class UserService {
 
 	@RequestMapping(path = "/add", method = RequestMethod.POST)
 	public @ResponseBody User add(@RequestBody User user) {
+		System.out.println(user.toProtocol());
 		checkUser(user);
 		String cryptedPassword = encoder.encode(user.getPassword());
 		System.out.println(String.format("encrypt %s = %s", user.getPassword(), cryptedPassword));
 		user.setPassword(cryptedPassword);
 		User savedUser = userRepository.save(user);
-		protocolRepository
-				.save(new Protocol(EntityType.USER, savedUser.getId(), ActionType.CREATE, user.toString(), savedUser));
+		protocolRepository.save(new Protocol(savedUser, ActionType.CREATE, savedUser));
 		user.getDevices().forEach(device -> {
 			device.setUser(savedUser);
 			UserDevice savedDevice = userDeviceRepository.save(device);
-			protocolRepository.save(new Protocol(EntityType.USER_DEVICE, savedDevice.getId(), ActionType.CREATE,
-					device.toString(), savedUser));
+			protocolRepository.save(new Protocol(savedDevice, ActionType.CREATE, savedUser));
 			savedUser.getDevices().add(savedDevice);
 		});
 		return savedUser;
@@ -83,8 +82,7 @@ public class UserService {
 	@PostMapping(path = "/addDevice")
 	public @ResponseBody UserDevice add(@RequestBody UserDevice userDevice) {
 		UserDevice savedDevice = userDeviceRepository.save(userDevice);
-		protocolRepository.save(new Protocol(EntityType.USER_DEVICE, savedDevice.getId(), ActionType.CREATE,
-				savedDevice.toString(), userDevice.getUser()));
+		protocolRepository.save(new Protocol(savedDevice, ActionType.CREATE, userDevice.getUser()));
 		return savedDevice;
 	}
 
@@ -93,7 +91,7 @@ public class UserService {
 		User user = get(userId).orElseThrow(() -> new NotFoundException(EntityType.USER, userId));
 		user.setStatus(status);
 		userRepository.save(user);
-		protocolRepository.save(new Protocol(EntityType.USER, user.getId(), ActionType.MODIFY, status.name(), user));
+		protocolRepository.save(new Protocol(user, ActionType.MODIFY, user));
 	}
 
 	@PutMapping(path = "/setDeviceStatus/{id}/{status}")
@@ -102,8 +100,7 @@ public class UserService {
 				.orElseThrow(() -> new NotFoundException(EntityType.USER_DEVICE, id));
 		device.setStatus(status);
 		userDeviceRepository.save(device);
-		protocolRepository
-				.save(new Protocol(EntityType.USER_DEVICE, id, ActionType.MODIFY, status.name(), device.getUser()));
+		protocolRepository.save(new Protocol(device, ActionType.MODIFY, device.getUser()));
 	}
 
 	@DeleteMapping(path = "/{userId}")

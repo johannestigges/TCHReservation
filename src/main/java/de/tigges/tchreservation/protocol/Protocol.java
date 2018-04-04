@@ -14,16 +14,18 @@ import de.tigges.tchreservation.user.model.User;
 @Entity
 public class Protocol {
 
-	public Protocol() {}
-	public Protocol(EntityType entityType, long entityId, ActionType actionType, String value, User user) {
+	public Protocol() {
+	}
+
+	public Protocol(ProtocolEntity entity, ActionType actionType, User user) {
 		setTime(LocalDateTime.now());
-		setEntityType(entityType);
-		setEntityId(entityId);
+		setEntityType(entity.getEntityType());
+		setEntityId(entity.getEntityId());
+		setValue(entity.toProtocol());
 		setActionType(actionType);
-		setValue(value);
 		setUser(user);
 	}
-	
+
 	@Id
 	@GeneratedValue
 	private long id;

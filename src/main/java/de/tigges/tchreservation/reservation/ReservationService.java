@@ -73,8 +73,7 @@ class ReservationService {
 
 		// save occupations and reservation
 		Reservation savedReservation = reservationRepository.save(reservation);
-		protocolRepository.save(new Protocol(EntityType.RESERVATION, savedReservation.getId(), ActionType.CREATE,
-				savedReservation.toString(), reservation.getUser()));
+		protocolRepository.save(new Protocol(savedReservation, ActionType.CREATE, reservation.getUser()));
 		occupations.forEach(o -> saveOccupation(o, reservation.getUser()));
 		return savedReservation;
 	}
@@ -86,8 +85,7 @@ class ReservationService {
 				.orElseThrow(() -> new NotFoundException(EntityType.RESERVATION, id));
 		occupationRepository.findByReservationId(id).forEach(o -> deleteOccupation(o, reservation.getUser()));
 		reservationRepository.delete(reservation);
-		protocolRepository.save(new Protocol(EntityType.RESERVATION, reservation.getId(), ActionType.DELETE,
-				reservation.toString(), reservation.getUser()));
+		protocolRepository.save(new Protocol(reservation, ActionType.DELETE, reservation.getUser()));
 	}
 
 	/**
@@ -258,15 +256,14 @@ class ReservationService {
 
 	private void saveOccupation(Occupation o, User user) {
 		Occupation savedOccupation = occupationRepository.save(o);
-		protocolRepository.save(new Protocol(EntityType.OCCUPATION, savedOccupation.getId(), ActionType.CREATE,
-				savedOccupation.toString(), user));
+		protocolRepository.save(new Protocol(savedOccupation, ActionType.CREATE, user));
 	}
 
-	private void deleteOccupation(Occupation o, User user) {
-		occupationRepository.delete(o);
-		protocolRepository.save(new Protocol(EntityType.OCCUPATION, o.getId(), ActionType.DELETE, o.toString(), user));
+	private void deleteOccupation(Occupation occupation, User user) {
+		occupationRepository.delete(occupation);
+		protocolRepository.save(new Protocol(occupation, ActionType.DELETE, user));
 	}
-	
+
 	private void addReservationFieldError(ErrorDetails errorDetails, String field, String message) {
 		addFieldError(errorDetails, "reservation", field, message);
 	}
@@ -329,4 +326,3 @@ class ReservationService {
 		return s == null || s.trim().isEmpty();
 	}
 }
-

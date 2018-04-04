@@ -8,10 +8,12 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 
+import de.tigges.tchreservation.EntityType;
+import de.tigges.tchreservation.protocol.ProtocolEntity;
 import de.tigges.tchreservation.user.model.User;
 
 @Entity
-public class Reservation  {
+public class Reservation implements ProtocolEntity {
 	
 	public Reservation() {}
 	
@@ -122,6 +124,27 @@ public class Reservation  {
 
 	public void setUser(User user) {
 		this.user = user;
+	}
+
+	@Override
+	public String toProtocol() {
+		return toProtocol("text",text,
+				"date", date.toString(),
+				"start", start.toString(),
+				"duration", Integer.toString(duration),
+				"type", type.name(),
+				"system config", Long.toString(systemConfigId)
+				);
+	}
+
+	@Override
+	public EntityType getEntityType() {
+		return EntityType.RESERVATION;
+	}
+
+	@Override
+	public long getEntityId() {
+		return id;
 	}
 	
 }
