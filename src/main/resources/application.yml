@@ -6,3 +6,16 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate # validate update create create-drop
+  # configure facebook login
+  security:
+    oauth2:
+      client:
+        registration:
+          facebook:
+          # account kit
+          #  clientId: 7b57c4a75dfa5b42ab806bdfa5997292
+          #  clientSecret: 9c0f1a93792c22327d33dc443a75c2b6
+            clientId: 1819260511438509
+            clientSecret: 34927c11f97afc43db39ea3bf130e5eb
+
+      

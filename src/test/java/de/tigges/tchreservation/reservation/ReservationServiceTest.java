@@ -29,6 +29,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.context.WebApplicationContext;
 
 import de.tigges.tchreservation.TchReservationApplication;
+import de.tigges.tchreservation.protocol.ProtocolRepository;
 import de.tigges.tchreservation.reservation.model.Reservation;
 import de.tigges.tchreservation.reservation.model.ReservationType;
 import de.tigges.tchreservation.user.UserRepository;
@@ -54,6 +55,8 @@ public class ReservationServiceTest {
 	private OccupationRepository occupationRepository;
 	@Autowired
 	private UserRepository userRepository;
+	@Autowired
+	private ProtocolRepository protocolRepository;
 
 	@Autowired
 	private WebApplicationContext webApplicationContext;
@@ -75,6 +78,7 @@ public class ReservationServiceTest {
 	public void setup() throws Exception {
 		this.mockMvc = webAppContextSetup(webApplicationContext).build();
 
+		this.protocolRepository.deleteAll();
 		this.occupationRepository.deleteAll();
 		this.reservationRepository.deleteAll();
 		this.userRepository.deleteAll();

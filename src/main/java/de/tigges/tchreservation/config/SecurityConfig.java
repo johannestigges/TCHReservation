@@ -13,14 +13,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		// @formatter:off
-		http
+		http.antMatcher("/**")
 			.authorizeRequests()
-				.antMatchers("resources/**", "css/**", "/index", "/actuator/**", "/api-docs/**").permitAll()
+				.antMatchers("resources/**", "css/**", "/index", 
+						"/actuator/**", "/api-docs/**", 
+						"reservation/getOccupations/**").permitAll()
 				.anyRequest().authenticated()
-			.and().formLogin()
-				.permitAll()
-			.and().logout()
-				.permitAll()
+			.and().formLogin().permitAll()
+			.and().logout().permitAll()
 			.and().csrf()
 				.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
 		;

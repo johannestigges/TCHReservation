@@ -23,6 +23,10 @@ import de.tigges.tchreservation.exception.ErrorDetails;
 import de.tigges.tchreservation.exception.FieldError;
 import de.tigges.tchreservation.exception.InvalidDataException;
 import de.tigges.tchreservation.exception.NotFoundException;
+import de.tigges.tchreservation.protocol.ActionType;
+import de.tigges.tchreservation.protocol.EntityTxpe;
+import de.tigges.tchreservation.protocol.Protocol;
+import de.tigges.tchreservation.protocol.ProtocolRepository;
 import de.tigges.tchreservation.reservation.model.Occupation;
 import de.tigges.tchreservation.reservation.model.Reservation;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
@@ -42,13 +46,16 @@ class ReservationService {
 	private OccupationRepository occupationRepository;
 	private ReservationSystemConfigRepository systemConfigRepository;
 	private UserRepository userRespository;
+	private ProtocolRepository protocolRepository;
 
 	public ReservationService(ReservationRepository reservationRepository, OccupationRepository occupationRepository,
-			ReservationSystemConfigRepository systemConfigRepository, UserRepository userRepository) {
+			ReservationSystemConfigRepository systemConfigRepository, UserRepository userRepository,
+			ProtocolRepository protocolRepository) {
 		this.reservationRepository = reservationRepository;
 		this.occupationRepository = occupationRepository;
 		this.systemConfigRepository = systemConfigRepository;
 		this.userRespository = userRepository;
+		this.protocolRepository = protocolRepository;
 	}
 
 	@PostMapping("/add")
@@ -66,7 +73,9 @@ class ReservationService {
 
 		// save occupations and reservation
 		Reservation savedReservation = reservationRepository.save(reservation);
-		occupationRepository.saveAll(occupations);
+		protocolRepository.save(new Protocol(EntityTxpe.RESERVATION, savedReservation.getId(), ActionType.CREATE,
+				savedReservation.toString(), reservation.getUser()));
+		occupations.forEach(o -> saveOccupation(o, reservation.getUser()));
 		return savedReservation;
 	}
 
@@ -75,9 +84,10 @@ class ReservationService {
 	public void delete(@PathVariable long id) {
 		Reservation reservation = reservationRepository.findById(id)
 				.orElseThrow(() -> new NotFoundException("Reservation", id));
-		Iterable<Occupation> occupations = occupationRepository.findByReservationId(id);
-		occupationRepository.deleteAll(occupations);
+		occupationRepository.findByReservationId(id).forEach(o -> deleteOccupation(o, reservation.getUser()));
 		reservationRepository.delete(reservation);
+		protocolRepository.save(new Protocol(EntityTxpe.RESERVATION, reservation.getId(), ActionType.DELETE,
+				reservation.toString(), reservation.getUser()));
 	}
 
 	/**
@@ -246,6 +256,17 @@ class ReservationService {
 		return systemConfigRepository.get(id);
 	}
 
+	private void saveOccupation(Occupation o, User user) {
+		Occupation savedOccupation = occupationRepository.save(o);
+		protocolRepository.save(new Protocol(EntityTxpe.OCCUPATION, savedOccupation.getId(), ActionType.CREATE,
+				savedOccupation.toString(), user));
+	}
+
+	private void deleteOccupation(Occupation o, User user) {
+		occupationRepository.delete(o);
+		protocolRepository.save(new Protocol(EntityTxpe.OCCUPATION, o.getId(), ActionType.DELETE, o.toString(), user));
+	}
+	
 	private void addReservationFieldError(ErrorDetails errorDetails, String field, String message) {
 		addFieldError(errorDetails, "reservation", field, message);
 	}
@@ -308,3 +329,4 @@ class ReservationService {
 		return s == null || s.trim().isEmpty();
 	}
 }
+

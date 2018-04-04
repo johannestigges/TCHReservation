@@ -41,10 +41,6 @@
 			<scope>test</scope>
 		</dependency>
 
-
-
-
-
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -106,4 +102,8 @@
 		</repository>
 	</repositories>
 	<url>https://www.tennisclub-havixbeck.de</url>
+	<organization>
+		<name>Tennisclub Havixbeck e.V.</name>
+		<url>https://www.tennisclub-havixbeck.de</url>
+	</organization>
 </project>

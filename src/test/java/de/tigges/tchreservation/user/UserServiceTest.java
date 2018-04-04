@@ -5,6 +5,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -36,6 +37,7 @@ import org.springframework.web.context.WebApplicationContext;
 
 import de.tigges.tchreservation.TchReservationApplication;
 import de.tigges.tchreservation.exception.NotFoundException;
+import de.tigges.tchreservation.protocol.ProtocolRepository;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.User;
 import de.tigges.tchreservation.user.model.UserDevice;
@@ -63,6 +65,9 @@ public class UserServiceTest {
 	@Autowired
 	private UserDeviceRepository userDeviceRepository;
 
+	@Autowired
+	private ProtocolRepository protocolRepository;
+
 	@SuppressWarnings("unchecked")
 	@Autowired
 	void setConverters(HttpMessageConverter<?>[] converters) {
@@ -77,6 +82,7 @@ public class UserServiceTest {
 	public void setup() throws Exception {
 		this.mockMvc = webAppContextSetup(webApplicationContext).build();
 
+		this.protocolRepository.deleteAll();
 		this.userDeviceRepository.deleteAll();
 		this.userRepository.deleteAll();
 	}
@@ -113,15 +119,15 @@ public class UserServiceTest {
 		User user = userRepository
 				.save(new User("email", "name", "password", UserRole.REGISTERED, ActivationStatus.CREATED));
 
-		mockMvc.perform(get("/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER.toString()))
+		mockMvc.perform(put("/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER.toString()))
 				.andExpect(status().isOk());
-		mockMvc.perform(get("/user/setStatus/" + user.getId() + "/" + ActivationStatus.ACTIVE.toString()))
+		mockMvc.perform(put("/user/setStatus/" + user.getId() + "/" + ActivationStatus.ACTIVE.toString()))
 				.andExpect(status().isOk());
-		mockMvc.perform(get("/user/setStatus/" + user.getId() + "/" + ActivationStatus.LOCKED.toString()))
+		mockMvc.perform(put("/user/setStatus/" + user.getId() + "/" + ActivationStatus.LOCKED.toString()))
 				.andExpect(status().isOk());
-		mockMvc.perform(get("/user/setStatus/" + user.getId() + "/" + ActivationStatus.ACTIVE.toString()))
+		mockMvc.perform(put("/user/setStatus/" + user.getId() + "/" + ActivationStatus.ACTIVE.toString()))
 				.andExpect(status().isOk());
-		mockMvc.perform(get("/user/setStatus/" + user.getId() + "/" + ActivationStatus.REMOVED.toString()))
+		mockMvc.perform(put("/user/setStatus/" + user.getId() + "/" + ActivationStatus.REMOVED.toString()))
 				.andExpect(status().isOk());
 	}
 
