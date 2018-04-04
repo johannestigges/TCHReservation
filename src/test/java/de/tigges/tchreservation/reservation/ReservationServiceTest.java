@@ -153,7 +153,7 @@ public class ReservationServiceTest {
 	public void addReservationUnknownSystemConfig() throws Exception {
 		addReservationError(
 				createReservation(10, admin, 1, 10, 6),
-				HttpStatus.NOT_FOUND, "System config with id 10 not found");
+				HttpStatus.NOT_FOUND, "SYSTEM_CONFIGURATION with id 10 not found");
 	}
 
 	@Test
@@ -173,7 +173,7 @@ public class ReservationServiceTest {
 		User user = new User();
 		user.setId(100);
 		addReservationError(createReservation(1, user, 1, 8, 2), HttpStatus.NOT_FOUND,
-				"user with id 100 not found");
+				"USER with id 100 not found");
 	}
 
 	@Test

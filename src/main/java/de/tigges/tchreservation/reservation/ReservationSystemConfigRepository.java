@@ -2,6 +2,7 @@ package de.tigges.tchreservation.reservation;
 
 import org.springframework.stereotype.Component;
 
+import de.tigges.tchreservation.EntityType;
 import de.tigges.tchreservation.exception.NotFoundException;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 
@@ -18,7 +19,7 @@ public class ReservationSystemConfigRepository {
 		case 2:
 			return system2;
 		default:
-			throw new NotFoundException("System config", id);
+			throw new NotFoundException(EntityType.SYSTEM_CONFIGURATION, id);
 		}
 	}
 }

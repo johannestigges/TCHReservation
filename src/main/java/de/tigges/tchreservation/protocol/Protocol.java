@@ -8,13 +8,14 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 
+import de.tigges.tchreservation.EntityType;
 import de.tigges.tchreservation.user.model.User;
 
 @Entity
 public class Protocol {
 
 	public Protocol() {}
-	public Protocol(EntityTxpe entityType, long entityId, ActionType actionType, String value, User user) {
+	public Protocol(EntityType entityType, long entityId, ActionType actionType, String value, User user) {
 		setTime(LocalDateTime.now());
 		setEntityType(entityType);
 		setEntityId(entityId);
@@ -27,7 +28,7 @@ public class Protocol {
 	@GeneratedValue
 	private long id;
 	private LocalDateTime time;
-	private EntityTxpe entityType;
+	private EntityType entityType;
 	private long entityId;
 	private ActionType actionType;
 	@Column(length = 2000)
@@ -53,11 +54,11 @@ public class Protocol {
 		this.time = time;
 	}
 
-	public EntityTxpe getEntityType() {
+	public EntityType getEntityType() {
 		return entityType;
 	}
 
-	public void setEntityType(EntityTxpe entityType) {
+	public void setEntityType(EntityType entityType) {
 		this.entityType = entityType;
 	}
 

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tigges.tchreservation.EntityType;
 import de.tigges.tchreservation.exception.AuthorizationException;
 import de.tigges.tchreservation.exception.BadRequestException;
 import de.tigges.tchreservation.exception.ErrorDetails;
@@ -24,7 +25,6 @@ import de.tigges.tchreservation.exception.FieldError;
 import de.tigges.tchreservation.exception.InvalidDataException;
 import de.tigges.tchreservation.exception.NotFoundException;
 import de.tigges.tchreservation.protocol.ActionType;
-import de.tigges.tchreservation.protocol.EntityTxpe;
 import de.tigges.tchreservation.protocol.Protocol;
 import de.tigges.tchreservation.protocol.ProtocolRepository;
 import de.tigges.tchreservation.reservation.model.Occupation;
@@ -73,7 +73,7 @@ class ReservationService {
 
 		// save occupations and reservation
 		Reservation savedReservation = reservationRepository.save(reservation);
-		protocolRepository.save(new Protocol(EntityTxpe.RESERVATION, savedReservation.getId(), ActionType.CREATE,
+		protocolRepository.save(new Protocol(EntityType.RESERVATION, savedReservation.getId(), ActionType.CREATE,
 				savedReservation.toString(), reservation.getUser()));
 		occupations.forEach(o -> saveOccupation(o, reservation.getUser()));
 		return savedReservation;
@@ -83,10 +83,10 @@ class ReservationService {
 	@ResponseStatus(HttpStatus.OK)
 	public void delete(@PathVariable long id) {
 		Reservation reservation = reservationRepository.findById(id)
-				.orElseThrow(() -> new NotFoundException("Reservation", id));
+				.orElseThrow(() -> new NotFoundException(EntityType.RESERVATION, id));
 		occupationRepository.findByReservationId(id).forEach(o -> deleteOccupation(o, reservation.getUser()));
 		reservationRepository.delete(reservation);
-		protocolRepository.save(new Protocol(EntityTxpe.RESERVATION, reservation.getId(), ActionType.DELETE,
+		protocolRepository.save(new Protocol(EntityType.RESERVATION, reservation.getId(), ActionType.DELETE,
 				reservation.toString(), reservation.getUser()));
 	}
 
@@ -122,7 +122,7 @@ class ReservationService {
 			throw new BadRequestException("no user");
 		}
 		User user = userRespository.findById(reservation.getUser().getId())
-				.orElseThrow(() -> new NotFoundException("user", reservation.getUser().getId()));
+				.orElseThrow(() -> new NotFoundException(EntityType.USER, reservation.getUser().getId()));
 		reservation.setUser(user);
 
 		LocalDate date = reservation.getDate();
@@ -258,13 +258,13 @@ class ReservationService {
 
 	private void saveOccupation(Occupation o, User user) {
 		Occupation savedOccupation = occupationRepository.save(o);
-		protocolRepository.save(new Protocol(EntityTxpe.OCCUPATION, savedOccupation.getId(), ActionType.CREATE,
+		protocolRepository.save(new Protocol(EntityType.OCCUPATION, savedOccupation.getId(), ActionType.CREATE,
 				savedOccupation.toString(), user));
 	}
 
 	private void deleteOccupation(Occupation o, User user) {
 		occupationRepository.delete(o);
-		protocolRepository.save(new Protocol(EntityTxpe.OCCUPATION, o.getId(), ActionType.DELETE, o.toString(), user));
+		protocolRepository.save(new Protocol(EntityType.OCCUPATION, o.getId(), ActionType.DELETE, o.toString(), user));
 	}
 	
 	private void addReservationFieldError(ErrorDetails errorDetails, String field, String message) {

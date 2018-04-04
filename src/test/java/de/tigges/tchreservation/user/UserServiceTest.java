@@ -35,6 +35,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.context.WebApplicationContext;
 
+import de.tigges.tchreservation.EntityType;
 import de.tigges.tchreservation.TchReservationApplication;
 import de.tigges.tchreservation.exception.NotFoundException;
 import de.tigges.tchreservation.protocol.ProtocolRepository;
@@ -177,7 +178,7 @@ public class UserServiceTest {
 	public void testGetByName() throws Exception {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
 		User foundUser = userRepository.findByNameOrEmail(user.getName(), "")
-				.orElseThrow(() -> new NotFoundException("user", user.getId()));
+				.orElseThrow(() -> new NotFoundException(EntityType.USER, user.getId()));
 		assertThat(foundUser.getId(), Matchers.is(user.getId()));
 	}
 
@@ -185,7 +186,7 @@ public class UserServiceTest {
 	public void testGetByEMail() throws Exception {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
 		User foundUser = userRepository.findByNameOrEmail("", user.getEmail())
-				.orElseThrow(() -> new NotFoundException("user", user.getId()));
+				.orElseThrow(() -> new NotFoundException(EntityType.USER, user.getId()));
 		assertThat(foundUser.getId(), Matchers.is(user.getId()));
 	}
 
