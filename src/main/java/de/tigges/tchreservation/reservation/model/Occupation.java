@@ -8,6 +8,13 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalTimeSerializer;
+
 import de.tigges.tchreservation.EntityType;
 import de.tigges.tchreservation.protocol.ProtocolEntity;
 
@@ -20,7 +27,11 @@ public class Occupation implements ProtocolEntity {
 
 	private int court;
 	private int lastCourt;
+	@JsonDeserialize(using = LocalDateDeserializer.class)
+	@JsonSerialize(using = LocalDateSerializer.class)
 	private LocalDate date;
+	@JsonDeserialize(using = LocalTimeDeserializer.class)
+	@JsonSerialize(using = LocalTimeSerializer.class)
 	private LocalTime start;
 	private int duration;
 	private String text;
@@ -113,15 +124,9 @@ public class Occupation implements ProtocolEntity {
 
 	@Override
 	public String toProtocol() {
-		return toProtocol(
-				"court", Integer.toString(court), 
-				"lastCourt", Integer.toString(lastCourt),
-				"date", date.toString(),
-				"start", start.toString(),
-				"duration", Integer.toString(duration),
-				"text", text,
-				"type", type.name()
-		);
+		return toProtocol("court", Integer.toString(court), "lastCourt", Integer.toString(lastCourt), "date",
+				date.toString(), "start", start.toString(), "duration", Integer.toString(duration), "text", text,
+				"type", type.name());
 	}
 
 	@Override
