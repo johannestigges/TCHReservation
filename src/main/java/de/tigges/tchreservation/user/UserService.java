@@ -63,10 +63,8 @@ public class UserService {
 
 	@RequestMapping(path = "/add", method = RequestMethod.POST)
 	public @ResponseBody User add(@RequestBody User user) {
-		System.out.println(user.toProtocol());
 		checkUser(user);
 		String cryptedPassword = encoder.encode(user.getPassword());
-		System.out.println(String.format("encrypt %s = %s", user.getPassword(), cryptedPassword));
 		user.setPassword(cryptedPassword);
 		User savedUser = userRepository.save(user);
 		protocolRepository.save(new Protocol(savedUser, ActionType.CREATE, savedUser));
