@@ -2,6 +2,8 @@ package de.tigges.tchreservation;
 
 import static org.junit.Assert.assertThat;
 
+import java.util.Iterator;
+
 import org.hamcrest.Matchers;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -16,12 +18,23 @@ public class ProtocolTest {
 	ProtocolRepository protocolRepository;
 
 	public void checkProtocol(ProtocolEntity entity, ActionType actionType) {
-		protocolRepository.findByEntityTypeAndEntityId(entity.getEntityType(), entity.getEntityId())
-				.forEach(p -> checkProtocol(p, actionType, entity.toProtocol()));
+		Iterable<Protocol> protocols = protocolRepository.findByEntityTypeAndEntityId(entity.protocolEntityType(),
+				entity.protocolEntityId());
+		int found = 0;
+		Iterator<Protocol> iter = protocols.iterator();
+		while(iter.hasNext()) {
+			Protocol protocol = iter.next();
+			if (protocol.getActionType().equals(actionType)) {
+				found ++;
+				checkProtocol(protocol, actionType, entity.toProtocol());
+			}
+		}
+		assertThat(found, Matchers.is(1));
 	}
 
 	public void checkProtocol(Protocol p, ActionType actionType, String value) {
-		assertThat(p.getActionType(), Matchers.is(actionType));
-		assertThat(p.getValue(), Matchers.is(value));
+		if (p.getActionType().equals(actionType)) {
+			assertThat(p.getValue(), Matchers.is(value));
+		}
 	}
 }

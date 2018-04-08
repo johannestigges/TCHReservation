@@ -125,12 +125,12 @@ public class Occupation implements ProtocolEntity {
 	}
 
 	@Override
-	public EntityType getEntityType() {
+	public EntityType protocolEntityType() {
 		return EntityType.OCCUPATION;
 	}
 
 	@Override
-	public long getEntityId() {
+	public long protocolEntityId() {
 		return id;
 	}
 }

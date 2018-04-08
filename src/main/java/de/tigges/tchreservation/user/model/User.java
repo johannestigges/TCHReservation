@@ -124,12 +124,12 @@ public class User implements ProtocolEntity {
 	}
 
 	@Override
-	public EntityType getEntityType() {
+	public EntityType protocolEntityType() {
 		return EntityType.USER;
 	}
 
 	@Override
-	public long getEntityId() {
+	public long protocolEntityId() {
 		return id;
 	}
 }

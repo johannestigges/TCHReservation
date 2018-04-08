@@ -91,12 +91,12 @@ public class UserDevice implements ProtocolEntity {
 	}
 
 	@Override
-	public EntityType getEntityType() {
+	public EntityType protocolEntityType() {
 		return EntityType.USER_DEVICE;
 	}
 
 	@Override
-	public long getEntityId() {
+	public long protocolEntityId() {
 		return id;
 	}
 }

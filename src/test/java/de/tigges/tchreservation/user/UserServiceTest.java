@@ -29,11 +29,14 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.mock.http.MockHttpInputMessage;
 import org.springframework.mock.http.MockHttpOutputMessage;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.context.WebApplicationContext;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tigges.tchreservation.EntityType;
 import de.tigges.tchreservation.ProtocolTest;
@@ -114,6 +117,15 @@ public class UserServiceTest extends ProtocolTest {
 
 		mockMvc.perform(post("/user/addDevice").content(json(createDevice(user, 0, ActivationStatus.CREATED)))
 				.contentType(contentType)).andExpect(status().isOk());
+	}
+
+	@Test
+	public void testModifyUser() throws Exception {
+		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.CREATED));
+		mockMvc.perform(put("/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER.toString()))
+				.andExpect(status().isOk());
+		user.setStatus(ActivationStatus.VERIFIED_BY_USER);
+		checkProtocol(user, ActionType.MODIFY);
 	}
 
 	@Test
@@ -216,19 +228,22 @@ public class UserServiceTest extends ProtocolTest {
 				.andExpect(jsonPath("$.status").value(user.getStatus().toString()))
 		//
 		;
-		if (passwordEncoded) {
-			// encoder.matches(user.getPassword(), jsonPath("$.password"));
-		} else {
+		if (!passwordEncoded) {
 			resultActions.andExpect(jsonPath("$.password").value(user.getPassword()));
 		}
 
-		if (actionType != null) {
+		if (ActionType.CREATE.equals(actionType)) {
+			User createdUser = new ObjectMapper().readValue(resultActions.andReturn().getResponse().getContentAsByteArray(), User.class);
+			resultActions.andExpect(jsonPath("$.id").value(createdUser.getId()));
+			new BCryptPasswordEncoder().matches(user.getPassword(), createdUser.getPassword());
+			checkProtocol(createdUser, actionType);
+		} else if (ActionType.MODIFY.equals(actionType) || ActionType.DELETE.equals(actionType)) {
 			checkProtocol(user, actionType);
 		}
+		
 		checkDevices(resultActions, user);
 		return resultActions;
 	}
-
 
 	private ResultActions checkDevices(ResultActions resultActions, User user) throws Exception {
 		if (user.getDevices().isEmpty()) {

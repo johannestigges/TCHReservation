@@ -28,6 +28,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.context.WebApplicationContext;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tigges.tchreservation.ProtocolTest;
 import de.tigges.tchreservation.TchReservationApplication;
 import de.tigges.tchreservation.protocol.ActionType;
@@ -250,7 +252,12 @@ public class ReservationServiceTest extends ProtocolTest {
 
 	private ResultActions checkReservation(ResultActions resultActions, Reservation reservation, ActionType actionType)
 			throws Exception {
-		if (actionType != null) {
+		if (ActionType.CREATE.equals(actionType)) {
+			Reservation createdReservation = new ObjectMapper()
+					.readValue(resultActions.andReturn().getResponse().getContentAsByteArray(), Reservation.class);
+			resultActions.andExpect(jsonPath("$.id").value(createdReservation.getId()));
+			checkProtocol(createdReservation, actionType);
+		} else if (ActionType.MODIFY.equals(actionType) || ActionType.DELETE.equals(actionType)) {
 			checkProtocol(reservation, actionType);
 		}
 		return resultActions //

@@ -8,16 +8,25 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalTimeSerializer;
+
 import de.tigges.tchreservation.EntityType;
 import de.tigges.tchreservation.protocol.ProtocolEntity;
 import de.tigges.tchreservation.user.model.User;
 
 @Entity
 public class Reservation implements ProtocolEntity {
-	
-	public Reservation() {}
-	
-	public Reservation (long configId, User user, String text, int court, LocalDate date, LocalTime start, int duration, ReservationType type) {
+
+	public Reservation() {
+	}
+
+	public Reservation(long configId, User user, String text, int court, LocalDate date, LocalTime start, int duration,
+			ReservationType type) {
 		setSystemConfig(configId);
 		setUser(user);
 		setText(text);
@@ -28,22 +37,28 @@ public class Reservation implements ProtocolEntity {
 		setDuration(duration);
 		setType(type);
 	}
-	
+
 	@Id
 	@GeneratedValue
 	private long id;
-	
+
 	private String text;
+	@JsonDeserialize(using = LocalDateDeserializer.class)
+	@JsonSerialize(using = LocalDateSerializer.class)
 	private LocalDate date;
+	@JsonDeserialize(using = LocalTimeDeserializer.class)
+	@JsonSerialize(using = LocalTimeSerializer.class)
 	private LocalTime start;
+	@JsonDeserialize(using = LocalDateDeserializer.class)
+	@JsonSerialize(using = LocalDateSerializer.class)
 	private LocalDate weeklyRepeatUntil;
 	private int[] courts;
 	private int duration;
 	private ReservationType type;
 
 	private long systemConfigId;
-	
-	@ManyToOne(optional=false)
+
+	@ManyToOne(optional = false)
 	private User user;
 
 	public long getId() {
@@ -73,11 +88,11 @@ public class Reservation implements ProtocolEntity {
 	public LocalDate getDate() {
 		return date;
 	}
-	
+
 	public void setDate(LocalDate date) {
 		this.date = date;
 	}
-		
+
 	public LocalTime getStart() {
 		return start;
 	}
@@ -128,23 +143,18 @@ public class Reservation implements ProtocolEntity {
 
 	@Override
 	public String toProtocol() {
-		return toProtocol("text",text,
-				"date", date.toString(),
-				"start", start.toString(),
-				"duration", Integer.toString(duration),
-				"type", type.name(),
-				"system config", Long.toString(systemConfigId)
-				);
+		return toProtocol("text", text, "date", date.toString(), "start", start.toString(), "duration",
+				Integer.toString(duration), "type", type.name(), "system config", Long.toString(systemConfigId));
 	}
 
 	@Override
-	public EntityType getEntityType() {
+	public EntityType protocolEntityType() {
 		return EntityType.RESERVATION;
 	}
 
 	@Override
-	public long getEntityId() {
+	public long protocolEntityId() {
 		return id;
 	}
-	
+
 }

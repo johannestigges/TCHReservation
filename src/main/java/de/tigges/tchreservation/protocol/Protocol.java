@@ -19,8 +19,8 @@ public class Protocol {
 
 	public Protocol(ProtocolEntity entity, ActionType actionType, User user) {
 		setTime(LocalDateTime.now());
-		setEntityType(entity.getEntityType());
-		setEntityId(entity.getEntityId());
+		setEntityType(entity.protocolEntityType());
+		setEntityId(entity.protocolEntityId());
 		setValue(entity.toProtocol());
 		setActionType(actionType);
 		setUser(user);
