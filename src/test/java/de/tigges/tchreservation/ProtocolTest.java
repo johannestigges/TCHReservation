@@ -12,7 +12,7 @@ import de.tigges.tchreservation.protocol.Protocol;
 import de.tigges.tchreservation.protocol.ProtocolEntity;
 import de.tigges.tchreservation.protocol.ProtocolRepository;
 
-public class ProtocolTest {
+public class ProtocolTest extends ServiceTest {
 
 	@Autowired
 	ProtocolRepository protocolRepository;

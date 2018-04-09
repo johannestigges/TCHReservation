@@ -7,7 +7,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Arrays;
@@ -24,7 +23,6 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.mock.http.MockHttpOutputMessage;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.context.WebApplicationContext;
 
@@ -46,13 +44,6 @@ import de.tigges.tchreservation.user.model.UserRole;
 @WebAppConfiguration
 public class ReservationServiceTest extends ProtocolTest {
 
-	private MediaType contentType = new MediaType(MediaType.APPLICATION_JSON.getType(),
-			MediaType.APPLICATION_JSON.getSubtype(), Charset.forName("utf8"));
-
-	private MockMvc mockMvc;
-
-	private HttpMessageConverter<Object> mappingJackson2HttpMessageConverter;
-
 	@Autowired
 	private ReservationRepository reservationRepository;
 	@Autowired
@@ -62,25 +53,11 @@ public class ReservationServiceTest extends ProtocolTest {
 	@Autowired
 	private ProtocolRepository protocolRepository;
 
-	@Autowired
-	private WebApplicationContext webApplicationContext;
-
 	private User user;
 	private User admin;
 
-	@SuppressWarnings("unchecked")
-	@Autowired
-	void setConverters(HttpMessageConverter<?>[] converters) {
-
-		this.mappingJackson2HttpMessageConverter = (HttpMessageConverter<Object>) Arrays.asList(converters).stream()
-				.filter(hmc -> hmc instanceof MappingJackson2HttpMessageConverter).findAny().orElse(null);
-
-		assertNotNull("the JSON message converter must not be null", this.mappingJackson2HttpMessageConverter);
-	}
-
 	@Before
 	public void setup() throws Exception {
-		this.mockMvc = webAppContextSetup(webApplicationContext).build();
 
 		this.protocolRepository.deleteAll();
 		this.occupationRepository.deleteAll();
@@ -89,7 +66,6 @@ public class ReservationServiceTest extends ProtocolTest {
 
 		user = insertUser(UserRole.REGISTERED, ActivationStatus.ACTIVE);
 		admin = insertUser(UserRole.ADMIN, ActivationStatus.ACTIVE);
-
 	}
 
 	@Test
@@ -118,25 +94,25 @@ public class ReservationServiceTest extends ProtocolTest {
 	@Test
 	public void addReservationOverlap() throws Exception {
 		addReservation(createReservation(1, user, 1, 10, 3));
-		addReservationError(createReservation(1, user, 1, 11, 2), HttpStatus.BAD_REQUEST, "overlap!");
+		addReservationOverlap(createReservation(1, user, 1, 11, 2));
 	}
 
 	@Test
 	public void addReservationDuplicate() throws Exception {
 		addReservation(createReservation(1, user, 1, 10, 3));
-		addReservationError(createReservation(1, user, 1, 10, 3), HttpStatus.BAD_REQUEST, "overlap!");
+		addReservationOverlap(createReservation(1, user, 1, 10, 3));
 	}
 
 	@Test
 	public void addReservationOverlap2() throws Exception {
 		addReservation(createReservation(1, admin, 1, 10, 6));
-		addReservationError(createReservation(1, user, 1, 11, 2), HttpStatus.BAD_REQUEST, "overlap!");
+		addReservationOverlap(createReservation(1, user, 1, 11, 2));
 	}
 
 	@Test
 	public void addReservationOverlap3() throws Exception {
 		addReservation(createReservation(1, user, 1, 11, 2));
-		addReservationError(createReservation(1, admin, 1, 10, 6), HttpStatus.BAD_REQUEST, "overlap!");
+		addReservationOverlap(createReservation(1, admin, 1, 10, 6));
 	}
 
 	@Test
@@ -250,6 +226,12 @@ public class ReservationServiceTest extends ProtocolTest {
 		return checkError(addReservationNoCheck(reservation), status, message);
 	}
 
+	private ResultActions addReservationOverlap(Reservation reservation) throws Exception {
+		return addReservationError(reservation, HttpStatus.BAD_REQUEST,
+				String.format("cannot add occupation on %tF %tR becauce court %d ist occupied.", reservation.getDate(),
+						reservation.getStart(), reservation.getCourts()[0]));
+	}
+
 	private ResultActions checkReservation(ResultActions resultActions, Reservation reservation, ActionType actionType)
 			throws Exception {
 		if (ActionType.CREATE.equals(actionType)) {
@@ -269,6 +251,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	private ResultActions checkError(ResultActions resultActions, HttpStatus status, String message) throws Exception {
+
 		return resultActions //
 				.andExpect(status().is(status.value())) //
 				.andExpect(jsonPath("$.message").value(message)) //
@@ -287,11 +270,5 @@ public class ReservationServiceTest extends ProtocolTest {
 	private Reservation createReservation(long systemId, User user, int court, int hour, int duration) {
 		return new Reservation(systemId, user, "reservation name", court, LocalDate.now().plusDays(1),
 				LocalTime.of(hour, 0), duration, ReservationType.INDIVIDUAL);
-	}
-
-	protected String json(Object o) throws IOException {
-		MockHttpOutputMessage mockHttpOutputMessage = new MockHttpOutputMessage();
-		this.mappingJackson2HttpMessageConverter.write(o, MediaType.APPLICATION_JSON, mockHttpOutputMessage);
-		return mockHttpOutputMessage.getBodyAsString();
 	}
 }

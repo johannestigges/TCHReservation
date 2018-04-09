@@ -12,4 +12,6 @@ public interface OccupationRepository extends CrudRepository<Occupation, Long> {
 	
 	public Iterable<Occupation> findByReservationId(long reservationId);
 
+	public Iterable<Occupation> findBySystemConfigId(long systemConfigId);
+
 }

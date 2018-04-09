@@ -1,6 +1,5 @@
 package de.tigges.tchreservation.user;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -9,12 +8,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.hamcrest.Matchers;
@@ -23,20 +18,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
-import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.mock.http.MockHttpInputMessage;
-import org.springframework.mock.http.MockHttpOutputMessage;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.web.context.WebApplicationContext;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tigges.tchreservation.EntityType;
 import de.tigges.tchreservation.ProtocolTest;
@@ -55,15 +40,6 @@ import de.tigges.tchreservation.user.model.UserRole;
 @WebAppConfiguration
 public class UserServiceTest extends ProtocolTest {
 
-	private MediaType contentType = new MediaType(MediaType.APPLICATION_JSON.getType(),
-			MediaType.APPLICATION_JSON.getSubtype(), Charset.forName("utf8"));
-
-	private MockMvc mockMvc;
-
-	private HttpMessageConverter<Object> mappingJackson2HttpMessageConverter;
-
-	@Autowired
-	private WebApplicationContext webApplicationContext;
 
 	@Autowired
 	private UserRepository userRepository;
@@ -74,20 +50,8 @@ public class UserServiceTest extends ProtocolTest {
 	@Autowired
 	private ProtocolRepository protocolRepository;
 
-	@SuppressWarnings("unchecked")
-	@Autowired
-	void setConverters(HttpMessageConverter<?>[] converters) {
-
-		this.mappingJackson2HttpMessageConverter = (HttpMessageConverter<Object>) Arrays.asList(converters).stream()
-				.filter(hmc -> hmc instanceof MappingJackson2HttpMessageConverter).findAny().orElse(null);
-
-		assertNotNull("the JSON message converter must not be null", this.mappingJackson2HttpMessageConverter);
-	}
-
 	@Before
 	public void setup() throws Exception {
-		this.mockMvc = webAppContextSetup(webApplicationContext).build();
-
 		this.protocolRepository.deleteAll();
 		this.userDeviceRepository.deleteAll();
 		this.userRepository.deleteAll();
@@ -233,14 +197,15 @@ public class UserServiceTest extends ProtocolTest {
 		}
 
 		if (ActionType.CREATE.equals(actionType)) {
-			User createdUser = new ObjectMapper().readValue(resultActions.andReturn().getResponse().getContentAsByteArray(), User.class);
+			User createdUser = getResponseJson(resultActions, User.class);
 			resultActions.andExpect(jsonPath("$.id").value(createdUser.getId()));
-			new BCryptPasswordEncoder().matches(user.getPassword(), createdUser.getPassword());
+			assertThat(new BCryptPasswordEncoder().matches(user.getPassword(), createdUser.getPassword()),
+					Matchers.is(true));
 			checkProtocol(createdUser, actionType);
 		} else if (ActionType.MODIFY.equals(actionType) || ActionType.DELETE.equals(actionType)) {
 			checkProtocol(user, actionType);
 		}
-		
+
 		checkDevices(resultActions, user);
 		return resultActions;
 	}
@@ -262,17 +227,4 @@ public class UserServiceTest extends ProtocolTest {
 	private UserDevice createDevice(User user, int i, ActivationStatus status) {
 		return new UserDevice(user, "deviceId " + i, status, "publicKey " + i);
 	}
-
-	protected String json(Object o) throws IOException {
-		MockHttpOutputMessage mockHttpOutputMessage = new MockHttpOutputMessage();
-		this.mappingJackson2HttpMessageConverter.write(o, MediaType.APPLICATION_JSON, mockHttpOutputMessage);
-		return mockHttpOutputMessage.getBodyAsString();
-	}
-
-	@SuppressWarnings("unchecked")
-	protected <T> T jsonObject(byte[] content, Class<T> c) throws HttpMessageNotReadableException, IOException {
-		MockHttpInputMessage mockHttpInputMessage = new MockHttpInputMessage(content);
-		return (T) this.mappingJackson2HttpMessageConverter.read(c, mockHttpInputMessage);
-	}
-
 }

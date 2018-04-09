@@ -40,8 +40,6 @@ import de.tigges.tchreservation.user.model.UserRole;
 @RequestMapping("/reservation")
 class ReservationService {
 
-	public static final String STATUS_OK = "Ok";
-
 	private ReservationRepository reservationRepository;
 	private OccupationRepository occupationRepository;
 	private ReservationSystemConfigRepository systemConfigRepository;
@@ -222,14 +220,12 @@ class ReservationService {
 	/**
 	 * get all occupations
 	 * 
-	 * @return list of all occupations
+	 * @return list of all occupations for one day
 	 */
-	@GetMapping("/getOccupations")
-	public Iterable<Occupation> getOccupations( //
-	// @RequestParam(value = "from") @DateTimeFormat(iso = ISO.DATE) Date from,
-	// @RequestParam(value = "until") @DateTimeFormat(iso = ISO.DATE) Date until
-	) {
-		return occupationRepository.findAll();
+	@GetMapping("/getOccupations/{systemConfigId}/{date}")
+
+	public Iterable<Occupation> getOccupations(@RequestParam long systemConfigId, @RequestParam LocalDate date) {
+		return occupationRepository.findBySystemConfigIdAndDate(systemConfigId, date);
 	}
 
 	/**
@@ -275,7 +271,9 @@ class ReservationService {
 	/**
 	 * create all occupations for a reservation
 	 * 
-	 * TODO: handle multiple courts TOTO: handle repeat weekly until
+	 * TODO: handle multiple courts
+	 * 
+	 * TODO: handle repeat weekly until
 	 * 
 	 * @param reservation
 	 * @return list of created occupations
@@ -312,7 +310,8 @@ class ReservationService {
 		}
 		// check time overlap
 		if (o1.getStart().isBefore(getEnd(o2)) && getEnd(o1).isAfter(o2.getStart())) {
-			throw new BadRequestException("overlap!");
+			throw new BadRequestException(String.format("cannot add occupation on %tF %tR becauce court %d ist occupied.",
+					o1.getDate(), o1.getStart(), o1.getCourt()));
 		}
 	}
 
