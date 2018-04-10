@@ -1,0 +1,16 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>Reservations</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+	<table>
+		<tr th:each="row : ${table}">
+			<td th:each="cell: *{row}" th:rowspan="*{cell.rowspan}"
+				th:colspan="*{cell.colspan}" th:utext="*{cell.content}">my
+				content</td>
+		</tr>
+	</table>
+</body>
+</html>
