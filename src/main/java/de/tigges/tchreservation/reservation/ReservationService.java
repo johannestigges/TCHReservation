@@ -38,7 +38,7 @@ import de.tigges.tchreservation.user.model.UserRole;
 
 @RestController
 @RequestMapping("/reservation")
-class ReservationService {
+public class ReservationService {
 
 	private ReservationRepository reservationRepository;
 	private OccupationRepository occupationRepository;

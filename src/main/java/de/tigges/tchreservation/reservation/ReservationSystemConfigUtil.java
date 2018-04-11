@@ -1,0 +1,35 @@
+package de.tigges.tchreservation.reservation;
+
+import java.time.LocalTime;
+
+import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
+
+public class ReservationSystemConfigUtil {
+
+	public static int[] getCourtsAsList(ReservationSystemConfig config) {
+		int[] courts = new int[config.getCourts()];
+		for (int c = 0; c < config.getCourts(); c++) {
+			courts[c] = c;
+		}
+		return courts;
+	}
+
+	public static int getRows(ReservationSystemConfig config) {
+		return (config.getClosingHour() - config.getOpeningHour()) * 60 / config.getDurationUnitInMinutes();
+	}
+	
+	public static int toMinutes (ReservationSystemConfig config, int row) {
+		return config.getOpeningHour() * 60 + row * config.getDurationUnitInMinutes();
+	}
+	
+	public static String showTime(ReservationSystemConfig config, int row) {
+		int hour = config.getOpeningHour() + row * config.getDurationUnitInMinutes() / 60;
+		int minute = (row * config.getDurationUnitInMinutes()) % 60;
+		return String.format("%02d:%02d", hour, minute);
+	}
+	
+	public static int toRow(ReservationSystemConfig config, LocalTime time) {
+		int minutes = time.getHour() * 60 + time.getMinute() - config.getOpeningHour() * 60;
+		return minutes / config.getDurationUnitInMinutes();
+	}
+}

@@ -1,92 +1,39 @@
 package de.tigges.tchreservation.mvc;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.TimeZone;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import de.tigges.tchreservation.mvc.occupation.OccupationTable;
+import de.tigges.tchreservation.reservation.ReservationService;
+import de.tigges.tchreservation.reservation.ReservationSystemConfigRepository;
+import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
+
 @Controller
 public class ReservationController {
 
-	List<List<Row>> table;
+	@Autowired
+	ReservationSystemConfigRepository systemRepository;
 
-	@GetMapping("/mvc/reservation/{systemConfigId}")
-	public String showReservations(@PathVariable long systemConfigId, Model model) {
-		createEmptyTable(10, 5);
-		model.addAttribute("table", table);
+	@Autowired
+	ReservationService reservationService;
+
+	@GetMapping("/mvc/reservation/{systemConfigId}/{date}")
+	public String showReservations(@PathVariable long systemConfigId, @PathVariable(required=false, value="0") Long date, Model model) {
+
+		ReservationSystemConfig config = systemRepository.get(systemConfigId);
+		OccupationTable table = new OccupationTable(config);
+		LocalDate localDate = date == null || date.equals(0) ? LocalDate.now() : Instant.ofEpochMilli(date).atZone(TimeZone.getDefault().toZoneId()).toLocalDate();
+		table.show(reservationService.getOccupations(systemConfigId, localDate), localDate);
+		model.addAttribute("table", table.getTable());
+		System.out.println(table.getTableRows());
+		System.out.println(table.getTableColumns());
 		return "reservation";
-	}
-
-	private void createEmptyTable(int rows, int columns) {
-		table = new ArrayList<>(rows);
-		for (int row = 0; row < rows; row++) {
-			List<Row> tableRow = new ArrayList<>();
-			for (int col = 0; col < columns; col++) {
-				tableRow.add(new Row("&nbsp;", "css", 1, 1));
-			}
-			table.add(tableRow);
-		}
-	}
-
-	public static class Row {
-		private int rowspan;
-		private int colspan;
-		private String content;
-		private String cssClass;
-
-		public Row() {
-			this(1, 1);
-		}
-
-		public Row(int rowspan, int colspan) {
-			this(null, null, rowspan, colspan);
-		}
-
-		public Row(String content, String cssClass) {
-			this(content, cssClass, 1, 1);
-		}
-
-		public Row(String content, String cssClass, int rowspan, int colspan) {
-			setRowspan(rowspan);
-			setColspan(colspan);
-			setContent(content);
-			setCssClass(cssClass);
-		}
-
-
-		public int getRowspan() {
-			return rowspan;
-		}
-
-		public void setRowspan(int rowspan) {
-			this.rowspan = rowspan;
-		}
-
-		public int getColspan() {
-			return colspan;
-		}
-
-		public void setColspan(int colspan) {
-			this.colspan = colspan;
-		}
-
-		public String getContent() {
-			return content;
-		}
-
-		public void setContent(String content) {
-			this.content = content;
-		}
-
-		public String getCssClass() {
-			return cssClass;
-		}
-
-		public void setCssClass(String cssClass) {
-			this.cssClass = cssClass;
-		}
 	}
 }

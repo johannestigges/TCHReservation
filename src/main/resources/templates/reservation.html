@@ -8,8 +8,8 @@
 	<table>
 		<tr th:each="row : ${table}">
 			<td th:each="cell: *{row}" th:rowspan="*{cell.rowspan}"
-				th:colspan="*{cell.colspan}" th:utext="*{cell.content}">my
-				content</td>
+				th:colspan="*{cell.colspan}" th:utext="*{cell.content}"
+				th:class="*{cell.cssClass}">cell content</td>
 		</tr>
 	</table>
 </body>
