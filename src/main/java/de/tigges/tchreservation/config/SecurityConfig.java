@@ -17,12 +17,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			.authorizeRequests()
 				.antMatchers("resources/**", "css/**", "/index", 
 						"/actuator/**", "/api-docs/**", 
+						"/mvc/**", "/angular/**",
 						"/reservation/getOccupations/**").permitAll()
 				.anyRequest().authenticated()
 			.and().formLogin().permitAll()
 			.and().logout().permitAll()
-			.and().csrf()
-				.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+			.and().csrf().disable()
+//				.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
 		;
 		// @formatter:on
 	}

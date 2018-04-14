@@ -170,24 +170,25 @@ public class ReservationService {
 			addReservationFieldError(errorDetails, "court", "null value not allowed");
 		}
 
-		if (reservation.getCourts().length < 1) {
+		int[] courts = reservation.courtsArray();
+
+		if (courts.length < 1) {
 			addReservationFieldError(errorDetails, "court", "null value not allowed");
 		}
 
-		if (reservation.getCourts().length > systemConfig.getCourts()) {
+		if (courts.length > systemConfig.getCourts()) {
 			addReservationFieldError(errorDetails, "court",
 					String.format("more than %d courts not allowed", systemConfig.getCourts()));
 		}
 
-		for (int i = 0; i < reservation.getCourts().length; i++) {
-			int court = reservation.getCourts()[i];
-			if (court < 1) {
+		for (int i = 0; i < courts.length; i++) {
+			if (courts[i] < 1) {
 				addReservationFieldError(errorDetails, "court",
-						String.format("court[%d]: %d < 1 not allowed", i, reservation.getCourts()[i]));
+						String.format("court[%d]: %d < 1 not allowed", i, courts[i]));
 			}
-			if (court > systemConfig.getCourts()) {
+			if (courts[i] > systemConfig.getCourts()) {
 				addReservationFieldError(errorDetails, "court", String.format("court[%d]: %d > %d not allowed", i,
-						reservation.getCourts()[i], systemConfig.getCourts()));
+						courts[i], systemConfig.getCourts()));
 			}
 		}
 
@@ -223,9 +224,9 @@ public class ReservationService {
 	 * @return list of all occupations for one day
 	 */
 	@GetMapping("/getOccupations/{systemConfigId}/{date}")
-
-	public Iterable<Occupation> getOccupations(@RequestParam long systemConfigId, @RequestParam LocalDate date) {
-		return occupationRepository.findBySystemConfigIdAndDate(systemConfigId, date);
+	public Iterable<Occupation> getOccupations(@PathVariable Long systemConfigId, @PathVariable Long date) {
+		
+		return occupationRepository.findBySystemConfigIdAndDate(systemConfigId, LocalDate.now());
 	}
 
 	/**
@@ -235,7 +236,7 @@ public class ReservationService {
 	 * @return all reservations belonging to that user
 	 */
 	@GetMapping("/get/{user}")
-	public Iterable<Reservation> getReservations(@RequestParam long userId) {
+	public Iterable<Reservation> getReservations(@PathVariable long userId) {
 		return reservationRepository.findByUserId(userId);
 	}
 
@@ -285,7 +286,7 @@ public class ReservationService {
 		occupation.setReservation(reservation);
 		occupation.setText(reservation.getText());
 		occupation.setType(reservation.getType());
-		occupation.setCourt(reservation.getCourts()[0]);
+		occupation.setCourt(reservation.courtsArray()[0]);
 		occupation.setDate(reservation.getDate());
 		occupation.setStart(reservation.getStart());
 		occupation.setDuration(reservation.getDuration());

@@ -1,15 +1,11 @@
 package de.tigges.tchreservation.reservation;
 
-import static org.junit.Assert.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.Arrays;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -17,16 +13,12 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.mock.http.MockHttpOutputMessage;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.web.context.WebApplicationContext;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JSR310Module;
 
 import de.tigges.tchreservation.ProtocolTest;
 import de.tigges.tchreservation.TchReservationApplication;
@@ -228,14 +220,14 @@ public class ReservationServiceTest extends ProtocolTest {
 
 	private ResultActions addReservationOverlap(Reservation reservation) throws Exception {
 		return addReservationError(reservation, HttpStatus.BAD_REQUEST,
-				String.format("cannot add occupation on %tF %tR becauce court %d ist occupied.", reservation.getDate(),
-						reservation.getStart(), reservation.getCourts()[0]));
+				String.format("cannot add occupation on %tF %tR becauce court %s ist occupied.", reservation.getDate(),
+						reservation.getStart(), reservation.getCourts()));
 	}
 
 	private ResultActions checkReservation(ResultActions resultActions, Reservation reservation, ActionType actionType)
 			throws Exception {
 		if (ActionType.CREATE.equals(actionType)) {
-			Reservation createdReservation = new ObjectMapper()
+			Reservation createdReservation = new ObjectMapper().registerModule(new JSR310Module())
 					.readValue(resultActions.andReturn().getResponse().getContentAsByteArray(), Reservation.class);
 			resultActions.andExpect(jsonPath("$.id").value(createdReservation.getId()));
 			checkProtocol(createdReservation, actionType);
@@ -268,7 +260,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	private Reservation createReservation(long systemId, User user, int court, int hour, int duration) {
-		return new Reservation(systemId, user, "reservation name", court, LocalDate.now().plusDays(1),
+		return new Reservation(systemId, user, "reservation name", String.valueOf(court), LocalDate.now().plusDays(1),
 				LocalTime.of(hour, 0), duration, ReservationType.INDIVIDUAL);
 	}
 }

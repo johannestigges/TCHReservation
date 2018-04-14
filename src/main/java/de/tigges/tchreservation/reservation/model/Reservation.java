@@ -2,18 +2,15 @@ package de.tigges.tchreservation.reservation.model;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Arrays;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalTimeDeserializer;
-import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
-import com.fasterxml.jackson.datatype.jsr310.ser.LocalTimeSerializer;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.tigges.tchreservation.EntityType;
 import de.tigges.tchreservation.protocol.ProtocolEntity;
@@ -25,13 +22,12 @@ public class Reservation implements ProtocolEntity {
 	public Reservation() {
 	}
 
-	public Reservation(long configId, User user, String text, int court, LocalDate date, LocalTime start, int duration,
-			ReservationType type) {
-		setSystemConfig(configId);
+	public Reservation(long systemConfigId, User user, String text, String courts, LocalDate date, LocalTime start,
+			int duration, ReservationType type) {
+		setSystemConfig(systemConfigId);
 		setUser(user);
 		setText(text);
-		setCourts(new int[1]);
-		getCourts()[0] = court;
+		setCourts(courts);
 		setDate(date);
 		setStart(start);
 		setDuration(duration);
@@ -43,16 +39,10 @@ public class Reservation implements ProtocolEntity {
 	private long id;
 
 	private String text;
-	@JsonDeserialize(using = LocalDateDeserializer.class)
-	@JsonSerialize(using = LocalDateSerializer.class)
 	private LocalDate date;
-	@JsonDeserialize(using = LocalTimeDeserializer.class)
-	@JsonSerialize(using = LocalTimeSerializer.class)
 	private LocalTime start;
-	@JsonDeserialize(using = LocalDateDeserializer.class)
-	@JsonSerialize(using = LocalDateSerializer.class)
 	private LocalDate weeklyRepeatUntil;
-	private int[] courts;
+	private String courts;
 	private int duration;
 	private ReservationType type;
 
@@ -109,11 +99,11 @@ public class Reservation implements ProtocolEntity {
 		this.weeklyRepeatUntil = weeklyRepeatUntil;
 	}
 
-	public int[] getCourts() {
+	public String getCourts() {
 		return courts;
 	}
 
-	public void setCourts(int[] courts) {
+	public void setCourts(String courts) {
 		this.courts = courts;
 	}
 
@@ -155,6 +145,35 @@ public class Reservation implements ProtocolEntity {
 	@Override
 	public long protocolEntityId() {
 		return id;
+	}
+
+	public void courts(int...courts) {
+		this.courts = toCourts(courts);
+	}
+	
+	public void addCourts(int...courts) {
+		this.courts = this.courts + ' ' + toCourts(courts);
+	}
+	
+	public int[] courtsArray() {
+		return toCourts(this.courts);
+	}
+
+	public static int[] toCourts(String courtsString) {
+		if (courtsString == null) {
+			return new int[0];
+		}
+		String[] c = courtsString.split(" ");
+		int[] courts = new int[c.length];
+		for (int i = 0; i < courts.length; i++) {
+			courts[i] = Integer.parseInt(c[i]);
+		}
+		return courts;
+	}
+
+	public static String toCourts(int... courts) {
+		return Arrays.toString(courts).replaceAll("\\[|\\]|,|\\s", "");
+
 	}
 
 }

@@ -25,15 +25,17 @@ public class ReservationController {
 	ReservationService reservationService;
 
 	@GetMapping("/mvc/reservation/{systemConfigId}/{date}")
-	public String showReservations(@PathVariable long systemConfigId, @PathVariable(required=false, value="0") Long date, Model model) {
+	public String showReservations(@PathVariable long systemConfigId,
+			@PathVariable(required = false, value = "0") Long date, Model model) {
 
 		ReservationSystemConfig config = systemRepository.get(systemConfigId);
 		OccupationTable table = new OccupationTable(config);
-		LocalDate localDate = date == null || date.equals(0) ? LocalDate.now() : Instant.ofEpochMilli(date).atZone(TimeZone.getDefault().toZoneId()).toLocalDate();
-		table.show(reservationService.getOccupations(systemConfigId, localDate), localDate);
+		LocalDate localDate = date == null || date.equals(0) ? LocalDate.now()
+				: Instant.ofEpochMilli(date).atZone(TimeZone.getDefault().toZoneId()).toLocalDate();
+	
+		table.show(reservationService.getOccupations(systemConfigId, date), localDate);
 		model.addAttribute("table", table.getTable());
-		System.out.println(table.getTableRows());
-		System.out.println(table.getTableColumns());
+
 		return "reservation";
 	}
 }

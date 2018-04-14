@@ -8,6 +8,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
@@ -25,37 +26,35 @@ public class Occupation implements ProtocolEntity {
 	@GeneratedValue
 	private long id;
 
-	private int court;
-	private int lastCourt;
-	@JsonDeserialize(using = LocalDateDeserializer.class)
-	@JsonSerialize(using = LocalDateSerializer.class)
+	private String text;
 	private LocalDate date;
-	@JsonDeserialize(using = LocalTimeDeserializer.class)
-	@JsonSerialize(using = LocalTimeSerializer.class)
 	private LocalTime start;
 	private int duration;
-	private String text;
+
+	private int court;
+	private int lastCourt;
+
 	private ReservationType type;
 
 	private long systemConfigId;
 
-	public long getSystemConfigId() {
-		return systemConfigId;
-	}
-
-	public void setSystemConfigId(long systemConfigId) {
-		this.systemConfigId = systemConfigId;
-	}
-
 	@ManyToOne(optional = false)
 	private Reservation reservation;
 
-	public int getCourt() {
-		return court;
+	public long getId() {
+		return id;
 	}
 
-	public void setCourt(int court) {
-		this.court = court;
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public String getText() {
+		return text;
+	}
+
+	public void setText(String text) {
+		this.text = text;
 	}
 
 	public LocalDate getDate() {
@@ -82,12 +81,12 @@ public class Occupation implements ProtocolEntity {
 		this.duration = duration;
 	}
 
-	public Reservation getReservation() {
-		return reservation;
+	public int getCourt() {
+		return court;
 	}
 
-	public void setReservation(Reservation reservation) {
-		this.reservation = reservation;
+	public void setCourt(int court) {
+		this.court = court;
 	}
 
 	public int getLastCourt() {
@@ -98,34 +97,40 @@ public class Occupation implements ProtocolEntity {
 		this.lastCourt = lastCourt;
 	}
 
-	public String getText() {
-		return text;
-	}
-
-	public void setText(String text) {
-		this.text = text;
-	}
-
 	public ReservationType getType() {
 		return type;
+
 	}
 
 	public void setType(ReservationType type) {
 		this.type = type;
 	}
 
-	public long getId() {
-		return id;
+	public long getSystemConfigId() {
+		return systemConfigId;
 	}
 
-	public void setId(long id) {
-		this.id = id;
+	public void setSystemConfigId(long systemConfigId) {
+		this.systemConfigId = systemConfigId;
+	}
+
+	public Reservation getReservation() {
+		return reservation;
+	}
+
+	public void setReservation(Reservation reservation) {
+		this.reservation = reservation;
 	}
 
 	@Override
 	public String toProtocol() {
-		return toProtocol("court", Integer.toString(court), "lastCourt", Integer.toString(lastCourt), "date",
-				date.toString(), "start", start.toString(), "duration", Integer.toString(duration), "text", text,
+		return toProtocol(//
+				"court", Integer.toString(court), //
+				"lastCourt", Integer.toString(lastCourt), //
+				"date", date.toString(), //
+				"start", start.toString(), //
+				"duration", Integer.toString(duration), //
+				"text", text, //
 				"type", type.name());
 	}
 

@@ -1,10 +1,12 @@
 package de.tigges.tchreservation.user;
 
+import java.security.Principal;
 import java.util.Optional;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -41,6 +43,11 @@ public class UserService {
 		encoder = new BCryptPasswordEncoder();
 	}
 
+	@GetMapping("/me")
+    public Principal getMyUser(Principal principal) {
+        return principal;
+    }
+	
 	@RequestMapping(path = "/get/{userId}", method = RequestMethod.GET)
 	public @ResponseBody Optional<User> get(@PathVariable Long userId) {
 		return userRepository.findById(userId);
