@@ -9,9 +9,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import de.tigges.tchreservation.EntityType;
 import de.tigges.tchreservation.protocol.ProtocolEntity;
 import de.tigges.tchreservation.user.model.User;
@@ -38,6 +35,8 @@ public class Reservation implements ProtocolEntity {
 	@GeneratedValue
 	private long id;
 
+	private long systemConfigId;
+
 	private String text;
 	private LocalDate date;
 	private LocalTime start;
@@ -46,7 +45,6 @@ public class Reservation implements ProtocolEntity {
 	private int duration;
 	private ReservationType type;
 
-	private long systemConfigId;
 
 	@ManyToOne(optional = false)
 	private User user;
