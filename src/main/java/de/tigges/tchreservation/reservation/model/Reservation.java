@@ -16,9 +16,25 @@ import de.tigges.tchreservation.user.model.User;
 @Entity
 public class Reservation implements ProtocolEntity {
 
+	@Id
+	@GeneratedValue
+	private long id;
+
+	private long systemConfigId;
+	private String text;
+	private LocalDate date;
+	private LocalTime start;
+	private int duration;
+	private String courts;
+	private ReservationType type;
+	private LocalDate weeklyRepeatUntil;
+
+	@ManyToOne(optional = false)
+	private User user;
+
 	public Reservation() {
 	}
-
+	
 	public Reservation(long systemConfigId, User user, String text, String courts, LocalDate date, LocalTime start,
 			int duration, ReservationType type) {
 		setSystemConfig(systemConfigId);
@@ -30,25 +46,7 @@ public class Reservation implements ProtocolEntity {
 		setDuration(duration);
 		setType(type);
 	}
-
-	@Id
-	@GeneratedValue
-	private long id;
-
-	private long systemConfigId;
-
-	private String text;
-	private LocalDate date;
-	private LocalTime start;
-	private LocalDate weeklyRepeatUntil;
-	private String courts;
-	private int duration;
-	private ReservationType type;
-
-
-	@ManyToOne(optional = false)
-	private User user;
-
+	
 	public long getId() {
 		return id;
 	}
