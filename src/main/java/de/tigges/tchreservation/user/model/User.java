@@ -17,6 +17,10 @@ public class User implements ProtocolEntity {
 
 	public User() {
 	}
+	
+	public User(String id) {
+		this.id = Integer.parseInt(id);
+	}
 
 	public User(String email, String name, String password, UserRole role, ActivationStatus status) {
 		this.email = email;
