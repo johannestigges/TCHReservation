@@ -1,7 +1,9 @@
 package de.tigges.tchreservation.reservation;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -72,7 +74,10 @@ public class ReservationService {
 		// save occupations and reservation
 		Reservation savedReservation = reservationRepository.save(reservation);
 		protocolRepository.save(new Protocol(savedReservation, ActionType.CREATE, reservation.getUser()));
-		occupations.forEach(o -> saveOccupation(o, reservation.getUser()));
+		occupations.forEach(o -> {
+			o.setReservation(savedReservation);
+			saveOccupation(o, reservation.getUser());
+		});
 		return savedReservation;
 	}
 
@@ -187,8 +192,8 @@ public class ReservationService {
 						String.format("court[%d]: %d < 1 not allowed", i, courts[i]));
 			}
 			if (courts[i] > systemConfig.getCourts()) {
-				addReservationFieldError(errorDetails, "court", String.format("court[%d]: %d > %d not allowed", i,
-						courts[i], systemConfig.getCourts()));
+				addReservationFieldError(errorDetails, "court",
+						String.format("court[%d]: %d > %d not allowed", i, courts[i], systemConfig.getCourts()));
 			}
 		}
 
@@ -225,8 +230,14 @@ public class ReservationService {
 	 */
 	@GetMapping("/getOccupations/{systemConfigId}/{date}")
 	public Iterable<Occupation> getOccupations(@PathVariable Long systemConfigId, @PathVariable Long date) {
-		
-		return occupationRepository.findBySystemConfigIdAndDate(systemConfigId, LocalDate.now());
+		LocalDate searchDate;
+		if (date == null || date.equals(0)) {
+			searchDate = LocalDate.now();
+		} else {
+			searchDate = Instant.ofEpochMilli(date).atZone(ZoneId.systemDefault()).toLocalDate();
+		}
+		System.out.println(String.format("search for system config %d and date %s", systemConfigId, searchDate.toString()));
+		return occupationRepository.findBySystemConfigIdAndDate(systemConfigId, searchDate);
 	}
 
 	/**
@@ -311,8 +322,9 @@ public class ReservationService {
 		}
 		// check time overlap
 		if (o1.getStart().isBefore(getEnd(o2)) && getEnd(o1).isAfter(o2.getStart())) {
-			throw new BadRequestException(String.format("cannot add occupation on %tF %tR becauce court %d ist occupied.",
-					o1.getDate(), o1.getStart(), o1.getCourt()));
+			throw new BadRequestException(
+					String.format("cannot add occupation on %tF %tR becauce court %d ist occupied.", o1.getDate(),
+							o1.getStart(), o1.getCourt()));
 		}
 	}
 
