@@ -17,7 +17,7 @@ public class LocalTimeJsonSerializer extends JsonSerializer<LocalTime> {
 				Long.toString(
 						value.atDate(LocalDate.now())
 						.atZone(ZoneId.systemDefault())
-						.toEpochSecond()));
+						.toEpochSecond() * 1000));
 	}
 
 }

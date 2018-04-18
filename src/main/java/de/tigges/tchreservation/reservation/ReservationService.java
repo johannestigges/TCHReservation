@@ -298,6 +298,7 @@ public class ReservationService {
 		occupation.setText(reservation.getText());
 		occupation.setType(reservation.getType());
 		occupation.setCourt(reservation.courtsArray()[0]);
+		occupation.setLastCourt(occupation.getCourt());
 		occupation.setDate(reservation.getDate());
 		occupation.setStart(reservation.getStart());
 		occupation.setDuration(reservation.getDuration());

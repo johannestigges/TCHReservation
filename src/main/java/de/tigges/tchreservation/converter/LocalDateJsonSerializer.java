@@ -12,7 +12,7 @@ public class LocalDateJsonSerializer extends JsonSerializer<LocalDate> {
 
 	@Override
 	public void serialize(LocalDate value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-		gen.writeString(Long.toString(value.atStartOfDay(ZoneId.systemDefault()).toEpochSecond()));
+		gen.writeString(Long.toString(value.atStartOfDay(ZoneId.systemDefault()).toEpochSecond()*1000));
 	}
 
 }
