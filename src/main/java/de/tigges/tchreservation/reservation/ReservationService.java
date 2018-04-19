@@ -6,7 +6,10 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,6 +45,8 @@ import de.tigges.tchreservation.user.model.UserRole;
 @RequestMapping("/reservation")
 public class ReservationService {
 
+	public static final Logger logger = LoggerFactory.getLogger(ReservationService.class);
+	
 	private ReservationRepository reservationRepository;
 	private OccupationRepository occupationRepository;
 	private ReservationSystemConfigRepository systemConfigRepository;
@@ -61,6 +66,7 @@ public class ReservationService {
 	@PostMapping("/add")
 	@ResponseStatus(HttpStatus.CREATED)
 	public @ResponseBody Reservation addReservation(@RequestBody Reservation reservation) {
+		logger.info("add reservation {} " + reservation.getText());
 
 		// check reservation data consistency
 		checkReservation(reservation);
@@ -84,6 +90,8 @@ public class ReservationService {
 	@DeleteMapping("/delete/{id}")
 	@ResponseStatus(HttpStatus.OK)
 	public void delete(@PathVariable long id) {
+		logger.info("delete reservation {}", id);
+		
 		Reservation reservation = reservationRepository.findById(id)
 				.orElseThrow(() -> new NotFoundException(EntityType.RESERVATION, id));
 		occupationRepository.findByReservationId(id).forEach(o -> deleteOccupation(o, reservation.getUser()));
@@ -241,15 +249,17 @@ public class ReservationService {
 	}
 
 	/**
-	 * get all reservations for one user
+	 * get one reservation by key
 	 * 
-	 * @param userId
+	 * @param reservationId
 	 * @return all reservations belonging to that user
 	 */
-	@GetMapping("/get/{user}")
-	public Iterable<Reservation> getReservations(@PathVariable long userId) {
-		return reservationRepository.findByUserId(userId);
+	@GetMapping("/get/{id}")
+	public Optional<Reservation> getReservation(@PathVariable long id) {
+		 Optional<Reservation> reservation = reservationRepository.findById(id);
+		 return reservation;
 	}
+	
 
 	/**
 	 * get the reservation system configuration

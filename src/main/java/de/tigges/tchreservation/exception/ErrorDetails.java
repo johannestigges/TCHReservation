@@ -2,6 +2,7 @@ package de.tigges.tchreservation.exception;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ErrorDetails {
 	private String message;
@@ -32,4 +33,11 @@ public class ErrorDetails {
 		return fieldErrors;
 	}
 	
+	@Override
+	public String toString() {
+		return "ErrorDetails: " + message 
+				+ " detail: " + details 
+				+ " [" + String.join(",", fieldErrors.stream().map(f -> f.toString()).collect(Collectors.toList())) + "]";
+		
+	}
 }

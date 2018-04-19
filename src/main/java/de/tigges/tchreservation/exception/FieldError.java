@@ -30,4 +30,9 @@ public class FieldError {
 	public String getMessage() {
 		return message;
 	}
+	
+	@Override
+	public String toString() {
+		return entity + "." + field + ": " + message;
+	}
 }
