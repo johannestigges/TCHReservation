@@ -46,7 +46,7 @@ import de.tigges.tchreservation.user.model.UserRole;
 public class ReservationService {
 
 	public static final Logger logger = LoggerFactory.getLogger(ReservationService.class);
-	
+
 	private ReservationRepository reservationRepository;
 	private OccupationRepository occupationRepository;
 	private ReservationSystemConfigRepository systemConfigRepository;
@@ -66,7 +66,7 @@ public class ReservationService {
 	@PostMapping("/add")
 	@ResponseStatus(HttpStatus.CREATED)
 	public @ResponseBody Reservation addReservation(@RequestBody Reservation reservation) {
-		logger.info("add reservation {} " + reservation.getText());
+		logger.info("add reservation {} ", reservation.getText());
 
 		// check reservation data consistency
 		checkReservation(reservation);
@@ -91,7 +91,7 @@ public class ReservationService {
 	@ResponseStatus(HttpStatus.OK)
 	public void delete(@PathVariable long id) {
 		logger.info("delete reservation {}", id);
-		
+
 		Reservation reservation = reservationRepository.findById(id)
 				.orElseThrow(() -> new NotFoundException(EntityType.RESERVATION, id));
 		occupationRepository.findByReservationId(id).forEach(o -> deleteOccupation(o, reservation.getUser()));
@@ -244,7 +244,7 @@ public class ReservationService {
 		} else {
 			searchDate = Instant.ofEpochMilli(date).atZone(ZoneId.systemDefault()).toLocalDate();
 		}
-		System.out.println(String.format("search for system config %d and date %s", systemConfigId, searchDate.toString()));
+		logger.info("get occupations date {} ({})", searchDate.toString(), date);
 		return occupationRepository.findBySystemConfigIdAndDate(systemConfigId, searchDate);
 	}
 
@@ -256,10 +256,10 @@ public class ReservationService {
 	 */
 	@GetMapping("/get/{id}")
 	public Optional<Reservation> getReservation(@PathVariable long id) {
-		 Optional<Reservation> reservation = reservationRepository.findById(id);
-		 return reservation;
+		logger.info("get reservation ()", id);
+		Optional<Reservation> reservation = reservationRepository.findById(id);
+		return reservation;
 	}
-	
 
 	/**
 	 * get the reservation system configuration
