@@ -3,6 +3,9 @@ package de.tigges.tchreservation.user;
 import java.security.Principal;
 import java.util.Optional;
 
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -25,29 +28,29 @@ import de.tigges.tchreservation.protocol.ProtocolRepository;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.User;
 import de.tigges.tchreservation.user.model.UserDevice;
+import de.tigges.tchreservation.user.model.UserRole;
 
 @RestController
 @RequestMapping("/user")
-public class UserService {
+public class UserService extends UserAwareService {
 
-	private UserRepository userRepository;
 	private UserDeviceRepository userDeviceRepository;
 	private ProtocolRepository protocolRepository;
 	private PasswordEncoder encoder;
 
 	public UserService(UserRepository userRepository, UserDeviceRepository userDeviceRepository,
 			ProtocolRepository protocolRepository) {
-		this.userRepository = userRepository;
+		super(userRepository);
 		this.userDeviceRepository = userDeviceRepository;
 		this.protocolRepository = protocolRepository;
 		encoder = new BCryptPasswordEncoder();
 	}
 
 	@GetMapping("/me")
-    public Principal getMyUser(Principal principal) {
-        return principal;
-    }
-	
+	public User getMyUser(Principal principal) {
+		return getLoggedInUser();
+	}
+
 	@RequestMapping(path = "/get/{userId}", method = RequestMethod.GET)
 	public @ResponseBody Optional<User> get(@PathVariable Long userId) {
 		return userRepository.findById(userId);

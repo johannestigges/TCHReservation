@@ -188,19 +188,19 @@ public class UserServiceTest extends ProtocolTest {
 		resultActions.andExpect(content().contentType(contentType)).andExpect(jsonPath("$.id").isNotEmpty())
 				.andExpect(jsonPath("$.email").value(user.getEmail()))
 				.andExpect(jsonPath("$.name").value(user.getName()))
-				.andExpect(jsonPath("$.role").value(user.getRole().toString()))
+				.andExpect(jsonPath("$.role").value(user.getRole().ordinal()))
 				.andExpect(jsonPath("$.status").value(user.getStatus().toString()))
 		//
 		;
-		if (!passwordEncoded) {
-			resultActions.andExpect(jsonPath("$.password").value(user.getPassword()));
-		}
+//		if (!passwordEncoded) {
+//			resultActions.andExpect(jsonPath("$.password").value(user.getPassword()));
+//		}
 
 		if (ActionType.CREATE.equals(actionType)) {
 			User createdUser = getResponseJson(resultActions, User.class);
 			resultActions.andExpect(jsonPath("$.id").value(createdUser.getId()));
-			assertThat(new BCryptPasswordEncoder().matches(user.getPassword(), createdUser.getPassword()),
-					Matchers.is(true));
+//			assertThat(new BCryptPasswordEncoder().matches(user.getPassword(), createdUser.getPassword()),
+//					Matchers.is(true));
 			checkProtocol(createdUser, actionType);
 		} else if (ActionType.MODIFY.equals(actionType) || ActionType.DELETE.equals(actionType)) {
 			checkProtocol(user, actionType);

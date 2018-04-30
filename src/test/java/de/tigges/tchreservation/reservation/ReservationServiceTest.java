@@ -17,9 +17,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.ResultActions;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
 import de.tigges.tchreservation.ProtocolTest;
 import de.tigges.tchreservation.TchReservationApplication;
 import de.tigges.tchreservation.protocol.ActionType;
@@ -227,8 +224,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	private ResultActions checkReservation(ResultActions resultActions, Reservation reservation, ActionType actionType)
 			throws Exception {
 		if (ActionType.CREATE.equals(actionType)) {
-			Reservation createdReservation = new ObjectMapper().registerModule(new JavaTimeModule())
-					.readValue(resultActions.andReturn().getResponse().getContentAsByteArray(), Reservation.class);
+			Reservation createdReservation = jsonObject(resultActions.andReturn().getResponse().getContentAsByteArray(), Reservation.class);
 			resultActions.andExpect(jsonPath("$.id").value(createdReservation.getId()));
 			checkProtocol(createdReservation, actionType);
 		} else if (ActionType.MODIFY.equals(actionType) || ActionType.DELETE.equals(actionType)) {

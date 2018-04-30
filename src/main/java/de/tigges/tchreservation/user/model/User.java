@@ -9,6 +9,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Transient;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import de.tigges.tchreservation.EntityType;
 import de.tigges.tchreservation.protocol.ProtocolEntity;
 
@@ -16,6 +18,10 @@ import de.tigges.tchreservation.protocol.ProtocolEntity;
 public class User implements ProtocolEntity {
 
 	public User() {
+	}
+	
+	public User(long id) {
+		this.id = id;
 	}
 	
 	public User(String id) {
@@ -33,6 +39,10 @@ public class User implements ProtocolEntity {
 	public User(User user) {
 		this(user.getEmail(), user.getName(), user.getPassword(), user.getRole(), user.getStatus());
 		setId(user.getId());
+	}
+	
+	public static User anonymous() {
+		return new User("", "", "", UserRole.ANONYMOUS, ActivationStatus.ACTIVE);
 	}
 
 	@Id

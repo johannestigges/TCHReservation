@@ -36,6 +36,7 @@ import de.tigges.tchreservation.reservation.model.Occupation;
 import de.tigges.tchreservation.reservation.model.Reservation;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 import de.tigges.tchreservation.reservation.model.ReservationType;
+import de.tigges.tchreservation.user.UserAwareService;
 import de.tigges.tchreservation.user.UserRepository;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.User;
@@ -43,23 +44,22 @@ import de.tigges.tchreservation.user.model.UserRole;
 
 @RestController
 @RequestMapping("/reservation")
-public class ReservationService {
+public class ReservationService extends UserAwareService {
 
 	public static final Logger logger = LoggerFactory.getLogger(ReservationService.class);
 
 	private ReservationRepository reservationRepository;
 	private OccupationRepository occupationRepository;
 	private ReservationSystemConfigRepository systemConfigRepository;
-	private UserRepository userRespository;
 	private ProtocolRepository protocolRepository;
 
 	public ReservationService(ReservationRepository reservationRepository, OccupationRepository occupationRepository,
 			ReservationSystemConfigRepository systemConfigRepository, UserRepository userRepository,
 			ProtocolRepository protocolRepository) {
+		super(userRepository);
 		this.reservationRepository = reservationRepository;
 		this.occupationRepository = occupationRepository;
 		this.systemConfigRepository = systemConfigRepository;
-		this.userRespository = userRepository;
 		this.protocolRepository = protocolRepository;
 	}
 
@@ -67,22 +67,23 @@ public class ReservationService {
 	@ResponseStatus(HttpStatus.CREATED)
 	public @ResponseBody Reservation addReservation(@RequestBody Reservation reservation) {
 		logger.info("add reservation {} ", reservation.getText());
+		User loggedInUser = getLoggedInUser();
 
 		// check reservation data consistency
-		checkReservation(reservation);
+		checkReservation(reservation, loggedInUser);
 
 		// check Authorization
 
 		// create and check Occupations
 		List<Occupation> occupations = createOccupations(reservation);
-		occupations.forEach(o -> checkOccupation(o));
+		occupations.forEach(o -> checkOccupation(o, loggedInUser));
 
 		// save occupations and reservation
 		Reservation savedReservation = reservationRepository.save(reservation);
-		protocolRepository.save(new Protocol(savedReservation, ActionType.CREATE, reservation.getUser()));
+		protocolRepository.save(new Protocol(savedReservation, ActionType.CREATE, loggedInUser));
 		occupations.forEach(o -> {
 			o.setReservation(savedReservation);
-			saveOccupation(o, reservation.getUser());
+			saveOccupation(o, loggedInUser);
 		});
 		return savedReservation;
 	}
@@ -90,13 +91,14 @@ public class ReservationService {
 	@DeleteMapping("/delete/{id}")
 	@ResponseStatus(HttpStatus.OK)
 	public void delete(@PathVariable long id) {
+		User loggedInUser = getLoggedInUser();
 		logger.info("delete reservation {}", id);
 
 		Reservation reservation = reservationRepository.findById(id)
 				.orElseThrow(() -> new NotFoundException(EntityType.RESERVATION, id));
-		occupationRepository.findByReservationId(id).forEach(o -> deleteOccupation(o, reservation.getUser()));
+		occupationRepository.findByReservationId(id).forEach(o -> deleteOccupation(o, loggedInUser));
 		reservationRepository.delete(reservation);
-		protocolRepository.save(new Protocol(reservation, ActionType.DELETE, reservation.getUser()));
+		protocolRepository.save(new Protocol(reservation, ActionType.DELETE, loggedInUser));
 	}
 
 	/**
@@ -108,8 +110,8 @@ public class ReservationService {
 	 * @param reservation
 	 * @return error message or OK
 	 */
-	private void checkReservation(Reservation reservation) {
-
+	private void checkReservation(Reservation reservation, User loggedInUser) {
+		
 		ErrorDetails errorDetails = new ErrorDetails("error validation reservation", null);
 
 		// data consistency checks
@@ -130,10 +132,9 @@ public class ReservationService {
 		if (reservation.getUser() == null || reservation.getUser().getId() <= 0) {
 			throw new BadRequestException("no user");
 		}
-		User user = userRespository.findById(reservation.getUser().getId())
+		User user = userRepository.findById(reservation.getUser().getId())
 				.orElseThrow(() -> new NotFoundException(EntityType.USER, reservation.getUser().getId()));
 		reservation.setUser(user);
-
 		LocalDate date = reservation.getDate();
 		if (date == null) {
 			addReservationFieldError(errorDetails, "date", "null value not allowed");
@@ -206,24 +207,24 @@ public class ReservationService {
 		}
 
 		// authorization checks
-		if (user.hasRole(UserRole.ANONYMOUS)) {
+		if (loggedInUser.hasRole(UserRole.ANONYMOUS)) {
 			throw new AuthorizationException("user with role ANONYMOUS cannot add reservation.");
 		}
 
-		if (!ActivationStatus.ACTIVE.equals(user.getStatus())) {
-			throw new AuthorizationException(String.format("user %s is not active.", user.getName()));
+		if (!ActivationStatus.ACTIVE.equals(loggedInUser.getStatus())) {
+			throw new AuthorizationException(String.format("user %s is not active.", loggedInUser.getName()));
 		}
 
-		if (user.hasRole(UserRole.REGISTERED)) {
+		if (loggedInUser.hasRole(UserRole.REGISTERED)) {
 			if (!ReservationType.INDIVIDUAL.equals(reservation.getType())) {
 				throw new AuthorizationException(
-						String.format("user %s with role REGISTERED cannot add reservation of type %s.", user.getName(),
+						String.format("user %s with role REGISTERED cannot add reservation of type %s.", loggedInUser.getName(),
 								reservation.getType()));
 			}
 			if (reservation.getDuration() > 3) {
 				throw new AuthorizationException(
 						String.format("user %s with role REGISTERED cannot add reservation with duration %d.",
-								user.getName(), reservation.getDuration()));
+								loggedInUser.getName(), reservation.getDuration()));
 			}
 		}
 		if (!errorDetails.getFieldErrors().isEmpty()) {
@@ -316,7 +317,7 @@ public class ReservationService {
 		return occupations;
 	}
 
-	private void checkOccupation(Occupation occupation) {
+	private void checkOccupation(Occupation occupation, User loggedInUser) {
 		occupationRepository.findBySystemConfigIdAndDate(occupation.getSystemConfigId(), occupation.getDate())
 				.forEach(o -> checkOverlap(occupation, o));
 	}
