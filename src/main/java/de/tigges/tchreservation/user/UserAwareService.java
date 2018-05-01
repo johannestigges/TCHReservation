@@ -16,7 +16,7 @@ public class UserAwareService {
 
 	public User getLoggedInUser() {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		if (authentication instanceof AnonymousAuthenticationToken) {
+		if (authentication instanceof AnonymousAuthenticationToken || authentication == null) {
 			return User.anonymous();
 		}
 		String name = authentication.getName();

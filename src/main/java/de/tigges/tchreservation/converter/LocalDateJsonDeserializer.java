@@ -13,6 +13,9 @@ public class LocalDateJsonDeserializer extends JsonDeserializer<LocalDate> {
 
 	@Override
 	public LocalDate deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+		if (p.currentToken().asByteArray().length == 0) {
+			return null;
+		}
 		return Instant.ofEpochMilli(p.getLongValue()).atZone(ZoneId.systemDefault()).toLocalDate();
 	}
 }

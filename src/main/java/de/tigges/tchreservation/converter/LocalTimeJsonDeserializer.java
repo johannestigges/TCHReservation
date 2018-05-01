@@ -15,6 +15,9 @@ public class LocalTimeJsonDeserializer extends JsonDeserializer<LocalTime> {
 	@Override
 	public LocalTime deserialize(JsonParser p, DeserializationContext ctxt)
 			throws IOException, JsonProcessingException {
+		if (p.currentToken().asByteArray().length == 0) {
+			return null;
+		}
 		return Instant.ofEpochMilli(p.getLongValue()).atZone(ZoneId.systemDefault()).toLocalTime();
 	}
 }

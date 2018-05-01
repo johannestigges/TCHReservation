@@ -12,6 +12,8 @@ public class LocalDateJsonSerializer extends JsonSerializer<LocalDate> {
 
 	@Override
 	public void serialize(LocalDate value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-		gen.writeString(Long.toString(value.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()));
+		if (value != null) {
+			gen.writeString(Long.toString(value.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()));
+		}
 	}
 }
