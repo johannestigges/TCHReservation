@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import org.hamcrest.Matchers;
 import org.junit.Before;
@@ -38,7 +39,6 @@ import de.tigges.tchreservation.user.model.UserRole;
 @WebAppConfiguration
 public class UserServiceTest extends ProtocolTest {
 
-
 	@Autowired
 	private UserRepository userRepository;
 
@@ -56,14 +56,14 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	public void testSave() throws Exception {
+	public void testAddUser() throws Exception {
 		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE);
 		checkUser(mockMvc.perform(post("/user/add").content(json(user)).contentType(contentType))
 				.andExpect(status().isOk()), user, true, ActionType.CREATE);
 	}
 
 	@Test
-	public void testSaveUserWithDevices() throws Exception {
+	public void testAddUserWithDevices() throws Exception {
 		User user = createUser(0, UserRole.ADMIN, ActivationStatus.CREATED);
 		for (int i = 0; i < 5; i++) {
 			user.getDevices().add(createDevice(user, i, ActivationStatus.CREATED));
@@ -74,7 +74,7 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	public void testSaveDevice() throws Exception {
+	public void testAddDevice() throws Exception {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
 
 		mockMvc.perform(post("/user/addDevice").content(json(createDevice(user, 0, ActivationStatus.CREATED)))
@@ -82,7 +82,7 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	public void testModifyUser() throws Exception {
+	public void testSetStatus() throws Exception {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.CREATED));
 		mockMvc.perform(put("/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER.toString()))
 				.andExpect(status().isOk());
@@ -108,6 +108,19 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
+	public void testUpdate() throws Exception {
+		User user = userRepository
+				.save(new User("email", "name", "password", UserRole.REGISTERED, ActivationStatus.CREATED));
+		User modifiedUser = new User("modifiedEmail", "modifiedName", "modifiedPassword", UserRole.KIOSK,
+				ActivationStatus.VERIFIED_BY_USER);
+		modifiedUser.setId(user.getId());
+
+		checkUser(mockMvc.perform(put("/user/update").contentType(contentType).content(json(modifiedUser)))
+				.andExpect(status().isOk()), modifiedUser, false, null);
+
+	}
+
+	@Test
 	public void testGet() throws Exception {
 		List<User> userList = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
@@ -123,7 +136,6 @@ public class UserServiceTest extends ProtocolTest {
 	@Test
 	public void testGetDevices() throws Exception {
 		List<UserDevice> devices = new ArrayList<>();
-
 		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.CREATED);
 		for (int i = 0; i < 15; i++) {
 			if (i % 3 == 0) {
@@ -167,6 +179,17 @@ public class UserServiceTest extends ProtocolTest {
 		assertThat(foundUser.getId(), Matchers.is(user.getId()));
 	}
 
+	@Test
+	public void testGetAll() throws Exception {
+		int users = 50;
+		for (int i = 0; i < users; i++) {
+			userRepository.save(createRandomUser());
+		}
+		mockMvc.perform(get("/user/getAll")).andExpect(status().isOk())
+				.andExpect(jsonPath("$.*", Matchers.hasSize(users)));
+		;
+	}
+
 	private void checkDevice(UserDevice device) {
 		try {
 			mockMvc.perform(get("/user/getDevice/" + device.getId())) //
@@ -181,24 +204,32 @@ public class UserServiceTest extends ProtocolTest {
 		}
 	}
 
+	private User createRandomUser() {
+		int i = new Random().nextInt(100000);
+		return new User("email " + i, "name_" + i, "password_" + i, UserRole.values()[i % 5],
+				ActivationStatus.values()[i % 5]);
+	}
+
 	private ResultActions checkUser(ResultActions resultActions, User user, boolean passwordEncoded,
 			ActionType actionType) throws Exception {
 		resultActions.andExpect(content().contentType(contentType)).andExpect(jsonPath("$.id").isNotEmpty())
 				.andExpect(jsonPath("$.email").value(user.getEmail()))
 				.andExpect(jsonPath("$.name").value(user.getName()))
 				.andExpect(jsonPath("$.role").value(user.getRole().ordinal()))
+
 				.andExpect(jsonPath("$.status").value(user.getStatus().toString()))
 		//
 		;
-//		if (!passwordEncoded) {
-//			resultActions.andExpect(jsonPath("$.password").value(user.getPassword()));
-//		}
+		// if (!passwordEncoded) {
+		// resultActions.andExpect(jsonPath("$.password").value(user.getPassword()));
+		// }
 
 		if (ActionType.CREATE.equals(actionType)) {
 			User createdUser = getResponseJson(resultActions, User.class);
 			resultActions.andExpect(jsonPath("$.id").value(createdUser.getId()));
-//			assertThat(new BCryptPasswordEncoder().matches(user.getPassword(), createdUser.getPassword()),
-//					Matchers.is(true));
+			// assertThat(new BCryptPasswordEncoder().matches(user.getPassword(),
+			// createdUser.getPassword()),
+			// Matchers.is(true));
 			checkProtocol(createdUser, actionType);
 		} else if (ActionType.MODIFY.equals(actionType) || ActionType.DELETE.equals(actionType)) {
 			checkProtocol(user, actionType);

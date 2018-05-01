@@ -1,11 +1,7 @@
 package de.tigges.tchreservation.user;
 
-import java.security.Principal;
 import java.util.Optional;
 
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -15,7 +11,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -28,7 +23,6 @@ import de.tigges.tchreservation.protocol.ProtocolRepository;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.User;
 import de.tigges.tchreservation.user.model.UserDevice;
-import de.tigges.tchreservation.user.model.UserRole;
 
 @RestController
 @RequestMapping("/user")
@@ -47,16 +41,21 @@ public class UserService extends UserAwareService {
 	}
 
 	@GetMapping("/me")
-	public User getMyUser(Principal principal) {
+	public User getMyUser() {
 		return getLoggedInUser();
 	}
 
-	@RequestMapping(path = "/get/{userId}", method = RequestMethod.GET)
+	@GetMapping("/getAll")
+	public @ResponseBody Iterable<User> getAll() {
+		return userRepository.findAll();
+	}
+	
+	@GetMapping("/get/{userId}")
 	public @ResponseBody Optional<User> get(@PathVariable Long userId) {
 		return userRepository.findById(userId);
 	}
 
-	@RequestMapping(path = "/getByDevice/{deviceId}", method = RequestMethod.GET)
+	@GetMapping("/getByDevice/{deviceId}")
 	public @ResponseBody User getByDevice(@PathVariable Long deviceId) {
 		UserDevice device = userDeviceRepository.findById(deviceId)
 				.orElseThrow(() -> new NotFoundException(EntityType.USER_DEVICE, deviceId));
@@ -66,12 +65,12 @@ public class UserService extends UserAwareService {
 		return user;
 	}
 
-	@RequestMapping(path = "/getDevice/{id}", method = RequestMethod.GET)
+	@GetMapping("/getDevice/{id}")
 	public @ResponseBody Optional<UserDevice> findDeviceById(@PathVariable Long id) {
 		return userDeviceRepository.findById(id);
 	}
 
-	@RequestMapping(path = "/add", method = RequestMethod.POST)
+	@PostMapping("/add")
 	public @ResponseBody User add(@RequestBody User user) {
 		checkUser(user);
 		String cryptedPassword = encoder.encode(user.getPassword());
@@ -87,14 +86,14 @@ public class UserService extends UserAwareService {
 		return savedUser;
 	}
 
-	@PostMapping(path = "/addDevice")
+	@PostMapping("/addDevice")
 	public @ResponseBody UserDevice add(@RequestBody UserDevice userDevice) {
 		UserDevice savedDevice = userDeviceRepository.save(userDevice);
 		protocolRepository.save(new Protocol(savedDevice, ActionType.CREATE, userDevice.getUser()));
 		return savedDevice;
 	}
 
-	@PutMapping(path = "/setStatus/{userId}/{status}")
+	@PutMapping("/setStatus/{userId}/{status}")
 	public @ResponseBody void setStatus(@PathVariable long userId, @PathVariable ActivationStatus status) {
 		User user = get(userId).orElseThrow(() -> new NotFoundException(EntityType.USER, userId));
 		user.setStatus(status);
@@ -102,7 +101,7 @@ public class UserService extends UserAwareService {
 		protocolRepository.save(new Protocol(user, ActionType.MODIFY, user));
 	}
 
-	@PutMapping(path = "/setDeviceStatus/{id}/{status}")
+	@PutMapping("/setDeviceStatus/{id}/{status}")
 	public @ResponseBody void setDeviceStatus(@PathVariable long id, @PathVariable ActivationStatus status) {
 		UserDevice device = userDeviceRepository.findById(id)
 				.orElseThrow(() -> new NotFoundException(EntityType.USER_DEVICE, id));
@@ -110,13 +109,21 @@ public class UserService extends UserAwareService {
 		userDeviceRepository.save(device);
 		protocolRepository.save(new Protocol(device, ActionType.MODIFY, device.getUser()));
 	}
+	
+	@PutMapping("/update")
+	public @ResponseBody void update(@RequestBody User user) {
+		User dbUser = get(user.getId()).orElseThrow(() -> new NotFoundException(EntityType.USER, user.getId()));
+		user.setId(dbUser.getId());
+		User savedUser = userRepository.save(user);
+		protocolRepository.save(new Protocol(user, ActionType.MODIFY, savedUser));
+	}
 
-	@DeleteMapping(path = "/{userId}")
+	@DeleteMapping("/{userId}")
 	public @ResponseBody void delete(@PathVariable long userId) {
 		setStatus(userId, ActivationStatus.REMOVED);
 	}
 
-	@DeleteMapping(path = "/device/{id}")
+	@DeleteMapping("/device/{id}")
 	public @ResponseBody void deleteDevice(@PathVariable long id) {
 		setDeviceStatus(id, ActivationStatus.REMOVED);
 	}
