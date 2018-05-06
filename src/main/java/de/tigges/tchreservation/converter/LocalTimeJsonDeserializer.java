@@ -15,9 +15,14 @@ public class LocalTimeJsonDeserializer extends JsonDeserializer<LocalTime> {
 	@Override
 	public LocalTime deserialize(JsonParser p, DeserializationContext ctxt)
 			throws IOException, JsonProcessingException {
-		if (p.currentToken().asByteArray().length == 0) {
+		if (p.currentToken().isNumeric()) {
+			return Instant.ofEpochMilli(p.getLongValue()).atZone(ZoneId.systemDefault()).toLocalTime();
+		}
+
+		if (p.currentToken().asByteArray() == null || p.currentToken().asByteArray().length == 0) {
 			return null;
 		}
-		return Instant.ofEpochMilli(p.getLongValue()).atZone(ZoneId.systemDefault()).toLocalTime();
+		
+		throw new IllegalArgumentException("cannot convert token to Local Time");
 	}
 }
