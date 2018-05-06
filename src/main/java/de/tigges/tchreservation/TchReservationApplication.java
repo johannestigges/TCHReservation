@@ -27,6 +27,14 @@ public class TchReservationApplication // implements WebMvcConfigurer
 //        };
 //    }
 	
+	/**
+	 * register my date converters
+	 * 
+	 * all date and time data is transferred in json as unix epoch timestamps
+	 * (milliseconds since 1970-01-01)
+	 *
+	 * return {@link Jackson2ObjectMapperBuilder}
+	 */
 	@Bean public Jackson2ObjectMapperBuilder objectMapperBuilder() {
 		Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
 		builder.serializerByType(LocalDate.class, new LocalDateJsonSerializer());

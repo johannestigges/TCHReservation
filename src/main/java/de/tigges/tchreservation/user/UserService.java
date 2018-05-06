@@ -49,7 +49,7 @@ public class UserService extends UserAwareService {
 	public @ResponseBody Iterable<User> getAll() {
 		return userRepository.findAll();
 	}
-	
+
 	@GetMapping("/get/{userId}")
 	public @ResponseBody Optional<User> get(@PathVariable Long userId) {
 		return userRepository.findById(userId);
@@ -109,7 +109,7 @@ public class UserService extends UserAwareService {
 		userDeviceRepository.save(device);
 		protocolRepository.save(new Protocol(device, ActionType.MODIFY, device.getUser()));
 	}
-	
+
 	@PutMapping("/update")
 	public @ResponseBody void update(@RequestBody User user) {
 		User dbUser = get(user.getId()).orElseThrow(() -> new NotFoundException(EntityType.USER, user.getId()));
@@ -134,6 +134,11 @@ public class UserService extends UserAwareService {
 		}
 		if (user.getEmail() == null) {
 			throw new BadRequestException("no email");
+		}
+		Optional<User> dbUser = userRepository.findByNameOrEmail(user.getName(), user.getEmail());
+		if (dbUser.isPresent() && dbUser.get().getId() != user.getId()) {
+			throw new BadRequestException(String.format("user with name '%s' and/or email '%s' already exists.",
+					user.getName(), user.getEmail()));
 		}
 	}
 }
