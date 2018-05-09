@@ -1,7 +1,5 @@
 package de.tigges.tchreservation.user.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public enum UserRole {
     /**
      * user not logged in, no user data, no rights
