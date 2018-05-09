@@ -110,7 +110,7 @@ public class UserService extends UserAwareService {
 		protocolRepository.save(new Protocol(device, ActionType.MODIFY, device.getUser()));
 	}
 
-	@PutMapping("/update")
+	@PutMapping("/")
 	public @ResponseBody void update(@RequestBody User user) {
 		User dbUser = get(user.getId()).orElseThrow(() -> new NotFoundException(EntityType.USER, user.getId()));
 		user.setId(dbUser.getId());

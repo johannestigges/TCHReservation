@@ -1,5 +1,7 @@
 package de.tigges.tchreservation.user.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import de.tigges.tchreservation.user.ActivationStatusException;
 
 /**
