@@ -15,11 +15,11 @@ import java.util.Random;
 
 import org.hamcrest.Matchers;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.ResultActions;
@@ -54,9 +54,12 @@ public class UserServiceTest extends ProtocolTest {
 		this.protocolRepository.deleteAll();
 		this.userDeviceRepository.deleteAll();
 		this.userRepository.deleteAll();
+		addUser(UserRole.ADMIN, ActivationStatus.ACTIVE);
+		addUser(UserRole.REGISTERED, ActivationStatus.ACTIVE);
 	}
 
 	@Test
+	@WithMockUser(username = "ADMIN", roles = { "ADMIN" })
 	public void testAddUser() throws Exception {
 		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE);
 		checkUser(mockMvc.perform(post("/user/add").content(json(user)).contentType(contentType))
@@ -64,6 +67,7 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
+	@WithMockUser(username = "ADMIN", roles = { "ADMIN" })
 	public void testAddUserWithDevices() throws Exception {
 		User user = createUser(0, UserRole.ADMIN, ActivationStatus.CREATED);
 		for (int i = 0; i < 5; i++) {
@@ -75,6 +79,7 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
+	@WithMockUser(username = "ADMIN", roles = { "ADMIN" })
 	public void testAddDevice() throws Exception {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
 
@@ -83,6 +88,7 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
+	@WithMockUser(username = "ADMIN", roles = { "ADMIN" })
 	public void testSetStatus() throws Exception {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.CREATED));
 		mockMvc.perform(put("/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER.toString()))
@@ -92,6 +98,7 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
+	@WithMockUser(username = "ADMIN", roles = { "ADMIN" })
 	public void testStatus() throws Exception {
 		User user = userRepository
 				.save(new User("email", "name", "password", UserRole.REGISTERED, ActivationStatus.CREATED));
@@ -108,8 +115,8 @@ public class UserServiceTest extends ProtocolTest {
 				.andExpect(status().isOk());
 	}
 
-	@Ignore
 	@Test
+	@WithMockUser(username = "ADMIN", roles = { "ADMIN" })
 	public void testUpdate() throws Exception {
 		User user = userRepository
 				.save(new User("email", "name", "password", UserRole.REGISTERED, ActivationStatus.CREATED));
@@ -117,12 +124,11 @@ public class UserServiceTest extends ProtocolTest {
 				ActivationStatus.VERIFIED_BY_USER);
 		modifiedUser.setId(user.getId());
 
-		checkUser(mockMvc.perform(put("/user/update").contentType(contentType).content(json(modifiedUser)))
-				.andExpect(status().isOk()), modifiedUser, false, null);
-
+		mockMvc.perform(put("/user/").contentType(contentType).content(json(modifiedUser))).andExpect(status().isOk());
 	}
 
 	@Test
+	@WithMockUser(username = "ADMIN", roles = { "ADMIN" })
 	public void testGet() throws Exception {
 		List<User> userList = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
@@ -136,6 +142,7 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
+	@WithMockUser(username = "ADMIN", roles = { "ADMIN" })
 	public void testGetDevices() throws Exception {
 		List<UserDevice> devices = new ArrayList<>();
 		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.CREATED);
@@ -150,6 +157,7 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
+	@WithMockUser(username = "ADMIN", roles = { "ADMIN" })
 	public void testGetByDevice() throws Exception {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.CREATED));
 		UserDevice device0 = userDeviceRepository.save(createDevice(user, 0, ActivationStatus.CREATED));
@@ -166,6 +174,7 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
+	@WithMockUser(username = "ADMIN", roles = { "ADMIN" })
 	public void testGetByName() throws Exception {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
 		User foundUser = userRepository.findByNameOrEmail(user.getName(), "")
@@ -174,6 +183,7 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
+	@WithMockUser(username = "ADMIN", roles = { "ADMIN" })
 	public void testGetByEMail() throws Exception {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
 		User foundUser = userRepository.findByNameOrEmail("", user.getEmail())
@@ -182,14 +192,21 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
+	@WithMockUser(username = "ADMIN", roles = { "ADMIN" })
 	public void testGetAll() throws Exception {
 		int users = 50;
 		for (int i = 0; i < users; i++) {
 			userRepository.save(createRandomUser());
 		}
 		mockMvc.perform(get("/user/getAll")).andExpect(status().isOk())
-				.andExpect(jsonPath("$.*", Matchers.hasSize(users)));
+				.andExpect(jsonPath("$.*", Matchers.hasSize(users + 2)));
 		;
+	}
+
+	@Test
+	@WithMockUser(username = "REGISTERED", roles = { "REGISTERED" })
+	public void testGetAllWithoutAuthentication() throws Exception {
+		mockMvc.perform(get("/user/getAll")).andExpect(status().isForbidden());
 	}
 
 	private void checkDevice(UserDevice device) {
@@ -217,9 +234,9 @@ public class UserServiceTest extends ProtocolTest {
 		resultActions.andExpect(content().contentType(contentType)).andExpect(jsonPath("$.id").isNotEmpty())
 				.andExpect(jsonPath("$.email").value(user.getEmail()))
 				.andExpect(jsonPath("$.name").value(user.getName()))
-				.andExpect(jsonPath("$.role").value(user.getRole().ordinal()))
+				.andExpect(jsonPath("$.role").value(user.getRole().name()))
 
-				.andExpect(jsonPath("$.status").value(user.getStatus().toString()))
+				.andExpect(jsonPath("$.status").value(user.getStatus().name()))
 		//
 		;
 		// if (!passwordEncoded) {

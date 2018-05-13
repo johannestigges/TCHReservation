@@ -9,8 +9,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Transient;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import de.tigges.tchreservation.EntityType;
 import de.tigges.tchreservation.protocol.ProtocolEntity;
 
@@ -131,10 +129,13 @@ public class User implements ProtocolEntity {
 
 	@Override
 	public String toProtocol() {
-		// @formatter:off
-		return toProtocol("name", name, "email", email, "password", password, "role", role.name(), "status",
-				status.name());
-		// @formatter:on
+		return toProtocol(
+				"name", name, 
+				"email", email, 
+				"password", password, 
+				"role", role.name(), 
+				"status", status.name()
+				);
 	}
 
 	@Override

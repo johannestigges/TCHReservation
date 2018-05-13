@@ -1,7 +1,6 @@
 package de.tigges.tchreservation;
 
 import static org.junit.Assert.assertNotNull;
-import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -15,8 +14,10 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.mock.http.MockHttpInputMessage;
 import org.springframework.mock.http.MockHttpOutputMessage;
+import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 public class ServiceTest {
@@ -43,7 +44,10 @@ public class ServiceTest {
 	
 	@Before
 	public void setupServiceTest() throws Exception {
-		this.mockMvc = webAppContextSetup(webApplicationContext).build();
+		 this.mockMvc = MockMvcBuilders
+		            .webAppContextSetup(webApplicationContext)
+		            .apply(SecurityMockMvcConfigurers.springSecurity())  
+		            .build();
 	}
 	
 	protected String json(Object o) throws IOException {

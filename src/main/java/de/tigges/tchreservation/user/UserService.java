@@ -72,15 +72,16 @@ public class UserService extends UserAwareService {
 
 	@PostMapping("/add")
 	public @ResponseBody User add(@RequestBody User user) {
+		User loggedInUser = getLoggedInUser();
 		checkUser(user);
 		String cryptedPassword = encoder.encode(user.getPassword());
 		user.setPassword(cryptedPassword);
 		User savedUser = userRepository.save(user);
-		protocolRepository.save(new Protocol(savedUser, ActionType.CREATE, savedUser));
+		protocolRepository.save(new Protocol(savedUser, ActionType.CREATE, loggedInUser));
 		user.getDevices().forEach(device -> {
 			device.setUser(savedUser);
 			UserDevice savedDevice = userDeviceRepository.save(device);
-			protocolRepository.save(new Protocol(savedDevice, ActionType.CREATE, savedUser));
+			protocolRepository.save(new Protocol(savedDevice, ActionType.CREATE, loggedInUser));
 			savedUser.getDevices().add(savedDevice);
 		});
 		return savedUser;
@@ -89,7 +90,7 @@ public class UserService extends UserAwareService {
 	@PostMapping("/addDevice")
 	public @ResponseBody UserDevice add(@RequestBody UserDevice userDevice) {
 		UserDevice savedDevice = userDeviceRepository.save(userDevice);
-		protocolRepository.save(new Protocol(savedDevice, ActionType.CREATE, userDevice.getUser()));
+		protocolRepository.save(new Protocol(savedDevice, ActionType.CREATE, getLoggedInUser()));
 		return savedDevice;
 	}
 
@@ -98,7 +99,7 @@ public class UserService extends UserAwareService {
 		User user = get(userId).orElseThrow(() -> new NotFoundException(EntityType.USER, userId));
 		user.setStatus(status);
 		userRepository.save(user);
-		protocolRepository.save(new Protocol(user, ActionType.MODIFY, user));
+		protocolRepository.save(new Protocol(user, ActionType.MODIFY, getLoggedInUser()));
 	}
 
 	@PutMapping("/setDeviceStatus/{id}/{status}")
@@ -107,15 +108,14 @@ public class UserService extends UserAwareService {
 				.orElseThrow(() -> new NotFoundException(EntityType.USER_DEVICE, id));
 		device.setStatus(status);
 		userDeviceRepository.save(device);
-		protocolRepository.save(new Protocol(device, ActionType.MODIFY, device.getUser()));
+		protocolRepository.save(new Protocol(device, ActionType.MODIFY, getLoggedInUser()));
 	}
 
 	@PutMapping("/")
 	public @ResponseBody void update(@RequestBody User user) {
-		User dbUser = get(user.getId()).orElseThrow(() -> new NotFoundException(EntityType.USER, user.getId()));
-		user.setId(dbUser.getId());
-		User savedUser = userRepository.save(user);
-		protocolRepository.save(new Protocol(user, ActionType.MODIFY, savedUser));
+		get(user.getId()).orElseThrow(() -> new NotFoundException(EntityType.USER, user.getId()));
+		userRepository.save(user);
+		protocolRepository.save(new Protocol(user, ActionType.MODIFY, getLoggedInUser()));
 	}
 
 	@DeleteMapping("/{userId}")

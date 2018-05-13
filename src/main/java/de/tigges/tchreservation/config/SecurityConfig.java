@@ -18,6 +18,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 						"/actuator/**", "/api-docs/**", 
 						"/mvc/**", "/angular/**",
 						"/reservation/getOccupations/**").permitAll()
+				.antMatchers("/user/**").hasRole("ADMIN")
 				.anyRequest().authenticated()
 			.and().formLogin().permitAll()
 			.and().logout().permitAll()
