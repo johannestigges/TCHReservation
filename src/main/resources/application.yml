@@ -23,3 +23,14 @@ spring:
 #  level:
 #    org.springframework.web.filter.CommonsRequestLoggingFilter: DEBUG
       
+server:
+  port: "8443"
+  ssl:
+    key-store-type: "PKCS12"
+    key-store: "classpath:keystore.p12"
+    key-store-password: "knofensa"
+    key-alias: "tomcat"
+  
+security:
+  require-ssl: true
+  

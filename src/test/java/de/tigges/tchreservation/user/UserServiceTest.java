@@ -59,7 +59,7 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN", roles = { "ADMIN" })
+	@WithMockUser(username = "ADMIN")
 	public void testAddUser() throws Exception {
 		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE);
 		checkUser(mockMvc.perform(post("/user/add").content(json(user)).contentType(contentType))
@@ -67,7 +67,7 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN", roles = { "ADMIN" })
+	@WithMockUser(username = "ADMIN")
 	public void testAddUserWithDevices() throws Exception {
 		User user = createUser(0, UserRole.ADMIN, ActivationStatus.CREATED);
 		for (int i = 0; i < 5; i++) {
@@ -79,7 +79,7 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN", roles = { "ADMIN" })
+	@WithMockUser(username = "ADMIN")
 	public void testAddDevice() throws Exception {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
 
@@ -88,7 +88,7 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN", roles = { "ADMIN" })
+	@WithMockUser(username = "ADMIN")
 	public void testSetStatus() throws Exception {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.CREATED));
 		mockMvc.perform(put("/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER.toString()))
@@ -98,7 +98,7 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN", roles = { "ADMIN" })
+	@WithMockUser(username = "ADMIN")
 	public void testStatus() throws Exception {
 		User user = userRepository
 				.save(new User("email", "name", "password", UserRole.REGISTERED, ActivationStatus.CREATED));
@@ -116,7 +116,7 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN", roles = { "ADMIN" })
+	@WithMockUser(username = "ADMIN")
 	public void testUpdate() throws Exception {
 		User user = userRepository
 				.save(new User("email", "name", "password", UserRole.REGISTERED, ActivationStatus.CREATED));
@@ -128,7 +128,7 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN", roles = { "ADMIN" })
+	@WithMockUser(username = "ADMIN")
 	public void testGet() throws Exception {
 		List<User> userList = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
@@ -142,7 +142,7 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN", roles = { "ADMIN" })
+	@WithMockUser(username = "ADMIN")
 	public void testGetDevices() throws Exception {
 		List<UserDevice> devices = new ArrayList<>();
 		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.CREATED);
@@ -157,7 +157,7 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN", roles = { "ADMIN" })
+	@WithMockUser(username = "ADMIN")
 	public void testGetByDevice() throws Exception {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.CREATED));
 		UserDevice device0 = userDeviceRepository.save(createDevice(user, 0, ActivationStatus.CREATED));
@@ -174,7 +174,7 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN", roles = { "ADMIN" })
+	@WithMockUser(username = "ADMIN")
 	public void testGetByName() throws Exception {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
 		User foundUser = userRepository.findByNameOrEmail(user.getName(), "")
@@ -183,7 +183,7 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN", roles = { "ADMIN" })
+	@WithMockUser(username = "ADMIN")
 	public void testGetByEMail() throws Exception {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
 		User foundUser = userRepository.findByNameOrEmail("", user.getEmail())
@@ -192,7 +192,7 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN", roles = { "ADMIN" })
+	@WithMockUser(username = "ADMIN")
 	public void testGetAll() throws Exception {
 		int users = 50;
 		for (int i = 0; i < users; i++) {
@@ -204,9 +204,9 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "REGISTERED", roles = { "REGISTERED" })
+	@WithMockUser(username = "REGISTERED")
 	public void testGetAllWithoutAuthentication() throws Exception {
-		mockMvc.perform(get("/user/getAll")).andExpect(status().isForbidden());
+		mockMvc.perform(get("/user/getAll")).andExpect(status().isUnauthorized());
 	}
 
 	private void checkDevice(UserDevice device) {
