@@ -6,10 +6,12 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -52,15 +54,17 @@ public class ReservationService extends UserAwareService {
 	private OccupationRepository occupationRepository;
 	private ReservationSystemConfigRepository systemConfigRepository;
 	private ProtocolRepository protocolRepository;
+	private MessageSource messageSource;
 
 	public ReservationService(ReservationRepository reservationRepository, OccupationRepository occupationRepository,
 			ReservationSystemConfigRepository systemConfigRepository, UserRepository userRepository,
-			ProtocolRepository protocolRepository) {
+			ProtocolRepository protocolRepository, MessageSource messageSource) {
 		super(userRepository);
 		this.reservationRepository = reservationRepository;
 		this.occupationRepository = occupationRepository;
 		this.systemConfigRepository = systemConfigRepository;
 		this.protocolRepository = protocolRepository;
+		this.messageSource = messageSource;
 	}
 
 	@PostMapping("/add")
@@ -111,120 +115,116 @@ public class ReservationService extends UserAwareService {
 	 * @return error message or OK
 	 */
 	private void checkReservation(Reservation reservation, User loggedInUser) {
-		
+
 		ErrorDetails errorDetails = new ErrorDetails("error validation reservation", null);
 
 		// data consistency checks
 		if (reservation == null) {
-			throw new BadRequestException("no reservation data");
+			throw new BadRequestException(msg("error_no_reservation_data"));
 		}
 
 		if (isEmpty(reservation.getText())) {
-			addReservationFieldError(errorDetails, "text", "null value not allowed");
+			addReservationFieldError(errorDetails, "text", msg("error_null_not_allowed"));
 		}
 
 		if (reservation.getSystemConfigId() <= 0) {
-			throw new BadRequestException("no reservation system");
+			throw new BadRequestException(msg("error_no_reservation_system"));
 		}
 
 		ReservationSystemConfig systemConfig = systemConfigRepository.get(reservation.getSystemConfigId());
 
 		if (reservation.getUser() == null || reservation.getUser().getId() <= 0) {
-			throw new BadRequestException("no user");
+			throw new BadRequestException(msg("error_no_user"));
 		}
 		User user = userRepository.findById(reservation.getUser().getId())
 				.orElseThrow(() -> new NotFoundException(EntityType.USER, reservation.getUser().getId()));
 		reservation.setUser(user);
 		LocalDate date = reservation.getDate();
 		if (date == null) {
-			addReservationFieldError(errorDetails, "date", "null value not allowed");
+			addReservationFieldError(errorDetails, "date", msg("error_null_not_allowed"));
 		} else if (date.isBefore(LocalDate.now())) {
-			addReservationFieldError(errorDetails, "date", "date in the past is not allowed");
+			addReservationFieldError(errorDetails, "date", msg("error_date_in_the_past"));
 		}
 
 		LocalTime start = reservation.getStart();
 		if (start == null) {
-			addReservationFieldError(errorDetails, "start", "null value not allowed");
+			addReservationFieldError(errorDetails, "start", msg("error_null_not_allowed"));
 		}
 
 		if (date != null && start != null) {
 			if (date.isEqual(LocalDate.now()) && start.isBefore(LocalTime.now())) {
-				addReservationFieldError(errorDetails, "time", "start time in the past is not allowed");
+				addReservationFieldError(errorDetails, "time", msg("error_start_time_in_the_past"));
 			}
 
 			if (start.getHour() < systemConfig.getOpeningHour()) {
-				addReservationFieldError(errorDetails, "start",
-						String.format("start hour %02d:00 before opening hour %02d:00 not allowed", start.getHour(),
-								systemConfig.getOpeningHour()));
+				addReservationFieldError(errorDetails, "start", String.format(msg("error_start_hour_before_opening"),
+						start.getHour(), systemConfig.getOpeningHour()));
 			}
 
 			if (start.getHour() > systemConfig.getClosingHour()) {
-				addReservationFieldError(errorDetails, "start",
-						String.format("start hour %02d:00 after closing hour %02d:00 not allowed", //
-								start.getHour(), systemConfig.getClosingHour()));
+				addReservationFieldError(errorDetails, "start", String.format(msg("error_start_hour_after_closing"),
+						start.getHour(), systemConfig.getClosingHour()));
 			}
 
 			if (start.getMinute() != 0 && start.getMinute() % systemConfig.getDurationUnitInMinutes() != 0) {
 				addReservationFieldError(errorDetails, "start",
-						String.format("start time with %d minutes not allowed", start.getMinute()));
+						String.format(msg("error_start_time_minutes"), start.getMinute()));
 			}
 
 			if (LocalTime.of(start.getHour(), start.getMinute())
 					.plusMinutes(reservation.getDuration() * systemConfig.getDurationUnitInMinutes())
 					.isAfter(LocalTime.of(systemConfig.getClosingHour(), 0))) {
-				addReservationFieldError(errorDetails, "start", "starttime plus duration greater than closing hour.");
+				addReservationFieldError(errorDetails, "start", msg("error_start_time_plus_duration"));
 			}
 		}
 
 		if (reservation.getDuration() < 1) {
-			addReservationFieldError(errorDetails, "duration", "duration must be greater than 0");
+			addReservationFieldError(errorDetails, "duration", msg("error_duration_too_small"));
 		}
 
 		if (reservation.getCourts() == null) {
-			addReservationFieldError(errorDetails, "court", "null value not allowed");
+			addReservationFieldError(errorDetails, "court", msg("error_null_not_allowed"));
 		}
 
 		int[] courts = reservation.courtsArray();
 
 		if (courts.length < 1) {
-			addReservationFieldError(errorDetails, "court", "null value not allowed");
+			addReservationFieldError(errorDetails, "court", msg("error_null_not_allowed"));
 		}
 
 		if (courts.length > systemConfig.getCourts()) {
 			addReservationFieldError(errorDetails, "court",
-					String.format("more than %d courts not allowed", systemConfig.getCourts()));
+					String.format(msg("error_court_too_big"), systemConfig.getCourts()));
 		}
 
 		for (int i = 0; i < courts.length; i++) {
 			if (courts[i] < 1) {
 				addReservationFieldError(errorDetails, "court",
-						String.format("court[%d]: %d < 1 not allowed", i, courts[i]));
+						String.format(msg("error_court_n_too_small"), i, courts[i]));
 			}
 			if (courts[i] > systemConfig.getCourts()) {
 				addReservationFieldError(errorDetails, "court",
-						String.format("court[%d]: %d > %d not allowed", i, courts[i], systemConfig.getCourts()));
+						String.format(msg("error_court_n_too_big"), i, courts[i], systemConfig.getCourts()));
 			}
 		}
 
 		// authorization checks
 		if (loggedInUser.hasRole(UserRole.ANONYMOUS)) {
-			throw new AuthorizationException("user with role ANONYMOUS cannot add reservation.");
+			throw new AuthorizationException(msg("error_anonymous_cannot_add"));
 		}
 
 		if (!ActivationStatus.ACTIVE.equals(loggedInUser.getStatus())) {
-			throw new AuthorizationException(String.format("user %s is not active.", loggedInUser.getName()));
+			throw new AuthorizationException(String.format(msg("error_user_not_active"), loggedInUser.getName()));
 		}
 
 		if (loggedInUser.hasRole(UserRole.REGISTERED)) {
 			if (!ReservationType.INDIVIDUAL.equals(reservation.getType())) {
-				throw new AuthorizationException(
-						String.format("user %s with role REGISTERED cannot add reservation of type %s.", loggedInUser.getName(),
-								reservation.getType()));
+				throw new AuthorizationException(String.format(msg("error_registered_cannot_add_type"),
+						loggedInUser.getName(), reservation.getType()));
 			}
 			if (reservation.getDuration() > 3) {
-				throw new AuthorizationException(
-						String.format("user %s with role REGISTERED cannot add reservation with duration %d.",
-								loggedInUser.getName(), reservation.getDuration()));
+				throw new AuthorizationException(String.format(msg("error_registered_cannot_add_duration"),
+						loggedInUser.getName(), reservation.getDuration()));
 			}
 		}
 		if (!errorDetails.getFieldErrors().isEmpty()) {
@@ -335,8 +335,7 @@ public class ReservationService extends UserAwareService {
 		// check time overlap
 		if (o1.getStart().isBefore(getEnd(o2)) && getEnd(o1).isAfter(o2.getStart())) {
 			throw new BadRequestException(
-					String.format("cannot add occupation on %tF %tR becauce court %d ist occupied.", o1.getDate(),
-							o1.getStart(), o1.getCourt()));
+					String.format(msg("error_occupied"), o1.getDate(), o1.getStart(), o1.getCourt()));
 		}
 	}
 
@@ -348,5 +347,9 @@ public class ReservationService extends UserAwareService {
 
 	private boolean isEmpty(String s) {
 		return s == null || s.trim().isEmpty();
+	}
+
+	private String msg(String code, Object... args) {
+		return messageSource.getMessage(code, args, Locale.getDefault());
 	}
 }
