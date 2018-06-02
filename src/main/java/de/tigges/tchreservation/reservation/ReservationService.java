@@ -142,8 +142,9 @@ public class ReservationService extends UserAwareService {
 		LocalDate date = reservation.getDate();
 		if (date == null) {
 			addReservationFieldError(errorDetails, "date", msg("error_null_not_allowed"));
-		} else if (date.isBefore(LocalDate.now())) {
-			addReservationFieldError(errorDetails, "date", msg("error_date_in_the_past"));
+			// reservation in the past ist allowed...
+//		} else if (date.isBefore(LocalDate.now())) {
+//			addReservationFieldError(errorDetails, "date", msg("error_date_in_the_past"));
 		}
 
 		LocalTime start = reservation.getStart();

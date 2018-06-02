@@ -1,6 +1,7 @@
 package de.tigges.tchreservation.user.model;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.persistence.Column;
@@ -17,11 +18,11 @@ public class User implements ProtocolEntity {
 
 	public User() {
 	}
-	
+
 	public User(long id) {
 		this.id = id;
 	}
-	
+
 	public User(String id) {
 		this.id = Integer.parseInt(id);
 	}
@@ -38,9 +39,27 @@ public class User implements ProtocolEntity {
 		this(user.getEmail(), user.getName(), user.getPassword(), user.getRole(), user.getStatus());
 		setId(user.getId());
 	}
-	
+
 	public static User anonymous() {
 		return new User("", "", "", UserRole.ANONYMOUS, ActivationStatus.ACTIVE);
+	}
+
+	public User hidePassword() {
+		this.password = null;
+		return this;
+	}
+	public static Optional<User> hidePassword(Optional<User> user) {
+		if (user.isPresent()) {
+			user.get().hidePassword();
+		}
+		return user;
+	}
+
+	public static Iterable<User> hidePasswords(Iterable<User> users) {
+		if (users != null) {
+			users.forEach(User::hidePassword);
+		}
+		return users;
 	}
 
 	@Id
@@ -129,13 +148,8 @@ public class User implements ProtocolEntity {
 
 	@Override
 	public String toProtocol() {
-		return toProtocol(
-				"name", name, 
-				"email", email, 
-				"password", password, 
-				"role", role.name(), 
-				"status", status.name()
-				);
+		return toProtocol("name", name, "email", email, "password", password, "role", role.name(), "status",
+				status.name());
 	}
 
 	@Override

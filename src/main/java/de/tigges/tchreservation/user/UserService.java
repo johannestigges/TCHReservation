@@ -44,20 +44,20 @@ public class UserService extends UserAwareService {
 
 	@GetMapping("/me")
 	public User getMyUser() {
-		return getLoggedInUser();
+		return getLoggedInUser().hidePassword();
 	}
 
 	@GetMapping("/getAll")
 	public @ResponseBody Iterable<User> getAll() {
 		if (!isAdmin(getLoggedInUser())) throw new AuthorizationException("not authorized");
-		return userRepository.findAll();
+		return User.hidePasswords(userRepository.findAll());
 	}
 
 	@GetMapping("/get/{userId}")
 	public @ResponseBody Optional<User> get(@PathVariable Long userId) {
 		User user = getLoggedInUser();
 		if (!isAdmin(user) && !is(user, userId)) throw new AuthorizationException("not authorized");
-		return userRepository.findById(userId);
+		return User.hidePassword(userRepository.findById(userId));
 	}
 
 	@GetMapping("/getByDevice/{deviceId}")
@@ -68,6 +68,7 @@ public class UserService extends UserAwareService {
 		User user = userRepository.findById(device.getUser().getId())
 				.orElseThrow(() -> new NotFoundException(EntityType.USER, device.getUser().getId()));
 		user.getDevices().add(device);
+		user.hidePassword();
 		return user;
 	}
 
@@ -130,7 +131,15 @@ public class UserService extends UserAwareService {
 	public @ResponseBody void update(@RequestBody User user) {
 		User loggedInUser = getLoggedInUser();
 		if (!isAdmin(loggedInUser) && !is(loggedInUser, user.getId())) throw new AuthorizationException("not authorized");
-		get(user.getId()).orElseThrow(() -> new NotFoundException(EntityType.USER, user.getId()));
+		User dbUser = userRepository.findById(user.getId())
+				.orElseThrow(() -> new NotFoundException(EntityType.USER, user.getId()));
+		
+		if (user.getPassword() == null || user.getPassword().isEmpty()) {
+			user.setPassword(dbUser.getPassword());
+		} else {
+			user.setPassword(encoder.encode(user.getPassword()));
+		}
+		
 		userRepository.save(user);
 		protocolRepository.save(new Protocol(user, ActionType.MODIFY, loggedInUser));
 	}

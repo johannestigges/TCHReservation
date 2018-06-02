@@ -35,7 +35,17 @@ public class ReservationController {
 	
 		table.show(reservationService.getOccupations(systemConfigId, date), localDate);
 		model.addAttribute("table", table.getTable());
+		model.addAttribute("courts", courts(config.getCourts()));
 
 		return "reservation";
+	}
+	
+	private String[] courts(int courts) {
+		String[] result = new String[courts];
+		for (int i=0;i<courts;i++) {
+			result[i] = "" + (i+1);
+		}
+		return result;
+		
 	}
 }
