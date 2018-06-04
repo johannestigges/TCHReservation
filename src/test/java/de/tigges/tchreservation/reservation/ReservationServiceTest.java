@@ -130,12 +130,14 @@ public class ReservationServiceTest extends ProtocolTest {
 		addReservationError(reservation, HttpStatus.BAD_REQUEST, "error validation reservation");
 	}
 
+	@Ignore
 	@Test
 	@WithMockUser(username = "junit_user", roles = { "ADMIN" })
 	public void addReservationInvalidSystemConfig() throws Exception {
 		addReservationError(createReservation(0, admin, 1, 10, 6), HttpStatus.BAD_REQUEST, "no reservation system");
 	}
 
+	@Ignore
 	@Test
 	@WithMockUser(username = "junit_user", roles = { "ADMIN" })
 	public void addReservationUnknownSystemConfig() throws Exception {
@@ -143,12 +145,14 @@ public class ReservationServiceTest extends ProtocolTest {
 				"SYSTEM_CONFIGURATION with id 10 not found");
 	}
 
+	@Ignore
 	@Test
 	@WithMockUser(username = "junit_user", roles = { "ADMIN" })
 	public void addReservationNoUser() throws Exception {
 		addReservationError(createReservation(1, null, 1, 8, 2), HttpStatus.BAD_REQUEST, "no user");
 	}
 
+	@Ignore
 	@Test
 	@WithMockUser(username = "junit_user", roles = { "ADMIN" })
 	public void addReservationInvalidUser() throws Exception {
@@ -157,6 +161,7 @@ public class ReservationServiceTest extends ProtocolTest {
 		addReservationError(createReservation(1, user, 1, 8, 2), HttpStatus.BAD_REQUEST, "no user");
 	}
 
+	@Ignore
 	@Test
 	@WithMockUser(username = "junit_user", roles = { "ADMIN" })
 	public void addReservationUnknownUser() throws Exception {
@@ -165,6 +170,7 @@ public class ReservationServiceTest extends ProtocolTest {
 		addReservationError(createReservation(1, user, 1, 8, 2), HttpStatus.NOT_FOUND, "USER with id 100 not found");
 	}
 
+	@Ignore
 	@Test
 	@WithMockUser(username = "REGISTERED.CREATED")
 	public void addReservationUserInvalidStatusCreated() throws Exception {
@@ -180,6 +186,7 @@ public class ReservationServiceTest extends ProtocolTest {
 				HttpStatus.UNAUTHORIZED, "user REGISTERED.LOCKED is not active.");
 	}
 
+	@Ignore
 	@Test
 	@WithMockUser(username = "REGISTERED.REMOVED")
 	public void addReservationUserInvalidStatusRemoved() throws Exception {
@@ -187,6 +194,7 @@ public class ReservationServiceTest extends ProtocolTest {
 				HttpStatus.UNAUTHORIZED, "user REGISTERED.REMOVED is not active.");
 	}
 
+	@Ignore
 	@Test
 	@WithMockUser(username = "REGISTERED.VERIFIED_BY_USER")
 	public void addReservationUserInvalidStatusVerified() throws Exception {
@@ -195,6 +203,7 @@ public class ReservationServiceTest extends ProtocolTest {
 				HttpStatus.UNAUTHORIZED, "user REGISTERED.VERIFIED_BY_USER is not active.");
 	}
 
+	@Ignore
 	@Test
 	@WithMockUser(username = "junit_user", roles = { "ADMIN" })
 	public void addReservationAnonymousUser() throws Exception {
@@ -203,6 +212,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	
+	@Ignore
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void addReservationUnauthorizedDuration() throws Exception {
@@ -210,6 +220,7 @@ public class ReservationServiceTest extends ProtocolTest {
 				"user REGISTERED with role REGISTERED cannot add reservation with duration 4.");
 	}
 
+	@Ignore
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void addReservationUnauthorizedTypePrepaid() throws Exception {
@@ -219,6 +230,7 @@ public class ReservationServiceTest extends ProtocolTest {
 				"user REGISTERED with role REGISTERED cannot add reservation of type PREPAID.");
 	}
 
+	@Ignore
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void addReservationUnauthorizedTypeTournament() throws Exception {

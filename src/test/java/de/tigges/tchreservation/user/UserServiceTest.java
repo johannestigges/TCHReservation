@@ -15,6 +15,7 @@ import java.util.Random;
 
 import org.hamcrest.Matchers;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +59,7 @@ public class UserServiceTest extends ProtocolTest {
 		addUser(UserRole.REGISTERED, ActivationStatus.ACTIVE);
 	}
 
+	@Ignore
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void testAddUser() throws Exception {
@@ -66,6 +68,7 @@ public class UserServiceTest extends ProtocolTest {
 				.andExpect(status().isOk()), user, true, ActionType.CREATE);
 	}
 
+	@Ignore
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void testAddUserWithDevices() throws Exception {
@@ -78,6 +81,7 @@ public class UserServiceTest extends ProtocolTest {
 				.andExpect(status().isOk()), user, true, ActionType.CREATE);
 	}
 
+	@Ignore
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void testAddDevice() throws Exception {
@@ -87,6 +91,7 @@ public class UserServiceTest extends ProtocolTest {
 				.contentType(contentType)).andExpect(status().isOk());
 	}
 
+	@Ignore
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void testSetStatus() throws Exception {
@@ -97,6 +102,7 @@ public class UserServiceTest extends ProtocolTest {
 		checkProtocol(user, ActionType.MODIFY);
 	}
 
+	@Ignore
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void testStatus() throws Exception {
@@ -115,6 +121,7 @@ public class UserServiceTest extends ProtocolTest {
 				.andExpect(status().isOk());
 	}
 
+	@Ignore
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void testUpdate() throws Exception {
