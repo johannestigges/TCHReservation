@@ -116,7 +116,7 @@ public class ReservationService extends UserAwareService {
 	 */
 	private void checkReservation(Reservation reservation, User loggedInUser) {
 
-		ErrorDetails errorDetails = new ErrorDetails("error validation reservation", null);
+		ErrorDetails errorDetails = new ErrorDetails(msg("error_validation_reservation"), null);
 
 		// data consistency checks
 		if (reservation == null) {
