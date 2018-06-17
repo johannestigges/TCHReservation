@@ -26,6 +26,18 @@ public class Protocol {
 		setUser(user);
 	}
 
+	/**
+	 * Constructor for {@link ActionType#MODIFY}
+	 * 
+	 * @param entity
+	 * @param oldEntity
+	 * @param user
+	 */
+	public Protocol(ProtocolEntity entity, ProtocolEntity oldEntity, User user) {
+		this(entity, ActionType.MODIFY, user);
+		this.setOldValue(oldEntity.toProtocol());
+	}
+
 	@Id
 	@GeneratedValue
 	private long id;

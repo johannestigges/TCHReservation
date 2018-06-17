@@ -13,10 +13,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -70,13 +72,11 @@ public class ReservationService extends UserAwareService {
 	@PostMapping("/add")
 	@ResponseStatus(HttpStatus.CREATED)
 	public @ResponseBody Reservation addReservation(@RequestBody Reservation reservation) {
-		logger.info("add reservation {} ", reservation.getText());
+		logger.info("add reservation {}", reservation.getText());
 		User loggedInUser = getLoggedInUser();
 
 		// check reservation data consistency
 		checkReservation(reservation, loggedInUser);
-
-		// check Authorization
 
 		// create and check Occupations
 		List<Occupation> occupations = createOccupations(reservation);
@@ -92,6 +92,26 @@ public class ReservationService extends UserAwareService {
 		return savedReservation;
 	}
 
+	@PutMapping("/update")
+	@Transactional
+	public void updateReservation(@RequestBody Reservation reservation) {
+		logger.info("update reservation {}", reservation.getText());
+		Reservation dbReservation = reservationRepository.findById(reservation.getId())
+				.orElseThrow(() -> new NotFoundException(EntityType.RESERVATION, reservation.getId()));
+
+		User loggedInUser = getLoggedInUser();
+
+		// check reservation data consistency
+		checkReservation(reservation, loggedInUser);
+		List<Occupation> occupations = createOccupations(reservation);
+		occupations.forEach(o -> checkOccupation(o, loggedInUser));
+
+		reservationRepository.save(reservation);
+		protocolRepository.save(new Protocol(reservation, dbReservation, loggedInUser));
+		occupationRepository.deleteByReservationId(reservation.getId());
+		occupations.forEach(o -> saveOccupation(o, loggedInUser));
+	}
+
 	@DeleteMapping("/delete/{id}")
 	@ResponseStatus(HttpStatus.OK)
 	public void delete(@PathVariable long id) {
@@ -103,6 +123,52 @@ public class ReservationService extends UserAwareService {
 		occupationRepository.findByReservationId(id).forEach(o -> deleteOccupation(o, loggedInUser));
 		reservationRepository.delete(reservation);
 		protocolRepository.save(new Protocol(reservation, ActionType.DELETE, loggedInUser));
+	}
+
+	/**
+	 * get one reservation by key
+	 * 
+	 * @param reservationId
+	 * @return all reservations belonging to that user
+	 */
+	@GetMapping("/get/{id}")
+	public Optional<Reservation> getReservation(@PathVariable long id) {
+		logger.info("get reservation ()", id);
+		Optional<Reservation> reservation = reservationRepository.findById(id);
+		return reservation;
+	}
+
+	/**
+	 * get all occupations
+	 * 
+	 * @return list of all occupations for one day
+	 */
+	@GetMapping("/getOccupations/{systemConfigId}/{date}")
+	public Iterable<Occupation> getOccupations(@PathVariable Long systemConfigId, @PathVariable Long date) {
+		LocalDate searchDate;
+		if (date == null || date.equals(0)) {
+			searchDate = LocalDate.now();
+		} else {
+			searchDate = Instant.ofEpochMilli(date).atZone(ZoneId.systemDefault()).toLocalDate();
+		}
+		logger.info("get occupations date {} ({})", searchDate.toString(), date);
+		return occupationRepository.findBySystemConfigIdAndDate(systemConfigId, searchDate);
+	}
+
+	/**
+	 * get the reservation system configuration
+	 * 
+	 * @param systemId
+	 * @return
+	 */
+	@GetMapping("/getSystemConfig/{id}")
+	public @ResponseBody ReservationSystemConfig getSystemConfig(@RequestParam long id) {
+		return systemConfigRepository.get(id);
+	}
+
+	private void saveOccupation(Occupation o, User user) {
+		Occupation savedOccupation = occupationRepository.save(o);
+		protocolRepository.save(new Protocol(savedOccupation, ActionType.CREATE, user));
 	}
 
 	/**
@@ -143,8 +209,9 @@ public class ReservationService extends UserAwareService {
 		if (date == null) {
 			addReservationFieldError(errorDetails, "date", msg("error_null_not_allowed"));
 			// reservation in the past ist allowed...
-//		} else if (date.isBefore(LocalDate.now())) {
-//			addReservationFieldError(errorDetails, "date", msg("error_date_in_the_past"));
+			// } else if (date.isBefore(LocalDate.now())) {
+			// addReservationFieldError(errorDetails, "date",
+			// msg("error_date_in_the_past"));
 		}
 
 		LocalTime start = reservation.getStart();
@@ -233,52 +300,6 @@ public class ReservationService extends UserAwareService {
 		}
 	}
 
-	/**
-	 * get all occupations
-	 * 
-	 * @return list of all occupations for one day
-	 */
-	@GetMapping("/getOccupations/{systemConfigId}/{date}")
-	public Iterable<Occupation> getOccupations(@PathVariable Long systemConfigId, @PathVariable Long date) {
-		LocalDate searchDate;
-		if (date == null || date.equals(0)) {
-			searchDate = LocalDate.now();
-		} else {
-			searchDate = Instant.ofEpochMilli(date).atZone(ZoneId.systemDefault()).toLocalDate();
-		}
-		logger.info("get occupations date {} ({})", searchDate.toString(), date);
-		return occupationRepository.findBySystemConfigIdAndDate(systemConfigId, searchDate);
-	}
-
-	/**
-	 * get one reservation by key
-	 * 
-	 * @param reservationId
-	 * @return all reservations belonging to that user
-	 */
-	@GetMapping("/get/{id}")
-	public Optional<Reservation> getReservation(@PathVariable long id) {
-		logger.info("get reservation ()", id);
-		Optional<Reservation> reservation = reservationRepository.findById(id);
-		return reservation;
-	}
-
-	/**
-	 * get the reservation system configuration
-	 * 
-	 * @param systemId
-	 * @return
-	 */
-	@GetMapping("/getSystemConfig/{id}")
-	public @ResponseBody ReservationSystemConfig getSystemConfig(@RequestParam long id) {
-		return systemConfigRepository.get(id);
-	}
-
-	private void saveOccupation(Occupation o, User user) {
-		Occupation savedOccupation = occupationRepository.save(o);
-		protocolRepository.save(new Protocol(savedOccupation, ActionType.CREATE, user));
-	}
-
 	private void deleteOccupation(Occupation occupation, User user) {
 		occupationRepository.delete(occupation);
 		protocolRepository.save(new Protocol(occupation, ActionType.DELETE, user));
@@ -325,6 +346,9 @@ public class ReservationService extends UserAwareService {
 
 	private void checkOverlap(Occupation o1, Occupation o2) {
 		if (o1.getSystemConfigId() != o2.getSystemConfigId()) {
+			return;
+		}
+		if (o1.getReservation().getId() == o2.getReservation().getId()) {
 			return;
 		}
 		if (o1.getCourt() != o2.getCourt()) {
