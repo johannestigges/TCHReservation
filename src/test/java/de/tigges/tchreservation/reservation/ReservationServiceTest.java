@@ -1,6 +1,7 @@
 package de.tigges.tchreservation.reservation;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -249,9 +250,23 @@ public class ReservationServiceTest extends ProtocolTest {
 		addReservationError(reservation, HttpStatus.UNAUTHORIZED,
 				"user REGISTERED.ACTIVE with role REGISTERED cannot add reservation of type TRAINER.");
 	}
+	
+	@Ignore
+	@Test
+	@WithMockUser(username = "junit_user", roles = { "ADMIN" })
+	public void updateReservation() throws Exception {
+		Reservation reservation = createReservation(1, user, 1, 12, 2);
+		addReservation(reservation);
+		reservation.setDuration(6);
+		updateReservation();
+	}
 
 	private ResultActions addReservationNoCheck(Reservation reservation) throws Exception {
-		return mockMvc.perform(post("/reservation/add").content(this.json(reservation)).contentType(contentType));
+		return mockMvc.perform(post("/reservation/add").content(json(reservation)).contentType(contentType));
+	}
+	
+	private ResultActions updateReservation(Reservation reservation) throws Exception {
+		return mockMvc.perform(put("/reservation/update").content(json(reservation)).contentType(contentType));
 	}
 
 	private ResultActions addReservation(Reservation reservation) throws Exception {
@@ -272,6 +287,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	private ResultActions checkReservation(ResultActions resultActions, Reservation reservation, ActionType actionType)
 			throws Exception {
 		if (ActionType.CREATE.equals(actionType)) {
+			resultActions.andExpect(status().is(HttpStatus.CREATED.value()));
 			Reservation createdReservation = jsonObject(resultActions.andReturn().getResponse().getContentAsByteArray(),
 					Reservation.class);
 			resultActions.andExpect(jsonPath("$.id").value(createdReservation.getId()));
