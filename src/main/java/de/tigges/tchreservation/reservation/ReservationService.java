@@ -208,10 +208,6 @@ public class ReservationService extends UserAwareService {
 		LocalDate date = reservation.getDate();
 		if (date == null) {
 			addReservationFieldError(errorDetails, "date", msg("error_null_not_allowed"));
-			// reservation in the past ist allowed...
-			// } else if (date.isBefore(LocalDate.now())) {
-			// addReservationFieldError(errorDetails, "date",
-			// msg("error_date_in_the_past"));
 		}
 
 		LocalTime start = reservation.getStart();
@@ -220,10 +216,6 @@ public class ReservationService extends UserAwareService {
 		}
 
 		if (date != null && start != null) {
-			if (date.isEqual(LocalDate.now()) && start.isBefore(LocalTime.now())) {
-				addReservationFieldError(errorDetails, "time", msg("error_start_time_in_the_past"));
-			}
-
 			if (start.getHour() < systemConfig.getOpeningHour()) {
 				addReservationFieldError(errorDetails, "start", String.format(msg("error_start_hour_before_opening"),
 						start.getHour(), systemConfig.getOpeningHour()));
@@ -285,16 +277,29 @@ public class ReservationService extends UserAwareService {
 			throw new AuthorizationException(String.format(msg("error_user_not_active"), loggedInUser.getName()));
 		}
 
-		if (loggedInUser.hasRole(UserRole.REGISTERED)) {
+		if (loggedInUser.hasRole(UserRole.REGISTERED, UserRole.KIOSK)) {
+			// only reservation type individual allowed
 			if (!ReservationType.INDIVIDUAL.equals(reservation.getType())) {
-				throw new AuthorizationException(String.format(msg("error_registered_cannot_add_type"),
+				addReservationFieldError(errorDetails, "type", String.format(msg("error_registered_cannot_add_type"),
 						loggedInUser.getName(), reservation.getType()));
 			}
+
+			// only duration <=3 is allowed
 			if (reservation.getDuration() > 3) {
-				throw new AuthorizationException(String.format(msg("error_registered_cannot_add_duration"),
-						loggedInUser.getName(), reservation.getDuration()));
+				addReservationFieldError(errorDetails, "duration",
+						String.format(msg("error_registered_cannot_add_duration"), loggedInUser.getName(),
+								reservation.getDuration()));
+			}
+
+			// reservation in the past is not allowed
+			if (date.isBefore(LocalDate.now())) {
+				addReservationFieldError(errorDetails, "date", msg("error_date_in_the_past"));
+			}
+			if (date.isEqual(LocalDate.now()) && start.isBefore(LocalTime.now())) {
+				addReservationFieldError(errorDetails, "time", msg("error_start_time_in_the_past"));
 			}
 		}
+
 		if (!errorDetails.getFieldErrors().isEmpty()) {
 			throw new InvalidDataException(errorDetails);
 		}
@@ -318,7 +323,7 @@ public class ReservationService extends UserAwareService {
 	 * 
 	 * TODO: handle multiple courts
 	 * 
-	 * TODO: handle repeat weekly until
+	 * TODO: handle weekly repeat
 	 * 
 	 * @param reservation
 	 * @return list of created occupations
