@@ -29,7 +29,7 @@ import org.springframework.web.context.WebApplicationContext;
  */
 public class ServiceTest {
 
-	private MediaType contentType = new MediaType(MediaType.APPLICATION_JSON.getType(),
+	private MediaType contentTypeJson = new MediaType(MediaType.APPLICATION_JSON.getType(),
 			MediaType.APPLICATION_JSON.getSubtype(), Charset.forName("utf8"));
 
 	private MockMvc mockMvc;
@@ -37,11 +37,11 @@ public class ServiceTest {
 	private HttpMessageConverter<Object> mappingJackson2HttpMessageConverter;
 
 	@Autowired
-	protected WebApplicationContext webApplicationContext;
+	private WebApplicationContext webApplicationContext;
 
 	@SuppressWarnings("unchecked")
 	@Autowired
-	void setConverters(HttpMessageConverter<?>[] converters) {
+	private void setConverters(HttpMessageConverter<?>[] converters) {
 
 		this.mappingJackson2HttpMessageConverter = (HttpMessageConverter<Object>) Arrays.asList(converters).stream()
 				.filter(hmc -> hmc instanceof MappingJackson2HttpMessageConverter).findAny().orElse(null);
@@ -107,7 +107,7 @@ public class ServiceTest {
 	 * @throws Exception
 	 */
 	public ResultActions performPost(String url, Object content) throws Exception {
-		return mockMvc.perform(post(url).content(json(content)).contentType(contentType).with(csrf()));
+		return mockMvc.perform(post(url).content(json(content)).contentType(contentTypeJson).with(csrf()));
 	}
 
 	/**
@@ -130,7 +130,7 @@ public class ServiceTest {
 	 * @throws Exception
 	 */
 	public ResultActions performPut(String url, Object content) throws Exception {
-		return mockMvc.perform(put(url).content(json(content)).contentType(contentType).with(csrf()));
+		return mockMvc.perform(put(url).content(json(content)).contentType(contentTypeJson).with(csrf()));
 	}
 
 	/**
