@@ -11,10 +11,10 @@ import de.tigges.tchreservation.user.model.UserRole;
 public class UserTest extends ServiceTest {
 
 	@Autowired
-	UserService userService;
+	protected UserService userService;
 	
 	@Autowired
-	UserRepository userRepository;
+	protected UserRepository userRepository;
 	
 	public User addUser(UserRole role, ActivationStatus status) {
 		String userName = role.name();

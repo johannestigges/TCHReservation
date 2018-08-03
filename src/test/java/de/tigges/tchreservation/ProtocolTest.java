@@ -15,7 +15,7 @@ import de.tigges.tchreservation.protocol.ProtocolRepository;
 public class ProtocolTest extends UserTest {
 
 	@Autowired
-	ProtocolRepository protocolRepository;
+	protected ProtocolRepository protocolRepository;
 
 	public void checkProtocol(ProtocolEntity entity, ActionType actionType) {
 		Iterable<Protocol> protocols = protocolRepository.findByEntityTypeAndEntityId(entity.protocolEntityType(),

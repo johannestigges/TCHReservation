@@ -2,6 +2,7 @@ package de.tigges.tchreservation.user;
 
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -15,7 +16,6 @@ import java.util.Random;
 
 import org.hamcrest.Matchers;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +30,6 @@ import de.tigges.tchreservation.ProtocolTest;
 import de.tigges.tchreservation.TchReservationApplication;
 import de.tigges.tchreservation.exception.NotFoundException;
 import de.tigges.tchreservation.protocol.ActionType;
-import de.tigges.tchreservation.protocol.ProtocolRepository;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.User;
 import de.tigges.tchreservation.user.model.UserDevice;
@@ -42,13 +41,7 @@ import de.tigges.tchreservation.user.model.UserRole;
 public class UserServiceTest extends ProtocolTest {
 
 	@Autowired
-	private UserRepository userRepository;
-
-	@Autowired
 	private UserDeviceRepository userDeviceRepository;
-
-	@Autowired
-	private ProtocolRepository protocolRepository;
 
 	@Before
 	public void setup() throws Exception {
@@ -59,16 +52,14 @@ public class UserServiceTest extends ProtocolTest {
 		addUser(UserRole.REGISTERED, ActivationStatus.ACTIVE);
 	}
 
-	@Ignore
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void testAddUser() throws Exception {
 		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE);
-		checkUser(mockMvc.perform(post("/user/add").content(json(user)).contentType(contentType))
+		checkUser(mockMvc.perform(post("/user/add").content(json(user)).contentType(contentType).with(csrf()))
 				.andExpect(status().isOk()), user, true, ActionType.CREATE);
 	}
 
-	@Ignore
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void testAddUserWithDevices() throws Exception {
@@ -77,51 +68,48 @@ public class UserServiceTest extends ProtocolTest {
 			user.getDevices().add(createDevice(user, i, ActivationStatus.CREATED));
 		}
 
-		checkUser(mockMvc.perform(post("/user/add").content(json(user)).contentType(contentType))//
+		checkUser(mockMvc.perform(post("/user/add").content(json(user)).contentType(contentType).with(csrf()))//
 				.andExpect(status().isOk()), user, true, ActionType.CREATE);
 	}
 
-	@Ignore
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void testAddDevice() throws Exception {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
 
 		mockMvc.perform(post("/user/addDevice").content(json(createDevice(user, 0, ActivationStatus.CREATED)))
-				.contentType(contentType)).andExpect(status().isOk());
+				.contentType(contentType).with(csrf())).andExpect(status().isOk());
 	}
 
-	@Ignore
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void testSetStatus() throws Exception {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.CREATED));
-		mockMvc.perform(put("/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER.toString()))
-				.andExpect(status().isOk());
+		mockMvc.perform(put("/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER.toString())
+				.with(csrf())).andExpect(status().isOk());
 		user.setStatus(ActivationStatus.VERIFIED_BY_USER);
+		user.setPassword(null); // don't check password
 		checkProtocol(user, ActionType.MODIFY);
 	}
 
-	@Ignore
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void testStatus() throws Exception {
 		User user = userRepository
 				.save(new User("email", "name", "password", UserRole.REGISTERED, ActivationStatus.CREATED));
 
-		mockMvc.perform(put("/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER.toString()))
+		mockMvc.perform(put("/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER.toString()).with(csrf()))
 				.andExpect(status().isOk());
-		mockMvc.perform(put("/user/setStatus/" + user.getId() + "/" + ActivationStatus.ACTIVE.toString()))
+		mockMvc.perform(put("/user/setStatus/" + user.getId() + "/" + ActivationStatus.ACTIVE.toString()).with(csrf()))
 				.andExpect(status().isOk());
-		mockMvc.perform(put("/user/setStatus/" + user.getId() + "/" + ActivationStatus.LOCKED.toString()))
+		mockMvc.perform(put("/user/setStatus/" + user.getId() + "/" + ActivationStatus.LOCKED.toString()).with(csrf()))
 				.andExpect(status().isOk());
-		mockMvc.perform(put("/user/setStatus/" + user.getId() + "/" + ActivationStatus.ACTIVE.toString()))
+		mockMvc.perform(put("/user/setStatus/" + user.getId() + "/" + ActivationStatus.ACTIVE.toString()).with(csrf()))
 				.andExpect(status().isOk());
-		mockMvc.perform(put("/user/setStatus/" + user.getId() + "/" + ActivationStatus.REMOVED.toString()))
+		mockMvc.perform(put("/user/setStatus/" + user.getId() + "/" + ActivationStatus.REMOVED.toString()).with(csrf()))
 				.andExpect(status().isOk());
 	}
 
-	@Ignore
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void testUpdate() throws Exception {
@@ -131,7 +119,7 @@ public class UserServiceTest extends ProtocolTest {
 				ActivationStatus.VERIFIED_BY_USER);
 		modifiedUser.setId(user.getId());
 
-		mockMvc.perform(put("/user/").contentType(contentType).content(json(modifiedUser))).andExpect(status().isOk());
+		mockMvc.perform(put("/user/").contentType(contentType).content(json(modifiedUser)).with(csrf())).andExpect(status().isOk());
 	}
 
 	@Test
@@ -143,7 +131,7 @@ public class UserServiceTest extends ProtocolTest {
 					new User("email " + i, "name " + i, "password", UserRole.REGISTERED, ActivationStatus.ACTIVE)));
 		}
 		for (int i = 0; i < userList.size(); i++) {
-			checkUser(mockMvc.perform(get("/user/get/" + userList.get(i).getId())).andExpect(status().isOk()),
+			checkUser(mockMvc.perform(get("/user/get/" + userList.get(i).getId()).with(csrf())).andExpect(status().isOk()),
 					userList.get(i), false, null);
 		}
 	}
