@@ -1,8 +1,5 @@
 package de.tigges.tchreservation.reservation;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -238,13 +235,11 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	private ResultActions addReservationNoCheck(Reservation reservation) throws Exception {
-		return mockMvc
-				.perform(post("/reservation/add").content(json(reservation)).contentType(contentType).with(csrf()));
+		return performPost("/reservation/add", reservation);
 	}
 
 	private ResultActions updateReservation(Reservation reservation) throws Exception {
-		return mockMvc
-				.perform(put("/reservation/update").content(json(reservation)).contentType(contentType).with(csrf()));
+		return performPut("/reservation/update", reservation);
 	}
 
 	private ResultActions addReservation(Reservation reservation) throws Exception {

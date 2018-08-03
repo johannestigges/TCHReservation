@@ -8,6 +8,9 @@ import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.User;
 import de.tigges.tchreservation.user.model.UserRole;
 
+/**
+ * base class for junit tests dealing with user data
+ */
 public class UserTest extends ServiceTest {
 
 	@Autowired
@@ -16,6 +19,13 @@ public class UserTest extends ServiceTest {
 	@Autowired
 	protected UserRepository userRepository;
 	
+	/**
+	 * add a user to database
+	 * 
+	 * @param role
+	 * @param status
+	 * @return inserted user
+	 */
 	public User addUser(UserRole role, ActivationStatus status) {
 		String userName = role.name();
 		if (!ActivationStatus.ACTIVE.equals(status)) {

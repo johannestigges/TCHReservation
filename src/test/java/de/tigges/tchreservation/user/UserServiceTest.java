@@ -2,11 +2,6 @@ package de.tigges.tchreservation.user;
 
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -56,8 +51,7 @@ public class UserServiceTest extends ProtocolTest {
 	@WithMockUser(username = "ADMIN")
 	public void testAddUser() throws Exception {
 		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE);
-		checkUser(mockMvc.perform(post("/user/add").content(json(user)).contentType(contentType).with(csrf()))
-				.andExpect(status().isOk()), user, true, ActionType.CREATE);
+		checkUser(performPost("/user/add", user).andExpect(status().isOk()), user, true, ActionType.CREATE);
 	}
 
 	@Test
@@ -68,8 +62,7 @@ public class UserServiceTest extends ProtocolTest {
 			user.getDevices().add(createDevice(user, i, ActivationStatus.CREATED));
 		}
 
-		checkUser(mockMvc.perform(post("/user/add").content(json(user)).contentType(contentType).with(csrf()))//
-				.andExpect(status().isOk()), user, true, ActionType.CREATE);
+		checkUser(performPost("/user/add", user).andExpect(status().isOk()), user, true, ActionType.CREATE);
 	}
 
 	@Test
@@ -77,16 +70,15 @@ public class UserServiceTest extends ProtocolTest {
 	public void testAddDevice() throws Exception {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
 
-		mockMvc.perform(post("/user/addDevice").content(json(createDevice(user, 0, ActivationStatus.CREATED)))
-				.contentType(contentType).with(csrf())).andExpect(status().isOk());
+		performPost("/user/addDevice", createDevice(user, 0, ActivationStatus.CREATED)).andExpect(status().isOk());
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void testSetStatus() throws Exception {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.CREATED));
-		mockMvc.perform(put("/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER.toString())
-				.with(csrf())).andExpect(status().isOk());
+		performPut("/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER.toString())
+				.andExpect(status().isOk());
 		user.setStatus(ActivationStatus.VERIFIED_BY_USER);
 		user.setPassword(null); // don't check password
 		checkProtocol(user, ActionType.MODIFY);
@@ -98,15 +90,15 @@ public class UserServiceTest extends ProtocolTest {
 		User user = userRepository
 				.save(new User("email", "name", "password", UserRole.REGISTERED, ActivationStatus.CREATED));
 
-		mockMvc.perform(put("/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER.toString()).with(csrf()))
+		performPut("/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER.toString())
 				.andExpect(status().isOk());
-		mockMvc.perform(put("/user/setStatus/" + user.getId() + "/" + ActivationStatus.ACTIVE.toString()).with(csrf()))
+		performPut("/user/setStatus/" + user.getId() + "/" + ActivationStatus.ACTIVE.toString())
 				.andExpect(status().isOk());
-		mockMvc.perform(put("/user/setStatus/" + user.getId() + "/" + ActivationStatus.LOCKED.toString()).with(csrf()))
+		performPut("/user/setStatus/" + user.getId() + "/" + ActivationStatus.LOCKED.toString())
 				.andExpect(status().isOk());
-		mockMvc.perform(put("/user/setStatus/" + user.getId() + "/" + ActivationStatus.ACTIVE.toString()).with(csrf()))
+		performPut("/user/setStatus/" + user.getId() + "/" + ActivationStatus.ACTIVE.toString())
 				.andExpect(status().isOk());
-		mockMvc.perform(put("/user/setStatus/" + user.getId() + "/" + ActivationStatus.REMOVED.toString()).with(csrf()))
+		performPut("/user/setStatus/" + user.getId() + "/" + ActivationStatus.REMOVED.toString())
 				.andExpect(status().isOk());
 	}
 
@@ -119,7 +111,7 @@ public class UserServiceTest extends ProtocolTest {
 				ActivationStatus.VERIFIED_BY_USER);
 		modifiedUser.setId(user.getId());
 
-		mockMvc.perform(put("/user/").contentType(contentType).content(json(modifiedUser)).with(csrf())).andExpect(status().isOk());
+		performPut("/user/", modifiedUser).andExpect(status().isOk());
 	}
 
 	@Test
@@ -131,8 +123,8 @@ public class UserServiceTest extends ProtocolTest {
 					new User("email " + i, "name " + i, "password", UserRole.REGISTERED, ActivationStatus.ACTIVE)));
 		}
 		for (int i = 0; i < userList.size(); i++) {
-			checkUser(mockMvc.perform(get("/user/get/" + userList.get(i).getId()).with(csrf())).andExpect(status().isOk()),
-					userList.get(i), false, null);
+			checkUser(performGet("/user/get/" + userList.get(i).getId()).andExpect(status().isOk()), userList.get(i),
+					false, null);
 		}
 	}
 
@@ -159,13 +151,11 @@ public class UserServiceTest extends ProtocolTest {
 		UserDevice device1 = userDeviceRepository.save(createDevice(user, 1, ActivationStatus.CREATED));
 
 		user.getDevices().add(device0);
-		checkUser(mockMvc.perform(get("/user/getByDevice/" + device0.getId())).andExpect(status().isOk()), user, false,
-				null);
+		checkUser(performGet("/user/getByDevice/" + device0.getId()).andExpect(status().isOk()), user, false, null);
 
 		user.getDevices().clear();
 		user.getDevices().add(device1);
-		checkUser(mockMvc.perform(get("/user/getByDevice/" + device1.getId())).andExpect(status().isOk()), user, false,
-				null);
+		checkUser(performGet("/user/getByDevice/" + device1.getId()).andExpect(status().isOk()), user, false, null);
 	}
 
 	@Test
@@ -193,20 +183,18 @@ public class UserServiceTest extends ProtocolTest {
 		for (int i = 0; i < users; i++) {
 			userRepository.save(createRandomUser());
 		}
-		mockMvc.perform(get("/user/getAll")).andExpect(status().isOk())
-				.andExpect(jsonPath("$.*", Matchers.hasSize(users + 2)));
-		;
+		performGet("/user/getAll").andExpect(status().isOk()).andExpect(jsonPath("$.*", Matchers.hasSize(users + 2)));
 	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void testGetAllWithoutAuthentication() throws Exception {
-		mockMvc.perform(get("/user/getAll")).andExpect(status().isUnauthorized());
+		performGet("/user/getAll").andExpect(status().isUnauthorized());
 	}
 
 	private void checkDevice(UserDevice device) {
 		try {
-			mockMvc.perform(get("/user/getDevice/" + device.getId())) //
+			performGet("/user/getDevice/" + device.getId()) //
 					.andExpect(status().isOk()) //
 					.andExpect(jsonPath("$.deviceId").value(device.getDeviceId()))
 					.andExpect(jsonPath("$.publicKey").value(device.getPublicKey()))
@@ -226,7 +214,7 @@ public class UserServiceTest extends ProtocolTest {
 
 	private ResultActions checkUser(ResultActions resultActions, User user, boolean passwordEncoded,
 			ActionType actionType) throws Exception {
-		resultActions.andExpect(content().contentType(contentType)).andExpect(jsonPath("$.id").isNotEmpty())
+		resultActions.andExpect(jsonPath("$.id").isNotEmpty())
 				.andExpect(jsonPath("$.email").value(user.getEmail()))
 				.andExpect(jsonPath("$.name").value(user.getName()))
 				.andExpect(jsonPath("$.role").value(user.getRole().name()))
