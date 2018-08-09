@@ -3,14 +3,15 @@ package de.tigges.tchreservation;
 import static org.junit.Assert.assertThat;
 
 import java.util.Iterator;
+import java.util.Map;
 
 import org.hamcrest.Matchers;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tigges.tchreservation.protocol.ActionType;
 import de.tigges.tchreservation.protocol.Protocol;
-import de.tigges.tchreservation.protocol.ProtocolEntity;
 import de.tigges.tchreservation.protocol.ProtocolRepository;
+import de.tigges.tchreservation.protocol.Protocollable;
 
 /**
  * base class for unit tests dealing with protocol data
@@ -26,7 +27,7 @@ public class ProtocolTest extends UserTest {
 	 * @param entity
 	 * @param actionType
 	 */
-	public void checkProtocol(ProtocolEntity entity, ActionType actionType) {
+	public void checkProtocol(Protocollable entity, ActionType actionType) {
 		Iterable<Protocol> protocols = protocolRepository.findByEntityTypeAndEntityId(entity.protocolEntityType(),
 				entity.protocolEntityId());
 		int found = 0;
@@ -35,7 +36,7 @@ public class ProtocolTest extends UserTest {
 			Protocol protocol = iter.next();
 			if (protocol.getActionType().equals(actionType)) {
 				found++;
-				checkProtocol(protocol, actionType, entity.toProtocol());
+				checkProtocolFields(protocol, actionType, entity.protocolFields());
 			}
 		}
 		assertThat(found, Matchers.is(1));
@@ -47,9 +48,7 @@ public class ProtocolTest extends UserTest {
 	 * @param actionType
 	 * @param value
 	 */
-	public void checkProtocol(Protocol p, ActionType actionType, String value) {
-		if (p.getActionType().equals(actionType)) {
-			assertThat(p.getValue(), Matchers.is(value));
-		}
+	public void checkProtocolFields(Protocol p, ActionType actionType, Map<String, String> value) {
+//			assertThat(p.getValue(), Matchers.is(value));
 	}
 }

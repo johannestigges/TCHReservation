@@ -2,6 +2,7 @@ package de.tigges.tchreservation.reservation.model;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Map;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -9,10 +10,10 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 
 import de.tigges.tchreservation.EntityType;
-import de.tigges.tchreservation.protocol.ProtocolEntity;
+import de.tigges.tchreservation.protocol.Protocollable;
 
 @Entity
-public class Occupation implements ProtocolEntity {
+public class Occupation implements Protocollable {
 
 	@Id
 	@GeneratedValue
@@ -115,8 +116,8 @@ public class Occupation implements ProtocolEntity {
 	}
 
 	@Override
-	public String toProtocol() {
-		return toProtocol(//
+	public Map<String, String> protocolFields() {
+		return protocolFields(//
 				"court", Integer.toString(court), //
 				"lastCourt", Integer.toString(lastCourt), //
 				"date", date.toString(), //

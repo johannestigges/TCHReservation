@@ -3,6 +3,7 @@ package de.tigges.tchreservation.reservation.model;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Arrays;
+import java.util.Map;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -10,11 +11,11 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 
 import de.tigges.tchreservation.EntityType;
-import de.tigges.tchreservation.protocol.ProtocolEntity;
+import de.tigges.tchreservation.protocol.Protocollable;
 import de.tigges.tchreservation.user.model.User;
 
 @Entity
-public class Reservation implements ProtocolEntity {
+public class Reservation implements Protocollable {
 
 	@Id
 	@GeneratedValue
@@ -34,7 +35,7 @@ public class Reservation implements ProtocolEntity {
 
 	public Reservation() {
 	}
-	
+
 	public Reservation(long systemConfigId, User user, String text, String courts, LocalDate date, LocalTime start,
 			int duration, ReservationType type) {
 		setSystemConfig(systemConfigId);
@@ -46,7 +47,7 @@ public class Reservation implements ProtocolEntity {
 		setDuration(duration);
 		setType(type);
 	}
-	
+
 	public long getId() {
 		return id;
 	}
@@ -128,9 +129,13 @@ public class Reservation implements ProtocolEntity {
 	}
 
 	@Override
-	public String toProtocol() {
-		return toProtocol("text", text, "date", date.toString(), "start", start.toString(), "duration",
-				Integer.toString(duration), "type", type.name(), "system config", Long.toString(systemConfigId));
+	public Map<String, String> protocolFields() {
+		return protocolFields("text", text, //
+				"date", date.toString(), //
+				"start", start.toString(), //
+				"duration", Integer.toString(duration), //
+				"type", type.name(), //
+				"system config", Long.toString(systemConfigId));
 	}
 
 	@Override
@@ -143,14 +148,14 @@ public class Reservation implements ProtocolEntity {
 		return id;
 	}
 
-	public void courts(int...courts) {
+	public void courts(int... courts) {
 		this.courts = toCourts(courts);
 	}
-	
-	public void addCourts(int...courts) {
+
+	public void addCourts(int... courts) {
 		this.courts = this.courts + ' ' + toCourts(courts);
 	}
-	
+
 	public int[] courtsArray() {
 		return toCourts(this.courts);
 	}

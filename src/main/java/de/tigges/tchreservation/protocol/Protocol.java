@@ -8,6 +8,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 
+import org.json.JSONObject;
+
 import de.tigges.tchreservation.EntityType;
 import de.tigges.tchreservation.user.model.User;
 
@@ -17,11 +19,11 @@ public class Protocol {
 	public Protocol() {
 	}
 
-	public Protocol(ProtocolEntity entity, ActionType actionType, User user) {
+	public Protocol(Protocollable entity, ActionType actionType, User user) {
 		setTime(LocalDateTime.now());
 		setEntityType(entity.protocolEntityType());
 		setEntityId(entity.protocolEntityId());
-		setValue(entity.toProtocol());
+		setValue(new JSONObject(entity.protocolFields()).toString());
 		setActionType(actionType);
 		setUser(user);
 	}
@@ -33,9 +35,9 @@ public class Protocol {
 	 * @param oldEntity
 	 * @param user
 	 */
-	public Protocol(ProtocolEntity entity, ProtocolEntity oldEntity, User user) {
+	public Protocol(Protocollable entity, Protocollable oldEntity, User user) {
 		this(entity, ActionType.MODIFY, user);
-		this.setOldValue(oldEntity.toProtocol());
+		this.setOldValue(new JSONObject(entity.protocolFields()).toString());
 	}
 
 	@Id

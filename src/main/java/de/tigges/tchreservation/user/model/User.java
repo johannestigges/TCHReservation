@@ -1,6 +1,7 @@
 package de.tigges.tchreservation.user.model;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -11,10 +12,10 @@ import javax.persistence.Id;
 import javax.persistence.Transient;
 
 import de.tigges.tchreservation.EntityType;
-import de.tigges.tchreservation.protocol.ProtocolEntity;
+import de.tigges.tchreservation.protocol.Protocollable;
 
 @Entity
-public class User implements ProtocolEntity {
+public class User implements Protocollable {
 
 	public User() {
 	}
@@ -48,6 +49,7 @@ public class User implements ProtocolEntity {
 		this.password = null;
 		return this;
 	}
+
 	public static Optional<User> hidePassword(Optional<User> user) {
 		if (user.isPresent()) {
 			user.get().hidePassword();
@@ -147,9 +149,13 @@ public class User implements ProtocolEntity {
 	}
 
 	@Override
-	public String toProtocol() {
-		return toProtocol("name", name, "email", email, "password", password, "role", role.name(), "status",
-				status.name());
+	public Map<String, String> protocolFields() {
+		return protocolFields(//
+				"name", name, //
+				"email", email, //
+				"password", password, //
+				"role", role.name(), //
+				"status", status.name());
 	}
 
 	@Override

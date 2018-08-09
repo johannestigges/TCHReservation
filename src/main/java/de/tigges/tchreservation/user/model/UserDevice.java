@@ -1,5 +1,7 @@
 package de.tigges.tchreservation.user.model;
 
+import java.util.Map;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -7,10 +9,10 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 
 import de.tigges.tchreservation.EntityType;
-import de.tigges.tchreservation.protocol.ProtocolEntity;
+import de.tigges.tchreservation.protocol.Protocollable;
 
 @Entity
-public class UserDevice implements ProtocolEntity {
+public class UserDevice implements Protocollable {
 
 	public UserDevice() {
 	}
@@ -26,16 +28,16 @@ public class UserDevice implements ProtocolEntity {
 	@GeneratedValue
 	private long id;
 
-	@ManyToOne(optional=false)
+	@ManyToOne(optional = false)
 	private User user;
 
-	@Column(nullable=true)
+	@Column(nullable = true)
 	private String deviceId; // unique device id, such as ISME or MAC address
-	
-	@Column(nullable=false)
+
+	@Column(nullable = false)
 	private ActivationStatus status;
-	
-	@Column(nullable=true)
+
+	@Column(nullable = true)
 	private String publicKey;
 
 	public long getId() {
@@ -68,7 +70,7 @@ public class UserDevice implements ProtocolEntity {
 	public ActivationStatus getStatus() {
 		return status;
 	}
-	
+
 	public void setStatus(ActivationStatus status) {
 		this.status = status;
 	}
@@ -82,12 +84,12 @@ public class UserDevice implements ProtocolEntity {
 	}
 
 	@Override
-	public String toProtocol() {
-		return toProtocol("user", user.getName(),
-				"deviceId", deviceId,
-				"publicKey", publicKey,
-				"status", status.name()
-				);
+	public Map<String, String> protocolFields() {
+		return protocolFields(//
+				"user", user.getName(), //
+				"deviceId", deviceId, //
+				"publicKey", publicKey, //
+				"status", status.name());
 	}
 
 	@Override

@@ -30,7 +30,7 @@ public class ReservationController {
 
 		ReservationSystemConfig config = systemRepository.get(systemConfigId);
 		OccupationTable table = new OccupationTable(config);
-		LocalDate localDate = date == null || date.equals(0) ? LocalDate.now()
+		LocalDate localDate = date == null || date.equals(0L) ? LocalDate.now()
 				: Instant.ofEpochMilli(date).atZone(TimeZone.getDefault().toZoneId()).toLocalDate();
 	
 		table.show(reservationService.getOccupations(systemConfigId, date), localDate);
