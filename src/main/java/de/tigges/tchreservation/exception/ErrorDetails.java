@@ -16,7 +16,7 @@ public class ErrorDetails {
 	public ErrorDetails(String message, String details) {
 		this();
 		this.message = message;
-		this.details = details;
+		this.setDetails(details);
 	}
 
 	public String getMessage() {
@@ -26,18 +26,29 @@ public class ErrorDetails {
 	public String getDetails() {
 		return details;
 	}
+
 	public void setDetails(String details) {
 		this.details = details;
 	}
+
 	public List<FieldError> getFieldErrors() {
 		return fieldErrors;
 	}
-	
+
 	@Override
 	public String toString() {
-		return "ErrorDetails: " + message 
-				+ " detail: " + details 
-				+ " [" + String.join(",", fieldErrors.stream().map(f -> f.toString()).collect(Collectors.toList())) + "]";
-		
+		StringBuilder sb = new StringBuilder("ErrorDetails: ");
+		sb.append(message);
+		if (getDetails() != null) {
+			sb.append(" details: ");
+			sb.append(getDetails());
+		}
+		if (fieldErrors != null && !fieldErrors.isEmpty()) {
+			sb.append(" [");
+			sb.append(String.join(",", fieldErrors.stream().map(f -> f.toString()).collect(Collectors.toList())));
+			sb.append(" ]");
+		}
+		return sb.toString();
 	}
+
 }
