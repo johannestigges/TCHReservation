@@ -19,7 +19,7 @@ public class FieldError {
 		this.message = message;
 	}
 
-	public String getentity() {
+	public String getEntity() {
 		return entity;
 	}
 
