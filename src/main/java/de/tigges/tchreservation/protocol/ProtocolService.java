@@ -1,7 +1,12 @@
 package de.tigges.tchreservation.protocol;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.print.attribute.standard.DateTimeAtCompleted;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,6 +27,12 @@ public class ProtocolService {
 	@GetMapping("/get")
 	public Iterable<Protocol> getAll() {
 		return Protocol.setFields(protocolRepository.findAll());
+	}
+	
+	@GetMapping("/get/{time}")
+	public Iterable<Protocol> getSince(Long time) {
+		LocalDateTime localDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(time), TimeZone.getDefault().toZoneId());
+		return Protocol.setFields(protocolRepository.findByTimeGreaterThan(localDateTime));
 	}
 
 	@GetMapping("/migrate")
