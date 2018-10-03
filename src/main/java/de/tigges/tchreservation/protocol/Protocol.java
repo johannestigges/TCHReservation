@@ -1,12 +1,15 @@
 package de.tigges.tchreservation.protocol;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
+import javax.persistence.Transient;
 
 import org.json.JSONObject;
 
@@ -53,6 +56,9 @@ public class Protocol {
 	private String oldValue;
 	@ManyToOne(optional = false)
 	private User user;
+
+	@Transient
+	private List<ProtocolField> fields;
 
 	public long getId() {
 		return id;
@@ -116,5 +122,37 @@ public class Protocol {
 
 	public void setOldValue(String oldValue) {
 		this.oldValue = oldValue;
+	}
+
+	public List<ProtocolField> getFields() {
+		return fields;
+	}
+
+	public static class ProtocolField {
+		public ProtocolField(String name, String value, String oldValue) {
+			this.name = name;
+			this.value = value;
+			this.oldValue = oldValue;
+		}
+
+		public String name;
+		public String value;
+		public String oldValue;
+	}
+
+	public static Iterable<Protocol> setFields(Iterable<Protocol> protocols) {
+		if (protocols != null) {
+			protocols.forEach(p -> p.setFields());
+		}
+		return protocols;
+	}
+	public static Optional<Protocol> setFields(Optional<Protocol> protocol) {
+		if (protocol.isPresent()) {
+			protocol.get().setFields();
+		}
+		return protocol;
+	}
+
+	private void setFields() {
 	}
 }
