@@ -19,7 +19,7 @@ public enum ActivationStatus {
 			checkStatusInRange(from, to, id, VERIFIED_BY_USER, CREATED);
 			checkStatusInRange(from, to, id, ACTIVE, VERIFIED_BY_USER, LOCKED, REMOVED);
 			checkStatusInRange(from, to, id, LOCKED, ACTIVE);
-			checkStatusInRange(from, to, id, ActivationStatus.REMOVED, ACTIVE);
+			checkStatusInRange(from, to, id, REMOVED, ACTIVE);
 		}
 	}
 

@@ -3,7 +3,6 @@ package de.tigges.tchreservation;
 import static org.junit.Assert.assertThat;
 
 import java.util.Iterator;
-import java.util.Map;
 
 import org.hamcrest.Matchers;
 import org.skyscreamer.jsonassert.JSONAssert;
@@ -13,7 +12,6 @@ import de.tigges.tchreservation.protocol.ActionType;
 import de.tigges.tchreservation.protocol.Protocol;
 import de.tigges.tchreservation.protocol.ProtocolRepository;
 import de.tigges.tchreservation.protocol.Protocollable;
-import net.minidev.json.JSONObject;
 
 /**
  * base class for unit tests dealing with protocol data

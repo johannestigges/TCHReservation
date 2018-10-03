@@ -13,6 +13,7 @@ public class ReservationSystemConfigUtilTest {
 
 	@Test
 	public void testGetRows() {
+		// opening hour, closing hour, durationUnitInMinutes, expectedRows
 		checkGetRows(8, 9, 60, 1);
 		checkGetRows(0, 24, 120, 12);
 		checkGetRows(8, 23, 60, 15);
@@ -21,15 +22,17 @@ public class ReservationSystemConfigUtilTest {
 
 	@Test
 	public void testToMinutes() {
+		// opening hour, durationUnitInMinutes, row, expectedMinutes
 		checkToMinutes(0, 60, 0, 0);
 		checkToMinutes(0, 60, 10, 600);
-		checkToMinutes(8, 30, 6, 660);
+		checkToMinutes(8, 30, 6, 8*60+6*30);
 		checkToMinutes(0, 1, 98, 98);
-		checkToMinutes(11, 7, 10, 660 + 70);
+		checkToMinutes(11, 7, 10, 11*60+7*10);
 	}
 
 	@Test
 	public void testToRow() {
+		// opening hour, durationUnitInMinutes, endTime,expectedRows
 		checkToRow(8, 30, "15:30", 15);
 		checkToRow(0, 60, "17:00", 17);
 		checkToRow(11, 20, "20:05", 27);

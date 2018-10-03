@@ -145,12 +145,12 @@ public class UserService extends UserAwareService {
 	}
 
 	@DeleteMapping("/{userId}")
-	public @ResponseBody void delete(@PathVariable long userId) {
+	public void delete(@PathVariable long userId) {
 		setStatus(userId, ActivationStatus.REMOVED);
 	}
 
 	@DeleteMapping("/device/{id}")
-	public @ResponseBody void deleteDevice(@PathVariable long id) {
+	public void deleteDevice(@PathVariable long id) {
 		setDeviceStatus(id, ActivationStatus.REMOVED);
 	}
 

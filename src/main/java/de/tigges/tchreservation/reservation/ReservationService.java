@@ -115,11 +115,13 @@ public class ReservationService extends UserAwareService {
 	@DeleteMapping("/delete/{id}")
 	@ResponseStatus(HttpStatus.OK)
 	public void delete(@PathVariable long id) {
-		User loggedInUser = getLoggedInUser();
 		logger.info("delete reservation {}", id);
 
 		Reservation reservation = reservationRepository.findById(id)
 				.orElseThrow(() -> new NotFoundException(EntityType.RESERVATION, id));
+
+		User loggedInUser = getLoggedInUser();
+		
 		occupationRepository.findByReservationId(id).forEach(o -> deleteOccupation(o, loggedInUser));
 		reservationRepository.delete(reservation);
 		protocolRepository.save(new Protocol(reservation, ActionType.DELETE, loggedInUser));
@@ -134,8 +136,8 @@ public class ReservationService extends UserAwareService {
 	@GetMapping("/get/{id}")
 	public Optional<Reservation> getReservation(@PathVariable long id) {
 		logger.info("get reservation ()", id);
-		Optional<Reservation> reservation = reservationRepository.findById(id);
-		return reservation;
+
+		return reservationRepository.findById(id);
 	}
 
 	/**
