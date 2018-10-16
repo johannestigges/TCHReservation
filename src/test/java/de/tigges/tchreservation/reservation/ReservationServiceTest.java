@@ -233,6 +233,19 @@ public class ReservationServiceTest extends ProtocolTest {
 		reservation.setDuration(6);
 		updateReservation(reservation);
 	}
+	
+	@Test
+	public void getAllNotAuthorized() throws Exception {
+		performGet("/reservation/get").andExpect(status().is3xxRedirection());
+	}
+	
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void getReservation() throws Exception {
+		Reservation reservation = reservationRepository.save(createReservation(1, user, 1, 10, 2));
+
+		performGet("/reservation/get/" + reservation.getId()).andExpect(status().isOk());
+	}
 
 	private ResultActions addReservationNoCheck(Reservation reservation) throws Exception {
 		return performPost("/reservation/add", reservation);

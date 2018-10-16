@@ -160,7 +160,7 @@ public class Reservation implements Protocollable {
 		return toCourts(this.courts);
 	}
 
-	public static int[] toCourts(String courtsString) {
+	private int[] toCourts(String courtsString) {
 		if (courtsString == null) {
 			return new int[0];
 		}

@@ -146,6 +146,7 @@ public class Protocol {
 		}
 		return protocols;
 	}
+	
 	public static Optional<Protocol> setFields(Optional<Protocol> protocol) {
 		if (protocol.isPresent()) {
 			protocol.get().setFields();
