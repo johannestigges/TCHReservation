@@ -6,6 +6,15 @@ import de.tigges.tchreservation.user.ActivationStatusException;
  * status of Activation
  * <p>
  * before using a device the user and the admin must verify it.
+ * <p>
+ * valid status changes
+ * CREATED -> VERIFIED_BY_USER user has activated
+ * VERIFIED_BY_USER -> ACTIVE admin has activated
+ * ACTIVE -> LOCKED account is locked
+ * ACTIVE -> REMOVED account inactive
+ * LOCKED -> ACTIVE admin has relocked
+ * LOCKED -> REMOVED 
+ * REMOVED-> ACTIVE admin has reactivated
  */
 public enum ActivationStatus {
 	CREATED, // created by the user, but not verified
@@ -16,14 +25,19 @@ public enum ActivationStatus {
 
 	public static void checkStatusChange(ActivationStatus from, ActivationStatus to, String id) {
 		if (from != null && to != null) {
-			checkStatusInRange(from, to, id, VERIFIED_BY_USER, CREATED);
-			checkStatusInRange(from, to, id, ACTIVE, VERIFIED_BY_USER, LOCKED, REMOVED);
-			checkStatusInRange(from, to, id, LOCKED, ACTIVE);
-			checkStatusInRange(from, to, id, REMOVED, ACTIVE);
+			// never go back to CREATED
+			checkStatusChangeInRange(from, to, id, CREATED);
+			// only from CREATED -> VERIFIED
+			checkStatusChangeInRange(from, to, id, VERIFIED_BY_USER, CREATED);
+			// can always go to ACTIVE
+			checkStatusChangeInRange(from, to, id, ACTIVE, VERIFIED_BY_USER, LOCKED, REMOVED);
+			// only from ACTIVE -> LOCKED
+			checkStatusChangeInRange(from, to, id, LOCKED, ACTIVE);
+			checkStatusChangeInRange(from, to, id, REMOVED, ACTIVE, LOCKED);
 		}
 	}
 
-	private static void checkStatusInRange(ActivationStatus from, ActivationStatus to, String id,
+	private static void checkStatusChangeInRange(ActivationStatus from, ActivationStatus to, String id,
 			ActivationStatus check, ActivationStatus... range) {
 		if (to.equals(check)) {
 			for (int i = 0; i < range.length; i++) {

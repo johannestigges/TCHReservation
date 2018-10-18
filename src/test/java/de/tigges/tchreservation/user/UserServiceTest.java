@@ -43,8 +43,8 @@ public class UserServiceTest extends ProtocolTest {
 		this.protocolRepository.deleteAll();
 		this.userDeviceRepository.deleteAll();
 		this.userRepository.deleteAll();
-		addUser(UserRole.ADMIN, ActivationStatus.ACTIVE);
-		addUser(UserRole.REGISTERED, ActivationStatus.ACTIVE);
+		addUser(UserRole.ADMIN);
+		addUser(UserRole.REGISTERED);
 	}
 
 	@Test
@@ -89,17 +89,47 @@ public class UserServiceTest extends ProtocolTest {
 	public void testStatus() throws Exception {
 		User user = userRepository
 				.save(new User("email", "name", "password", UserRole.REGISTERED, ActivationStatus.CREATED));
+		
+		// check from CREATED
+		changeStatus(user, ActivationStatus.ACTIVE, false);
+		changeStatus(user, ActivationStatus.LOCKED, false);
+		changeStatus(user, ActivationStatus.REMOVED, false);
+		changeStatus(user, ActivationStatus.VERIFIED_BY_USER, true);
 
-		performPut("/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER.toString())
-				.andExpect(status().isOk());
-		performPut("/user/setStatus/" + user.getId() + "/" + ActivationStatus.ACTIVE.toString())
-				.andExpect(status().isOk());
-		performPut("/user/setStatus/" + user.getId() + "/" + ActivationStatus.LOCKED.toString())
-				.andExpect(status().isOk());
-		performPut("/user/setStatus/" + user.getId() + "/" + ActivationStatus.ACTIVE.toString())
-				.andExpect(status().isOk());
-		performPut("/user/setStatus/" + user.getId() + "/" + ActivationStatus.REMOVED.toString())
-				.andExpect(status().isOk());
+		// check from VERIFIED_BY_USER
+		changeStatus(user, ActivationStatus.CREATED, false);
+		changeStatus(user, ActivationStatus.LOCKED, false);
+		changeStatus(user, ActivationStatus.REMOVED, false);
+		changeStatus(user, ActivationStatus.ACTIVE, true);
+		
+		// check from ACTIVE
+		changeStatus(user, ActivationStatus.CREATED, false);
+		changeStatus(user, ActivationStatus.VERIFIED_BY_USER, false);
+		changeStatus(user, ActivationStatus.REMOVED, true);
+		changeStatus(user, ActivationStatus.ACTIVE, true);
+		changeStatus(user, ActivationStatus.LOCKED, true);
+		
+		// check from LOCKED
+		changeStatus(user, ActivationStatus.CREATED, false);
+		changeStatus(user, ActivationStatus.VERIFIED_BY_USER, false);
+		changeStatus(user, ActivationStatus.REMOVED, true);
+		changeStatus(user, ActivationStatus.ACTIVE, true);
+		changeStatus(user, ActivationStatus.REMOVED, true);
+
+		// check from REMOVED
+		changeStatus(user, ActivationStatus.CREATED, false);
+		changeStatus(user, ActivationStatus.VERIFIED_BY_USER, false);
+		changeStatus(user, ActivationStatus.LOCKED, false);
+		changeStatus(user, ActivationStatus.ACTIVE, true);
+	}
+
+	private void changeStatus(User user, ActivationStatus status, boolean expectOk) throws Exception {
+		ResultActions actions = performPut("/user/setStatus/" + user.getId() + "/" + status.toString());
+		if (expectOk) {
+			actions.andExpect(status().isOk());
+		} else {
+			actions.andExpect(status().isBadRequest());
+		}
 	}
 
 	@Test
@@ -214,8 +244,7 @@ public class UserServiceTest extends ProtocolTest {
 
 	private ResultActions checkUser(ResultActions resultActions, User user, boolean passwordEncoded,
 			ActionType actionType) throws Exception {
-		resultActions.andExpect(jsonPath("$.id").isNotEmpty())
-				.andExpect(jsonPath("$.email").value(user.getEmail()))
+		resultActions.andExpect(jsonPath("$.id").isNotEmpty()).andExpect(jsonPath("$.email").value(user.getEmail()))
 				.andExpect(jsonPath("$.name").value(user.getName()))
 				.andExpect(jsonPath("$.role").value(user.getRole().name()))
 

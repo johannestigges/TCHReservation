@@ -46,8 +46,8 @@ public class ReservationServiceTest extends ProtocolTest {
 		this.occupationRepository.deleteAll();
 		this.reservationRepository.deleteAll();
 		this.userRepository.deleteAll();
-		user = addUser(UserRole.REGISTERED, ActivationStatus.ACTIVE);
-		admin = addUser(UserRole.ADMIN, ActivationStatus.ACTIVE);
+		user = addUser(UserRole.REGISTERED);
+		admin = addUser(UserRole.ADMIN);
 	}
 
 	@Test

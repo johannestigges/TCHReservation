@@ -22,7 +22,6 @@ import de.tigges.tchreservation.ProtocolTest;
 import de.tigges.tchreservation.TchReservationApplication;
 import de.tigges.tchreservation.reservation.model.Occupation;
 import de.tigges.tchreservation.reservation.model.ReservationType;
-import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.User;
 import de.tigges.tchreservation.user.model.UserRole;
 
@@ -38,7 +37,7 @@ public class ProtocolServiceTest extends ProtocolTest {
 
 		this.protocolRepository.deleteAll();
 		this.userRepository.deleteAll();
-		user = addUser(UserRole.REGISTERED, ActivationStatus.ACTIVE);
+		user = addUser(UserRole.REGISTERED);
 	}
 
 	@Test
