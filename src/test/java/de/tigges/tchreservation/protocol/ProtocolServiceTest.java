@@ -70,10 +70,10 @@ public class ProtocolServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void getAllSince() throws Exception {
-		long now = new Date().getTime();
+		long now = new Date().getTime() - 1000;
 		protocolRepository.save(new Protocol(createOccupation(), ActionType.CREATE, user));
 		performGet("/protocol/get/" + now).andExpect(status().isOk()).andExpect(jsonPath("$.*", Matchers.hasSize(1)));
-		now +=1000;
+		now +=5000;
 		performGet("/protocol/get/" + now).andExpect(status().isOk()).andExpect(jsonPath("$.*", Matchers.hasSize(0)));
 
 	}
