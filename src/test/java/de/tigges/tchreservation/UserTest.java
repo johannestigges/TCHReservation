@@ -15,10 +15,10 @@ public class UserTest extends ServiceTest {
 
 	@Autowired
 	protected UserService userService;
-	
+
 	@Autowired
 	protected UserRepository userRepository;
-	
+
 	/**
 	 * add a user to database
 	 * 
@@ -26,12 +26,9 @@ public class UserTest extends ServiceTest {
 	 * @param status
 	 * @return inserted user
 	 */
-	public User addUser(UserRole role, ActivationStatus status) {
-		String userName = role.name();
-		if (!ActivationStatus.ACTIVE.equals(status)) {
-			userName = userName + "." + status.name();
-		}
-		User user = new User("myemail@mydomain.de", userName, "mySecretPassword", role, status);
-		return userRepository.save(user);
+	public User addUser(UserRole role) {
+		return userRepository.save(
+				new User("myemail@mydomain.de", role.name(), 
+						"mySecretPassword", role, ActivationStatus.ACTIVE));
 	}
 }
