@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Date;
 import java.util.Optional;
 
 import org.hamcrest.Matchers;
@@ -265,6 +266,16 @@ public class ReservationServiceTest extends ProtocolTest {
 	@Test
 	public void getAllNotAuthorized() throws Exception {
 		performGet("/reservation/get").andExpect(status().is3xxRedirection());
+	}
+	
+	@Test
+	public void getOccupations() throws Exception {
+		performGet("/reservation/getOccupations/1/0").andExpect(status().isOk());
+	}
+	
+	@Test
+	public void getOccupationsWithDate() throws Exception {
+		performGet("/reservation/getOccupations/15/" + new Date().getTime()).andExpect(status().isOk());
 	}
 
 	@Test
