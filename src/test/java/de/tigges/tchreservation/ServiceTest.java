@@ -2,6 +2,7 @@ package de.tigges.tchreservation;
 
 import static org.junit.Assert.assertNotNull;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -142,5 +143,16 @@ public class ServiceTest {
 	 */
 	public ResultActions performGet(String url) throws Exception {
 		return mockMvc.perform(get(url).with(csrf()));
+	}
+	
+	/**
+	 * call a DELETE service
+	 * 
+	 * @param url
+	 * @return
+	 * @throws Exception
+	 */
+	public ResultActions performDelete(String url) throws Exception {
+		return mockMvc.perform(delete(url).with(csrf()));
 	}
 }

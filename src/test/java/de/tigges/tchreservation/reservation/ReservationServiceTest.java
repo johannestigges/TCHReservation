@@ -1,11 +1,15 @@
 package de.tigges.tchreservation.reservation;
 
+import static org.junit.Assert.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Optional;
 
+import org.hamcrest.Matchers;
+import org.hamcrest.collection.IsEmptyIterable;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -233,12 +237,36 @@ public class ReservationServiceTest extends ProtocolTest {
 		reservation.setDuration(6);
 		updateReservation(reservation);
 	}
-	
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void updateReservationNotFound() throws Exception {
+		Reservation reservation = createReservation(1, user, 1, 12, 2);
+		reservation.setId(657865765659L);
+		updateReservation(reservation).andExpect(status().isNotFound());
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void deleteReservation() throws Exception {
+		Reservation reservation = reservationRepository.save(createReservation(1, user, 1, 10, 2));
+		deleteReservation(reservation.getId());
+
+		assertThat(reservationRepository.findById(reservation.getId()), Matchers.equalTo(Optional.empty()));
+		assertThat(occupationRepository.findByReservationId(reservation.getId()), IsEmptyIterable.emptyIterable());
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void deleteReservationNotFound() throws Exception {
+		deleteReservation(543636262L).andExpect(status().isNotFound());
+	}
+
 	@Test
 	public void getAllNotAuthorized() throws Exception {
 		performGet("/reservation/get").andExpect(status().is3xxRedirection());
 	}
-	
+
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void getReservation() throws Exception {
@@ -253,6 +281,10 @@ public class ReservationServiceTest extends ProtocolTest {
 
 	private ResultActions updateReservation(Reservation reservation) throws Exception {
 		return performPut("/reservation/update", reservation);
+	}
+
+	private ResultActions deleteReservation(long id) throws Exception {
+		return performDelete("/reservation/delete/" + id);
 	}
 
 	private ResultActions addReservation(Reservation reservation) throws Exception {
@@ -280,8 +312,7 @@ public class ReservationServiceTest extends ProtocolTest {
 			throws Exception {
 		if (ActionType.CREATE.equals(actionType)) {
 			resultActions.andExpect(status().is(HttpStatus.CREATED.value()));
-			Reservation createdReservation = jsonObject(resultActions.andReturn().getResponse().getContentAsByteArray(),
-					Reservation.class);
+			Reservation createdReservation = getResponseJson(resultActions, Reservation.class);
 			resultActions.andExpect(jsonPath("$.id").value(createdReservation.getId()));
 			checkProtocol(createdReservation, actionType);
 		} else if (ActionType.MODIFY.equals(actionType) || ActionType.DELETE.equals(actionType)) {
