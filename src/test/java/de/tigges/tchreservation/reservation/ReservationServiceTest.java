@@ -232,10 +232,10 @@ public class ReservationServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void updateReservation() throws Exception {
-		Reservation reservation = createReservation(1, user, 1, 12, 2);
-		addReservation(reservation);
+		Reservation reservation = getResponseJson(addReservation(createReservation(1, user, 1, 12, 2)),
+				Reservation.class);
 		reservation.setDuration(6);
-		updateReservation(reservation);
+		updateReservation(reservation).andExpect(status().isOk());
 	}
 
 	@Test
@@ -250,7 +250,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	@WithMockUser(username = "ADMIN")
 	public void deleteReservation() throws Exception {
 		Reservation reservation = reservationRepository.save(createReservation(1, user, 1, 10, 2));
-		deleteReservation(reservation.getId());
+		deleteReservation(reservation.getId()).andExpect(status().isOk());
 
 		assertThat(reservationRepository.findById(reservation.getId()), Matchers.equalTo(Optional.empty()));
 		assertThat(occupationRepository.findByReservationId(reservation.getId()), IsEmptyIterable.emptyIterable());
@@ -288,7 +288,8 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	private ResultActions addReservation(Reservation reservation) throws Exception {
-		return checkReservation(addReservationNoCheck(reservation), reservation, ActionType.CREATE);
+		return checkReservation(addReservationNoCheck(reservation).andExpect(status().isCreated()), reservation,
+				ActionType.CREATE);
 	}
 
 	private ResultActions addReservationError(Reservation reservation, HttpStatus status, String message)
