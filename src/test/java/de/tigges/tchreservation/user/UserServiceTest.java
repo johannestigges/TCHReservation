@@ -142,6 +142,20 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
+	@WithMockUser(username = "REGISTERED")
+	public void testAddUserDeviceWithoutAuthorization() throws Exception {
+		UserDevice device = userDeviceRepository.save(createDevice(adminUser, 0, ActivationStatus.CREATED));
+		performPost("/user/addDevice", device).andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	@WithMockUser(username = "REGISTERED")
+	public void testAddUserOwnDevice() throws Exception {
+		UserDevice device = userDeviceRepository.save(createDevice(registeredUser, 0, ActivationStatus.CREATED));
+		performPost("/user/addDevice", device).andExpect(status().isOk());
+	}
+
+	@Test
 	@WithMockUser(username = "ADMIN")
 	public void testSetStatusWithUserNotFound() throws Exception {
 		performPut("/user/setStatus/666/" + ActivationStatus.VERIFIED_BY_USER.toString())
@@ -173,7 +187,7 @@ public class UserServiceTest extends ProtocolTest {
 	public void testUpdateNotMe() throws Exception {
 		performPut("/user/", adminUser).andExpect(status().isUnauthorized());
 	}
-	
+
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void testUpdateMe() throws Exception {
@@ -201,7 +215,14 @@ public class UserServiceTest extends ProtocolTest {
 		registeredUser.setId(666);
 		performPut("/user/", registeredUser).andExpect(status().isNotFound());
 	}
-	
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void testDeleteUser() throws Exception {
+		performDelete("/user/" + registeredUser.getId()).andExpect(status().isOk());
+		performGet("/user/get/" + registeredUser.getId()).andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value(ActivationStatus.REMOVED.toString()));
+	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
@@ -221,19 +242,19 @@ public class UserServiceTest extends ProtocolTest {
 	public void testGetUserWithoutAuthorization() throws Exception {
 		performGet("/user/get/" + adminUser.getId()).andExpect(status().is3xxRedirection());
 	}
-	
+
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void testGetUserMe() throws Exception {
 		performGet("/user/get/" + registeredUser.getId()).andExpect(status().isOk());
 	}
+
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void testGetUserNotMe() throws Exception {
 		performGet("/user/get/" + adminUser.getId()).andExpect(status().isUnauthorized());
 	}
-	
-	
+
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void testGetDevices() throws Exception {
@@ -255,14 +276,14 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
-	public void testGetLoggedInUserAdmin() throws Exception {
-		checkUser(performGet("/user/me").andExpect(status().isOk()), adminUser, false, null);
+	@WithMockUser(username = "REGISTERED")
+	public void testGetLoggedInUserRegistered() throws Exception {
+		checkUser(performGet("/user/me").andExpect(status().isOk()), registeredUser, false, null);
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
-	public void testGetByDevice() throws Exception {
+	public void testGetUserByDevice() throws Exception {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.CREATED));
 		UserDevice device0 = userDeviceRepository.save(createDevice(user, 0, ActivationStatus.CREATED));
 		UserDevice device1 = userDeviceRepository.save(createDevice(user, 1, ActivationStatus.CREATED));
@@ -276,8 +297,20 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
+	@WithMockUser(username = "REGISTERED")
+	public void testGetUserByDeviceNotAuthorized() throws Exception {
+		performGet("/user/getByDevice/1").andExpect(status().isUnauthorized());
+	}
+
+	@Test
 	@WithMockUser(username = "ADMIN")
-	public void testGetByName() throws Exception {
+	public void testGetUserByDeviceNotFound() throws Exception {
+		performGet("/user/getByDevice/666").andExpect(status().isNotFound());
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void testGetUserByName() throws Exception {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
 		User foundUser = userRepository.findByNameOrEmail(user.getName(), "")
 				.orElseThrow(() -> new NotFoundException(EntityType.USER, user.getId()));
@@ -286,7 +319,7 @@ public class UserServiceTest extends ProtocolTest {
 
 	@Test
 	@WithMockUser(username = "ADMIN")
-	public void testGetByEMail() throws Exception {
+	public void testGetUserByEMail() throws Exception {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
 		User foundUser = userRepository.findByNameOrEmail("", user.getEmail())
 				.orElseThrow(() -> new NotFoundException(EntityType.USER, user.getId()));
@@ -307,6 +340,33 @@ public class UserServiceTest extends ProtocolTest {
 	@WithMockUser(username = "REGISTERED")
 	public void testGetAllWithoutAuthentication() throws Exception {
 		performGet("/user/getAll").andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void testGetDevice() throws Exception {
+		checkDevice(userDeviceRepository.save(createDevice(registeredUser, 0, ActivationStatus.CREATED)));
+	}
+
+	@Test
+	@WithMockUser(username = "REGISTERED")
+	public void testGetDeviceNotAuthorized() throws Exception {
+		performGet("/user/getDevice/0").andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void testDeleteDevice() throws Exception {
+		UserDevice device = userDeviceRepository.save(createDevice(registeredUser, 0, ActivationStatus.CREATED));
+		performDelete("/user/device/" + device.getId()).andExpect(status().isOk());
+		performGet("/user/getDevice/" + device.getId()).andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value(ActivationStatus.REMOVED.toString()));
+	}
+
+	@Test
+	@WithMockUser(username = "REGISTERED")
+	public void testDeleteDeviceNotAuthorized() throws Exception {
+		performDelete("/user/device/0").andExpect(status().isUnauthorized());
 	}
 
 	private void checkDevice(UserDevice device) {
