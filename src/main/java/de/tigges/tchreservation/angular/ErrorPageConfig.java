@@ -6,6 +6,9 @@ import org.springframework.boot.web.server.ErrorPageRegistry;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
+/**
+ * redirect all {@link HttpStatus#NOT_FOUND} to angular index to get angular working.
+ */
 @Component
 public class ErrorPageConfig implements ErrorPageRegistrar {
   

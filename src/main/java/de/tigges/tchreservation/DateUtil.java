@@ -5,12 +5,16 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Date;
-
+/**
+ * utility class to show a unix timestamp
+ * @author johannes
+ *
+ */
 public class DateUtil {
 
 	public static void main(String[] args) {
 		if (args.length != 1) {
-			System.err.println("usage: DateUtil <unix timestamp>");
+			System.err.println("usage: DateUtil <unix timestamp>\n show a unix timestamp in human readable format");
 			System.exit(1);
 		}
 		long epoch = Long.parseLong(args[0]);
