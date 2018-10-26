@@ -14,10 +14,10 @@ import de.tigges.tchreservation.converter.LocalTimeJsonDeserializer;
 import de.tigges.tchreservation.converter.LocalTimeJsonSerializer;
 
 @SpringBootApplication
-public class TchReservationApplication // implements WebMvcConfigurer
+public class TchReservationApplication
 {
 	/**
-	 * register my date converters
+	 * register date converters
 	 * 
 	 * all date and time data is transferred in json as unix epoch timestamps
 	 * (milliseconds since 1970-01-01)
