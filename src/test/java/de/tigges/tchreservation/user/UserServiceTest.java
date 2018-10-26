@@ -37,14 +37,16 @@ public class UserServiceTest extends ProtocolTest {
 
 	@Autowired
 	private UserDeviceRepository userDeviceRepository;
+	private User adminUser;
+	private User registeredUser;
 
 	@Before
 	public void setup() throws Exception {
 		this.protocolRepository.deleteAll();
 		this.userDeviceRepository.deleteAll();
 		this.userRepository.deleteAll();
-		addUser(UserRole.ADMIN);
-		addUser(UserRole.REGISTERED);
+		adminUser = addUser(UserRole.ADMIN);
+		registeredUser = addUser(UserRole.REGISTERED);
 	}
 
 	@Test
@@ -86,10 +88,10 @@ public class UserServiceTest extends ProtocolTest {
 
 	@Test
 	@WithMockUser(username = "ADMIN")
-	public void testStatus() throws Exception {
+	public void testSetStatusAllCombinations() throws Exception {
 		User user = userRepository
 				.save(new User("email", "name", "password", UserRole.REGISTERED, ActivationStatus.CREATED));
-		
+
 		// check from CREATED
 		changeStatus(user, ActivationStatus.ACTIVE, false);
 		changeStatus(user, ActivationStatus.LOCKED, false);
@@ -101,14 +103,14 @@ public class UserServiceTest extends ProtocolTest {
 		changeStatus(user, ActivationStatus.LOCKED, false);
 		changeStatus(user, ActivationStatus.REMOVED, false);
 		changeStatus(user, ActivationStatus.ACTIVE, true);
-		
+
 		// check from ACTIVE
 		changeStatus(user, ActivationStatus.CREATED, false);
 		changeStatus(user, ActivationStatus.VERIFIED_BY_USER, false);
 		changeStatus(user, ActivationStatus.REMOVED, true);
 		changeStatus(user, ActivationStatus.ACTIVE, true);
 		changeStatus(user, ActivationStatus.LOCKED, true);
-		
+
 		// check from LOCKED
 		changeStatus(user, ActivationStatus.CREATED, false);
 		changeStatus(user, ActivationStatus.VERIFIED_BY_USER, false);
@@ -133,6 +135,28 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
+	@WithMockUser(username = "REGISTERED")
+	public void testAddUserWithoutAuthorization() throws Exception {
+		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE);
+		performPost("/user/add", user).andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void testSetStatusWithUserNotFound() throws Exception {
+		performPut("/user/setStatus/666/" + ActivationStatus.VERIFIED_BY_USER.toString())
+				.andExpect(status().isNotFound());
+	}
+
+	@Test
+	@WithMockUser(username = "REGISTERED")
+	public void testSetStatusWithoutAuthorization() throws Exception {
+		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.CREATED));
+		performPut("/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER.toString())
+				.andExpect(status().isUnauthorized());
+	}
+
+	@Test
 	@WithMockUser(username = "ADMIN")
 	public void testUpdate() throws Exception {
 		User user = userRepository
@@ -143,6 +167,41 @@ public class UserServiceTest extends ProtocolTest {
 
 		performPut("/user/", modifiedUser).andExpect(status().isOk());
 	}
+
+	@Test
+	@WithMockUser(username = "REGISTERED")
+	public void testUpdateNotMe() throws Exception {
+		performPut("/user/", adminUser).andExpect(status().isUnauthorized());
+	}
+	
+	@Test
+	@WithMockUser(username = "REGISTERED")
+	public void testUpdateMe() throws Exception {
+		registeredUser.setName("new name");
+		performPut("/user/", registeredUser).andExpect(status().isOk());
+	}
+
+	@Test
+	@WithMockUser(username = "REGISTERED")
+	public void testUpdateMyRoleNotAuthorized() throws Exception {
+		registeredUser.setRole(UserRole.ADMIN);
+		performPut("/user/", registeredUser).andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	@WithMockUser(username = "REGISTERED")
+	public void testUpdateMyStatusNotAuthorized() throws Exception {
+		registeredUser.setStatus(ActivationStatus.LOCKED);
+		performPut("/user/", registeredUser).andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void testUpdateUserNotFound() throws Exception {
+		registeredUser.setId(666);
+		performPut("/user/", registeredUser).andExpect(status().isNotFound());
+	}
+	
 
 	@Test
 	@WithMockUser(username = "ADMIN")
@@ -159,6 +218,23 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	@Test
+	public void testGetUserWithoutAuthorization() throws Exception {
+		performGet("/user/get/" + adminUser.getId()).andExpect(status().is3xxRedirection());
+	}
+	
+	@Test
+	@WithMockUser(username = "REGISTERED")
+	public void testGetUserMe() throws Exception {
+		performGet("/user/get/" + registeredUser.getId()).andExpect(status().isOk());
+	}
+	@Test
+	@WithMockUser(username = "REGISTERED")
+	public void testGetUserNotMe() throws Exception {
+		performGet("/user/get/" + adminUser.getId()).andExpect(status().isUnauthorized());
+	}
+	
+	
+	@Test
 	@WithMockUser(username = "ADMIN")
 	public void testGetDevices() throws Exception {
 		List<UserDevice> devices = new ArrayList<>();
@@ -171,6 +247,17 @@ public class UserServiceTest extends ProtocolTest {
 		}
 
 		devices.forEach(device -> checkDevice(device));
+	}
+
+	@Test
+	public void testGetLoggedInUserAnonymous() throws Exception {
+		checkUser(performGet("/user/me").andExpect(status().isOk()), User.anonymous(), false, null);
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void testGetLoggedInUserAdmin() throws Exception {
+		checkUser(performGet("/user/me").andExpect(status().isOk()), adminUser, false, null);
 	}
 
 	@Test

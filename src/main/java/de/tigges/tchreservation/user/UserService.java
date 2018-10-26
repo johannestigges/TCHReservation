@@ -140,6 +140,15 @@ public class UserService extends UserAwareService {
 			user.setPassword(encoder.encode(user.getPassword()));
 		}
 		
+		if (!isAdmin(loggedInUser)) {
+			if (user.getRole() != dbUser.getRole()) {
+				throw new AuthorizationException("user cannot modify role.");
+			}
+			if (user.getStatus() != dbUser.getStatus()) {
+				throw new AuthorizationException("user cannot modify status.");
+			}
+		}
+		
 		userRepository.save(user);
 		protocolRepository.save(new Protocol(user, ActionType.MODIFY, loggedInUser));
 	}

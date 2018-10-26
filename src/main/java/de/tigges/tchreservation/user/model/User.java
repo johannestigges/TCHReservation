@@ -20,14 +20,6 @@ public class User implements Protocollable {
 	public User() {
 	}
 
-	public User(long id) {
-		this.id = id;
-	}
-
-	public User(String id) {
-		this.id = Integer.parseInt(id);
-	}
-
 	public User(String email, String name, String password, UserRole role, ActivationStatus status) {
 		this.email = email;
 		this.name = name;
