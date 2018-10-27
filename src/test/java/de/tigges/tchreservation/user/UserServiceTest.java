@@ -1,12 +1,14 @@
 package de.tigges.tchreservation.user;
 
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 
 import org.hamcrest.Matchers;
@@ -20,10 +22,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.ResultActions;
 
-import de.tigges.tchreservation.EntityType;
 import de.tigges.tchreservation.ProtocolTest;
 import de.tigges.tchreservation.TchReservationApplication;
-import de.tigges.tchreservation.exception.NotFoundException;
 import de.tigges.tchreservation.protocol.ActionType;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.User;
@@ -89,8 +89,7 @@ public class UserServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void testSetStatusAllCombinations() throws Exception {
-		User user = userRepository
-				.save(new User("email", "name", "password", UserRole.REGISTERED, ActivationStatus.CREATED));
+		User user = userRepository.save(createUser(0,UserRole.REGISTERED,ActivationStatus.CREATED));
 
 		// check from CREATED
 		changeStatus(user, ActivationStatus.ACTIVE, false);
@@ -233,8 +232,7 @@ public class UserServiceTest extends ProtocolTest {
 					new User("email " + i, "name " + i, "password", UserRole.REGISTERED, ActivationStatus.ACTIVE)));
 		}
 		for (int i = 0; i < userList.size(); i++) {
-			checkUser(performGet("/user/get/" + userList.get(i).getId()).andExpect(status().isOk()), userList.get(i),
-					false, null);
+			checkUser(performGet("/user/get/" + userList.get(i).getId()).andExpect(status().isOk()), userList.get(i));
 		}
 	}
 
@@ -272,13 +270,13 @@ public class UserServiceTest extends ProtocolTest {
 
 	@Test
 	public void testGetLoggedInUserAnonymous() throws Exception {
-		checkUser(performGet("/user/me").andExpect(status().isOk()), User.anonymous(), false, null);
+		checkUser(performGet("/user/me").andExpect(status().isOk()), User.anonymous());
 	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void testGetLoggedInUserRegistered() throws Exception {
-		checkUser(performGet("/user/me").andExpect(status().isOk()), registeredUser, false, null);
+		checkUser(performGet("/user/me").andExpect(status().isOk()), registeredUser);
 	}
 
 	@Test
@@ -289,11 +287,11 @@ public class UserServiceTest extends ProtocolTest {
 		UserDevice device1 = userDeviceRepository.save(createDevice(user, 1, ActivationStatus.CREATED));
 
 		user.getDevices().add(device0);
-		checkUser(performGet("/user/getByDevice/" + device0.getId()).andExpect(status().isOk()), user, false, null);
+		checkUser(performGet("/user/getByDevice/" + device0.getId()).andExpect(status().isOk()), user);
 
 		user.getDevices().clear();
 		user.getDevices().add(device1);
-		checkUser(performGet("/user/getByDevice/" + device1.getId()).andExpect(status().isOk()), user, false, null);
+		checkUser(performGet("/user/getByDevice/" + device1.getId()).andExpect(status().isOk()), user);
 	}
 
 	@Test
@@ -312,18 +310,18 @@ public class UserServiceTest extends ProtocolTest {
 	@WithMockUser(username = "ADMIN")
 	public void testGetUserByName() throws Exception {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
-		User foundUser = userRepository.findByNameOrEmail(user.getName(), "")
-				.orElseThrow(() -> new NotFoundException(EntityType.USER, user.getId()));
-		assertThat(foundUser.getId(), Matchers.is(user.getId()));
+		Optional<User> foundUser = userRepository.findByNameOrEmail(user.getName(), "");
+		assertTrue(foundUser.isPresent());
+		assertThat(foundUser.get().getId(), Matchers.is(user.getId()));
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void testGetUserByEMail() throws Exception {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
-		User foundUser = userRepository.findByNameOrEmail("", user.getEmail())
-				.orElseThrow(() -> new NotFoundException(EntityType.USER, user.getId()));
-		assertThat(foundUser.getId(), Matchers.is(user.getId()));
+		Optional<User> foundUser = userRepository.findByNameOrEmail("", user.getEmail());
+		assertTrue(foundUser.isPresent());
+		assertThat(foundUser.get().getId(), Matchers.is(user.getId()));
 	}
 
 	@Test
@@ -389,6 +387,10 @@ public class UserServiceTest extends ProtocolTest {
 				ActivationStatus.values()[i % 5]);
 	}
 
+	private ResultActions checkUser(ResultActions resultActions, User user) throws Exception {
+		return checkUser(resultActions, user, false, null);
+	}
+	
 	private ResultActions checkUser(ResultActions resultActions, User user, boolean passwordEncoded,
 			ActionType actionType) throws Exception {
 		resultActions.andExpect(jsonPath("$.id").isNotEmpty()).andExpect(jsonPath("$.email").value(user.getEmail()))
