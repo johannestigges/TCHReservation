@@ -47,41 +47,44 @@ public class UserService extends UserAwareService {
 		return getLoggedInUser().hidePassword();
 	}
 
-	@GetMapping("/getAll")
+	@GetMapping("/all")
 	public @ResponseBody Iterable<User> getAll() {
-		if (!isAdmin(getLoggedInUser())) throw new AuthorizationException("not authorized");
+		if (!isAdmin(getLoggedInUser()))
+			throw new AuthorizationException("not authorized");
 		return User.hidePasswords(userRepository.findAll());
 	}
 
-	@GetMapping("/get/{userId}")
+	@GetMapping("/{userId}")
 	public @ResponseBody Optional<User> get(@PathVariable Long userId) {
 		User user = getLoggedInUser();
-		if (!isAdmin(user) && !is(user, userId)) throw new AuthorizationException("not authorized");
+		if (!isAdmin(user) && !is(user, userId))
+			throw new AuthorizationException("not authorized");
 		return User.hidePassword(userRepository.findById(userId));
 	}
 
 	@GetMapping("/getByDevice/{deviceId}")
 	public @ResponseBody User getByDevice(@PathVariable Long deviceId) {
-		if (!isAdmin(getLoggedInUser())) throw new AuthorizationException("not authorized");
-		UserDevice device = userDeviceRepository.findById(deviceId)
-				.orElseThrow(() -> new NotFoundException(EntityType.USER_DEVICE, deviceId));
-		User user = userRepository.findById(device.getUser().getId())
-				.orElseThrow(() -> new NotFoundException(EntityType.USER, device.getUser().getId()));
+		UserDevice device = getDevice(deviceId);
+		long userId = device.getUser().getId();
+		User user = userRepository.findById(userId).orElseThrow(() -> new NotFoundException(EntityType.USER, userId));
 		user.getDevices().add(device);
 		user.hidePassword();
 		return user;
 	}
 
-	@GetMapping("/getDevice/{id}")
-	public @ResponseBody Optional<UserDevice> findDeviceById(@PathVariable Long id) {
-		if (!isAdmin(getLoggedInUser())) throw new AuthorizationException("not authorized");
-		return userDeviceRepository.findById(id);
+	@GetMapping("/device/{deviceId}")
+	public @ResponseBody UserDevice getDevice(@PathVariable Long deviceId) {
+		if (!isAdmin(getLoggedInUser()))
+			throw new AuthorizationException("not authorized");
+		return userDeviceRepository.findById(deviceId)
+				.orElseThrow(() -> new NotFoundException(EntityType.USER_DEVICE, deviceId));
 	}
 
-	@PostMapping("/add")
+	@PostMapping("/")
 	public @ResponseBody User add(@RequestBody User user) {
 		User loggedInUser = getLoggedInUser();
-		if (!isAdmin(loggedInUser)) throw new AuthorizationException("not authorized");
+		if (!isAdmin(loggedInUser))
+			throw new AuthorizationException("not authorized");
 		checkUser(user);
 		String cryptedPassword = encoder.encode(user.getPassword());
 		user.setPassword(cryptedPassword);
@@ -96,10 +99,11 @@ public class UserService extends UserAwareService {
 		return savedUser;
 	}
 
-	@PostMapping("/addDevice")
+	@PostMapping("/device")
 	public @ResponseBody UserDevice add(@RequestBody UserDevice userDevice) {
 		User loggedInUser = getLoggedInUser();
-		if (!isAdmin(loggedInUser) && !is(loggedInUser, userDevice.getUser().getId())) throw new AuthorizationException("not authorized");
+		if (!isAdmin(loggedInUser) && !is(loggedInUser, userDevice.getUser().getId()))
+			throw new AuthorizationException("not authorized");
 		UserDevice savedDevice = userDeviceRepository.save(userDevice);
 		protocolRepository.save(new Protocol(savedDevice, ActionType.CREATE, loggedInUser));
 		return savedDevice;
@@ -108,20 +112,22 @@ public class UserService extends UserAwareService {
 	@PutMapping("/setStatus/{userId}/{status}")
 	public @ResponseBody void setStatus(@PathVariable long userId, @PathVariable ActivationStatus status) {
 		User loggedInUser = getLoggedInUser();
-		if (!isAdmin(loggedInUser)) throw new AuthorizationException("not authorized");
+		if (!isAdmin(loggedInUser))
+			throw new AuthorizationException("not authorized");
 		User user = get(userId).orElseThrow(() -> new NotFoundException(EntityType.USER, userId));
 		user.setStatus(status);
 		userRepository.save(user);
 		protocolRepository.save(new Protocol(user, ActionType.MODIFY, getLoggedInUser()));
 	}
 
-	@PutMapping("/setDeviceStatus/{id}/{status}")
-	public @ResponseBody void setDeviceStatus(@PathVariable long id, @PathVariable ActivationStatus status) {
+	@PutMapping("/device/setStatus/{deviceId}/{status}")
+	public @ResponseBody void setDeviceStatus(@PathVariable long deviceId, @PathVariable ActivationStatus status) {
 		User loggedInUser = getLoggedInUser();
-		if (!isAdmin(loggedInUser)) throw new AuthorizationException("not authorized");
+		if (!isAdmin(loggedInUser))
+			throw new AuthorizationException("not authorized");
 
-		UserDevice device = userDeviceRepository.findById(id)
-				.orElseThrow(() -> new NotFoundException(EntityType.USER_DEVICE, id));
+		UserDevice device = userDeviceRepository.findById(deviceId)
+				.orElseThrow(() -> new NotFoundException(EntityType.USER_DEVICE, deviceId));
 		device.setStatus(status);
 		userDeviceRepository.save(device);
 		protocolRepository.save(new Protocol(device, ActionType.MODIFY, loggedInUser));
@@ -130,16 +136,17 @@ public class UserService extends UserAwareService {
 	@PutMapping("/")
 	public @ResponseBody void update(@RequestBody User user) {
 		User loggedInUser = getLoggedInUser();
-		if (!isAdmin(loggedInUser) && !is(loggedInUser, user.getId())) throw new AuthorizationException("not authorized");
+		if (!isAdmin(loggedInUser) && !is(loggedInUser, user.getId()))
+			throw new AuthorizationException("not authorized");
 		User dbUser = userRepository.findById(user.getId())
 				.orElseThrow(() -> new NotFoundException(EntityType.USER, user.getId()));
-		
+
 		if (user.getPassword() == null || user.getPassword().isEmpty()) {
 			user.setPassword(dbUser.getPassword());
 		} else {
 			user.setPassword(encoder.encode(user.getPassword()));
 		}
-		
+
 		if (!isAdmin(loggedInUser)) {
 			if (user.getRole() != dbUser.getRole()) {
 				throw new AuthorizationException("user cannot modify role.");
@@ -148,7 +155,7 @@ public class UserService extends UserAwareService {
 				throw new AuthorizationException("user cannot modify status.");
 			}
 		}
-		
+
 		userRepository.save(user);
 		protocolRepository.save(new Protocol(user, ActionType.MODIFY, loggedInUser));
 	}
@@ -158,9 +165,9 @@ public class UserService extends UserAwareService {
 		setStatus(userId, ActivationStatus.REMOVED);
 	}
 
-	@DeleteMapping("/device/{id}")
-	public void deleteDevice(@PathVariable long id) {
-		setDeviceStatus(id, ActivationStatus.REMOVED);
+	@DeleteMapping("/device/{deviceId}")
+	public void deleteDevice(@PathVariable long deviceId) {
+		setDeviceStatus(deviceId, ActivationStatus.REMOVED);
 	}
 
 	private void checkUser(User user) {
@@ -176,10 +183,11 @@ public class UserService extends UserAwareService {
 					user.getName(), user.getEmail()));
 		}
 	}
-	
+
 	private boolean isAdmin(User user) {
 		return UserRole.ADMIN.equals(user.getRole()) && ActivationStatus.ACTIVE.equals(user.getStatus());
 	}
+
 	private boolean is(User user, long userId) {
 		return user.getId() == userId;
 	}

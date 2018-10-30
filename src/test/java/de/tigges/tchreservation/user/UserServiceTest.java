@@ -53,7 +53,7 @@ public class UserServiceTest extends ProtocolTest {
 	@WithMockUser(username = "ADMIN")
 	public void testAddUser() throws Exception {
 		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE);
-		checkUser(performPost("/user/add", user).andExpect(status().isOk()), user, true, ActionType.CREATE);
+		checkUser(performPost("/user/", user).andExpect(status().isOk()), user, true, ActionType.CREATE);
 	}
 
 	@Test
@@ -64,7 +64,7 @@ public class UserServiceTest extends ProtocolTest {
 			user.getDevices().add(createDevice(user, i, ActivationStatus.CREATED));
 		}
 
-		checkUser(performPost("/user/add", user).andExpect(status().isOk()), user, true, ActionType.CREATE);
+		checkUser(performPost("/user/", user).andExpect(status().isOk()), user, true, ActionType.CREATE);
 	}
 
 	@Test
@@ -72,7 +72,7 @@ public class UserServiceTest extends ProtocolTest {
 	public void testAddDevice() throws Exception {
 		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
 
-		performPost("/user/addDevice", createDevice(user, 0, ActivationStatus.CREATED)).andExpect(status().isOk());
+		performPost("/user/device", createDevice(user, 0, ActivationStatus.CREATED)).andExpect(status().isOk());
 	}
 
 	@Test
@@ -137,21 +137,21 @@ public class UserServiceTest extends ProtocolTest {
 	@WithMockUser(username = "REGISTERED")
 	public void testAddUserWithoutAuthorization() throws Exception {
 		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE);
-		performPost("/user/add", user).andExpect(status().isUnauthorized());
+		performPost("/user/", user).andExpect(status().isUnauthorized());
 	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void testAddUserDeviceWithoutAuthorization() throws Exception {
 		UserDevice device = userDeviceRepository.save(createDevice(adminUser, 0, ActivationStatus.CREATED));
-		performPost("/user/addDevice", device).andExpect(status().isUnauthorized());
+		performPost("/user/device", device).andExpect(status().isUnauthorized());
 	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void testAddUserOwnDevice() throws Exception {
 		UserDevice device = userDeviceRepository.save(createDevice(registeredUser, 0, ActivationStatus.CREATED));
-		performPost("/user/addDevice", device).andExpect(status().isOk());
+		performPost("/user/device", device).andExpect(status().isOk());
 	}
 
 	@Test
@@ -212,14 +212,14 @@ public class UserServiceTest extends ProtocolTest {
 	@WithMockUser(username = "ADMIN")
 	public void testUpdateUserNotFound() throws Exception {
 		registeredUser.setId(666);
-		performPut("/user/", registeredUser).andExpect(status().isNotFound());
+		performPut("/user", registeredUser).andExpect(status().isNotFound());
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void testDeleteUser() throws Exception {
 		performDelete("/user/" + registeredUser.getId()).andExpect(status().isOk());
-		performGet("/user/get/" + registeredUser.getId()).andExpect(status().isOk())
+		performGet("/user/" + registeredUser.getId()).andExpect(status().isOk())
 				.andExpect(jsonPath("$.status").value(ActivationStatus.REMOVED.toString()));
 	}
 
@@ -232,25 +232,25 @@ public class UserServiceTest extends ProtocolTest {
 					new User("email " + i, "name " + i, "password", UserRole.REGISTERED, ActivationStatus.ACTIVE)));
 		}
 		for (int i = 0; i < userList.size(); i++) {
-			checkUser(performGet("/user/get/" + userList.get(i).getId()).andExpect(status().isOk()), userList.get(i));
+			checkUser(performGet("/user/" + userList.get(i).getId()).andExpect(status().isOk()), userList.get(i));
 		}
 	}
 
 	@Test
 	public void testGetUserWithoutAuthorization() throws Exception {
-		performGet("/user/get/" + adminUser.getId()).andExpect(status().is3xxRedirection());
+		performGet("/user/" + adminUser.getId()).andExpect(status().is3xxRedirection());
 	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void testGetUserMe() throws Exception {
-		performGet("/user/get/" + registeredUser.getId()).andExpect(status().isOk());
+		performGet("/user/" + registeredUser.getId()).andExpect(status().isOk());
 	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void testGetUserNotMe() throws Exception {
-		performGet("/user/get/" + adminUser.getId()).andExpect(status().isUnauthorized());
+		performGet("/user/" + adminUser.getId()).andExpect(status().isUnauthorized());
 	}
 
 	@Test
@@ -331,13 +331,13 @@ public class UserServiceTest extends ProtocolTest {
 		for (int i = 0; i < users; i++) {
 			userRepository.save(createRandomUser());
 		}
-		performGet("/user/getAll").andExpect(status().isOk()).andExpect(jsonPath("$.*", Matchers.hasSize(users + 2)));
+		performGet("/user/all").andExpect(status().isOk()).andExpect(jsonPath("$.*", Matchers.hasSize(users + 2)));
 	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void testGetAllWithoutAuthentication() throws Exception {
-		performGet("/user/getAll").andExpect(status().isUnauthorized());
+		performGet("/user/all").andExpect(status().isUnauthorized());
 	}
 
 	@Test
@@ -349,7 +349,7 @@ public class UserServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void testGetDeviceNotAuthorized() throws Exception {
-		performGet("/user/getDevice/0").andExpect(status().isUnauthorized());
+		performGet("/user/device/0").andExpect(status().isUnauthorized());
 	}
 
 	@Test
@@ -357,7 +357,7 @@ public class UserServiceTest extends ProtocolTest {
 	public void testDeleteDevice() throws Exception {
 		UserDevice device = userDeviceRepository.save(createDevice(registeredUser, 0, ActivationStatus.CREATED));
 		performDelete("/user/device/" + device.getId()).andExpect(status().isOk());
-		performGet("/user/getDevice/" + device.getId()).andExpect(status().isOk())
+		performGet("/user/device/" + device.getId()).andExpect(status().isOk())
 				.andExpect(jsonPath("$.status").value(ActivationStatus.REMOVED.toString()));
 	}
 
@@ -369,7 +369,7 @@ public class UserServiceTest extends ProtocolTest {
 
 	private void checkDevice(UserDevice device) {
 		try {
-			performGet("/user/getDevice/" + device.getId()) //
+			performGet("/user/device/" + device.getId()) //
 					.andExpect(status().isOk()) //
 					.andExpect(jsonPath("$.deviceId").value(device.getDeviceId()))
 					.andExpect(jsonPath("$.publicKey").value(device.getPublicKey()))
