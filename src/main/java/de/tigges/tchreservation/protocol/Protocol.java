@@ -40,7 +40,7 @@ public class Protocol {
 	 */
 	public Protocol(Protocollable entity, Protocollable oldEntity, User user) {
 		this(entity, ActionType.MODIFY, user);
-		this.setOldValue(new JSONObject(entity.protocolFields()).toString());
+		this.setOldValue(new JSONObject(oldEntity.protocolFields()).toString());
 	}
 
 	@Id
