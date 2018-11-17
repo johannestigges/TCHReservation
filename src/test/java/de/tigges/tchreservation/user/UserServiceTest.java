@@ -58,6 +58,20 @@ public class UserServiceTest extends ProtocolTest {
 
 	@Test
 	@WithMockUser(username = "ADMIN")
+	public void testAddUserNull() throws Exception {
+		performPost("/user/", null).andExpect(status().isBadRequest());
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void testAddUserWithoutEmail() throws Exception {
+		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE);
+		user.setEmail(null);
+		performPost("/user/", user).andExpect(status().isBadRequest());
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
 	public void testAddUserWithDevices() throws Exception {
 		User user = createUser(0, UserRole.ADMIN, ActivationStatus.CREATED);
 		for (int i = 0; i < 5; i++) {
