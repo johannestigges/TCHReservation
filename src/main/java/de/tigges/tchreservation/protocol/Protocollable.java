@@ -34,10 +34,10 @@ public interface Protocollable {
 	 */
 	default Map<String, String> protocolFields(String... keyValues) {
 
-		Map<String, String> fields = new HashMap<>();
 		if (keyValues.length % 2 != 0) {
 			throw new IllegalArgumentException("key values not even.");
 		}
+		Map<String, String> fields = new HashMap<>();
 		int i = 0;
 		while (i < keyValues.length) {
 			fields.put(keyValues[i++], keyValues[i++]);

@@ -2,7 +2,6 @@ package de.tigges.tchreservation.user;
 
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -103,7 +102,7 @@ public class UserServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void testSetStatusAllCombinations() throws Exception {
-		User user = userRepository.save(createUser(0,UserRole.REGISTERED,ActivationStatus.CREATED));
+		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.CREATED));
 
 		// check from CREATED
 		changeStatus(user, ActivationStatus.ACTIVE, false);
@@ -279,7 +278,9 @@ public class UserServiceTest extends ProtocolTest {
 			devices.add(userDeviceRepository.save(createDevice(user, i, ActivationStatus.CREATED)));
 		}
 
-		devices.forEach(device -> checkDevice(device));
+		for (UserDevice device : devices) {
+			checkDevice(device);
+		}
 	}
 
 	@Test
@@ -381,18 +382,13 @@ public class UserServiceTest extends ProtocolTest {
 		performDelete("/user/device/0").andExpect(status().isUnauthorized());
 	}
 
-	private void checkDevice(UserDevice device) {
-		try {
-			performGet("/user/device/" + device.getId()) //
-					.andExpect(status().isOk()) //
-					.andExpect(jsonPath("$.deviceId").value(device.getDeviceId()))
-					.andExpect(jsonPath("$.publicKey").value(device.getPublicKey()))
-					.andExpect(jsonPath("$.user").exists())
-					.andExpect(jsonPath("$.user.id").value(device.getUser().getId()));
+	private void checkDevice(UserDevice device) throws Exception {
+		performGet("/user/device/" + device.getId()) //
+				.andExpect(status().isOk()) //
+				.andExpect(jsonPath("$.deviceId").value(device.getDeviceId()))
+				.andExpect(jsonPath("$.publicKey").value(device.getPublicKey())).andExpect(jsonPath("$.user").exists())
+				.andExpect(jsonPath("$.user.id").value(device.getUser().getId()));
 
-		} catch (Exception e) {
-			fail(e.getMessage());
-		}
 	}
 
 	private User createRandomUser() {
@@ -404,7 +400,7 @@ public class UserServiceTest extends ProtocolTest {
 	private ResultActions checkUser(ResultActions resultActions, User user) throws Exception {
 		return checkUser(resultActions, user, false, null);
 	}
-	
+
 	private ResultActions checkUser(ResultActions resultActions, User user, boolean passwordEncoded,
 			ActionType actionType) throws Exception {
 		resultActions.andExpect(jsonPath("$.id").isNotEmpty()).andExpect(jsonPath("$.email").value(user.getEmail()))
