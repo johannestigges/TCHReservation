@@ -22,10 +22,13 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.ResultActions;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tigges.tchreservation.ProtocolTest;
 import de.tigges.tchreservation.TchReservationApplication;
 import de.tigges.tchreservation.protocol.ActionType;
 import de.tigges.tchreservation.reservation.model.Reservation;
+import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 import de.tigges.tchreservation.reservation.model.ReservationType;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.User;
@@ -40,6 +43,9 @@ public class ReservationServiceTest extends ProtocolTest {
 	private ReservationRepository reservationRepository;
 	@Autowired
 	private OccupationRepository occupationRepository;
+
+	@Autowired
+	ObjectMapper objectMapper;
 
 	private User user;
 	private User admin;
@@ -109,6 +115,23 @@ public class ReservationServiceTest extends ProtocolTest {
 		addReservation(createReservation(1, user, 1, 11, 2));
 		addReservationOverlap(createReservation(1, admin, 1, 10, 6));
 	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void addReservationNotOverlapDifferentSystemConfig() throws Exception {
+		addReservation(createReservation(1, admin, 1, 11, 2));
+		addReservation(createReservation(2, admin, 1, 11, 2));
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void addReservationNotOverlapDifferentDays() throws Exception {
+		Reservation reservation = createReservation(1, admin, 1, 11, 2);
+		reservation.setDate(reservation.getDate().plusDays(1));
+		addReservation(reservation);
+		addReservation(createReservation(1, admin, 1, 11, 2));
+	}
+	
 
 	@Test
 	@WithMockUser(username = "ADMIN")
@@ -287,6 +310,26 @@ public class ReservationServiceTest extends ProtocolTest {
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
+	public void addReservationUnauthorizedDateInThePast() throws Exception {
+		Reservation reservation = createReservation(1, user, 1, 10, 2);
+		reservation.setDate(LocalDate.now().minusDays(1));
+		addReservationFieldError(reservation, "date", "Das Datum darf nicht in der Vergangenheit liegen.");
+	}
+
+	@Test
+	@WithMockUser(username = "REGISTERED")
+	public void addReservationUnauthorizedTimeInThePast() throws Exception {
+		int hour = LocalTime.now().getHour();
+		ReservationSystemConfig systemConfig = getSystemConfig(1);
+		if (hour > systemConfig.getOpeningHour() + 1 && hour < systemConfig.getClosingHour()) {
+			Reservation reservation = createReservation(1, user, 1, hour - 1, 1);
+			reservation.setDate(LocalDate.now());
+			addReservationFieldError(reservation, "time", "Die Startzeit darf nicht in der Vergangenheit liegen.");
+		}
+	}
+
+	@Test
+	@WithMockUser(username = "REGISTERED")
 	public void addReservationUnauthorizedTypePrepaid() throws Exception {
 		Reservation reservation = createReservation(1, user, 1, 8, 2);
 		reservation.setType(ReservationType.PREPAID);
@@ -340,7 +383,8 @@ public class ReservationServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void deleteReservation() throws Exception {
-		Reservation reservation = reservationRepository.save(createReservation(1, user, 1, 10, 2));
+		Reservation reservation = objectMapper.readValue(addReservation(createReservation(1, user, 1, 10, 2))
+				.andExpect(status().isCreated()).andReturn().getResponse().getContentAsString(), Reservation.class);
 		deleteReservation(reservation.getId()).andExpect(status().isOk());
 
 		assertThat(reservationRepository.findById(reservation.getId()), Matchers.equalTo(Optional.empty()));
@@ -386,6 +430,12 @@ public class ReservationServiceTest extends ProtocolTest {
 
 	private ResultActions deleteReservation(long id) throws Exception {
 		return performDelete("/reservation/delete/" + id);
+	}
+
+	private ReservationSystemConfig getSystemConfig(long id) throws Exception {
+		String content = performGet("/reservation/systemconfig/" + id).andExpect(status().isOk()) //
+				.andReturn().getResponse().getContentAsString();
+		return objectMapper.readValue(content, ReservationSystemConfig.class);
 	}
 
 	private ResultActions addReservation(Reservation reservation) throws Exception {
@@ -465,4 +515,5 @@ public class ReservationServiceTest extends ProtocolTest {
 		return new Reservation(systemId, user, "reservation name", String.valueOf(court), LocalDate.now().plusDays(1),
 				LocalTime.of(hour, 0), duration, ReservationType.INDIVIDUAL);
 	}
+
 }
