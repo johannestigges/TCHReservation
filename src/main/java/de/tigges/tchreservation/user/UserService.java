@@ -171,9 +171,6 @@ public class UserService extends UserAwareService {
 	}
 
 	private void checkUser(User user) {
-		if (user == null) {
-			throw new BadRequestException("no user");
-		}
 		if (user.getEmail() == null) {
 			throw new BadRequestException("no email");
 		}

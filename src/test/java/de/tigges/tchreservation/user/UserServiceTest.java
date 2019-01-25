@@ -152,6 +152,13 @@ public class UserServiceTest extends ProtocolTest {
 		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE);
 		performPost("/user/", user).andExpect(status().isUnauthorized());
 	}
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void testAddUserDuplicate() throws Exception {
+		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE);
+		performPost("/user/", user).andExpect(status().isOk());
+		performPost("/user/", user).andExpect(status().isBadRequest());
+	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
@@ -192,6 +199,28 @@ public class UserServiceTest extends ProtocolTest {
 		modifiedUser.setId(user.getId());
 
 		performPut("/user/", modifiedUser).andExpect(status().isOk());
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void testUpdateWithoutPassword() throws Exception {
+		User user = userRepository
+				.save(new User("email", "name", "password", UserRole.REGISTERED, ActivationStatus.CREATED));
+		User modifiedUser = new User("modifiedEmail", "modifiedName", null, UserRole.KIOSK,
+				ActivationStatus.VERIFIED_BY_USER);
+		modifiedUser.setId(user.getId());
+
+		performPut("/user/", modifiedUser).andExpect(status().isOk());
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void testUpdateU() throws Exception {
+		User modifiedUser = new User("modifiedEmail", "modifiedName", null, UserRole.KIOSK,
+				ActivationStatus.VERIFIED_BY_USER);
+		modifiedUser.setId(8989787L);
+
+		performPut("/user/", modifiedUser).andExpect(status().isNotFound());
 	}
 
 	@Test
@@ -365,6 +394,13 @@ public class UserServiceTest extends ProtocolTest {
 	@WithMockUser(username = "REGISTERED")
 	public void testGetDeviceNotAuthorized() throws Exception {
 		performGet("/user/device/0").andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void testDeleteUnknownDevice() throws Exception {
+		UserDevice device = createDevice(registeredUser, 0, ActivationStatus.CREATED);
+		performDelete("/user/device/" + device.getId()).andExpect(status().isNotFound());
 	}
 
 	@Test
