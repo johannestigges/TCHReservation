@@ -115,12 +115,100 @@ public class ReservationServiceTest extends ProtocolTest {
 	public void addReservationNoText() throws Exception {
 		Reservation reservation = createReservation(1, user, 1, 8, 2);
 		reservation.setText(null);
-		addReservationError(reservation, HttpStatus.BAD_REQUEST, "Fehler beim Prüfen der Reservierung");
+		addReservationFieldError(reservation, "text", "Bitte geben Sie einen Wert an");
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
-	public void addReservationInvalidSystemConfig() throws Exception {
+	public void addReservationNoDate() throws Exception {
+		Reservation reservation = createReservation(1, user, 1, 8, 2);
+		reservation.setDate(null);
+		addReservationFieldError(reservation, "date", "Bitte geben Sie einen Wert an");
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void addReservationNoStart() throws Exception {
+		Reservation reservation = createReservation(1, user, 1, 8, 2);
+		reservation.setStart(null);
+		addReservationFieldError(reservation, "start", "Bitte geben Sie einen Wert an");
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void addReservationBeforeOpeningHour() throws Exception {
+		Reservation reservation = createReservation(1, user, 1, 6, 2);
+		addReservationFieldError(reservation, "start", "Startzeit 06:00 liegt vor der Öffnungszeit 08:00.");
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void addReservationAfterClosingHour() throws Exception {
+		Reservation reservation = createReservation(1, user, 1, 23, 2);
+		addReservationFieldError(reservation, "start", "Startzeit 23:00 liegt später als die Endezeit 22:00");
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void addReservationInvalidMinutes() throws Exception {
+		Reservation reservation = createReservation(1, user, 1, 0, 2);
+		reservation.setStart(LocalTime.of(9, 25));
+		addReservationFieldError(reservation, "start", "fehlerhafte Startzeit mit 25 Minuten.");
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void addReservationExtendsClosingHour() throws Exception {
+		Reservation reservation = createReservation(1, user, 1, 19, 7);
+		addReservationFieldError(reservation, "start", "Startzeit + Dauer zu spät.");
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void addReservationDurationTooSmall() throws Exception {
+		Reservation reservation = createReservation(1, user, 1, 8, 0);
+		addReservationFieldError(reservation, "duration", "Dauer zu gering");
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void addReservationNoCourts() throws Exception {
+		Reservation reservation = createReservation(1, user, 0, 8, 2);
+		reservation.setCourts(null);
+		addReservationFieldError(reservation, "court", "Bitte geben Sie einen Wert an");
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void addReservationTooManyCourts() throws Exception {
+		Reservation reservation = createReservation(1, user, 0, 8, 2);
+		reservation.setCourts("1 2 3 4 5 6 7");
+		addReservationFieldError(reservation, "court", "Mehr als 6 Plätze gibt es nicht.");
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void addReservationCourtTooSmall() throws Exception {
+		Reservation reservation = createReservation(1, user, 0, 8, 2);
+		addReservationFieldError(reservation, "court", "Platz[1]: Platz 0 gibt es nicht");
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void addReservationCourtTooBig() throws Exception {
+		Reservation reservation = createReservation(1, user, 7, 8, 2);
+		addReservationFieldError(reservation, "court", "Platz[1]: Platz 7 gibt es nicht");
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void addReservationNull() throws Exception {
+		addReservationNoCheck(null).andExpect(status().isBadRequest());
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void addReservationNoSystemConfig() throws Exception {
 		addReservationError(createReservation(0, admin, 1, 10, 6), HttpStatus.BAD_REQUEST,
 				"Kein Reservierungssystem angegeben");
 	}
@@ -193,9 +281,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void addReservationUnauthorizedDuration() throws Exception {
-		assertFieldError(
-				addReservationError(createReservation(1, user, 1, 8, 4), HttpStatus.BAD_REQUEST,
-						"Fehler beim Prüfen der Reservierung"),
+		addReservationFieldError(createReservation(1, user, 1, 8, 4), //
 				"duration", "Der Benutzer REGISTERED hat nicht die Rechte, eine Reservierung der Dauer 4 anzulegen.");
 	}
 
@@ -204,8 +290,8 @@ public class ReservationServiceTest extends ProtocolTest {
 	public void addReservationUnauthorizedTypePrepaid() throws Exception {
 		Reservation reservation = createReservation(1, user, 1, 8, 2);
 		reservation.setType(ReservationType.PREPAID);
-		assertFieldError(
-				addReservationError(reservation, HttpStatus.BAD_REQUEST, "Fehler beim Prüfen der Reservierung"), //
+
+		addReservationFieldError(reservation, //
 				"type", "Der Benutzer REGISTERED hat nicht die Rechte, eine Reservierung vom Typ PREPAID anzulegen.");
 	}
 
@@ -214,8 +300,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	public void addReservationUnauthorizedTypeTournament() throws Exception {
 		Reservation reservation = createReservation(1, user, 1, 8, 2);
 		reservation.setType(ReservationType.TOURNAMENT);
-		assertFieldError(
-				addReservationError(reservation, HttpStatus.BAD_REQUEST, "Fehler beim Prüfen der Reservierung"), //
+		addReservationFieldError(reservation, //
 				"type",
 				"Der Benutzer REGISTERED hat nicht die Rechte, eine Reservierung vom Typ TOURNAMENT anzulegen.");
 	}
@@ -225,8 +310,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	public void addReservationUnauthorizedTypeTrainer() throws Exception {
 		Reservation reservation = createReservation(1, user, 1, 8, 2);
 		reservation.setType(ReservationType.TRAINER);
-		assertFieldError(
-				addReservationError(reservation, HttpStatus.BAD_REQUEST, "Fehler beim Prüfen der Reservierung"), //
+		addReservationFieldError(reservation, //
 				"type", "Der Benutzer REGISTERED hat nicht die Rechte, eine Reservierung vom Typ TRAINER anzulegen.");
 	}
 
@@ -249,6 +333,12 @@ public class ReservationServiceTest extends ProtocolTest {
 
 	@Test
 	@WithMockUser(username = "ADMIN")
+	public void updateReservationNull() throws Exception {
+		updateReservation(null).andExpect(status().isBadRequest());
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
 	public void deleteReservation() throws Exception {
 		Reservation reservation = reservationRepository.save(createReservation(1, user, 1, 10, 2));
 		deleteReservation(reservation.getId()).andExpect(status().isOk());
@@ -267,12 +357,12 @@ public class ReservationServiceTest extends ProtocolTest {
 	public void getAllNotAuthorized() throws Exception {
 		performGet("/reservation/get").andExpect(status().is3xxRedirection());
 	}
-	
+
 	@Test
 	public void getOccupations() throws Exception {
 		performGet("/reservation/getOccupations/1/0").andExpect(status().isOk());
 	}
-	
+
 	@Test
 	public void getOccupationsWithDate() throws Exception {
 		performGet("/reservation/getOccupations/15/" + new Date().getTime()).andExpect(status().isOk());
@@ -308,10 +398,21 @@ public class ReservationServiceTest extends ProtocolTest {
 		return checkError(addReservationNoCheck(reservation), status, message);
 	}
 
-	private ResultActions assertFieldError(ResultActions resultActions, String field, String message) throws Exception {
-		return resultActions.andExpect(jsonPath("$.fieldErrors[0].entity").value("reservation"))
-				.andExpect(jsonPath("$.fieldErrors[0].field").value(field))
-				.andExpect(jsonPath("$.fieldErrors[0].message").value(message));
+	private ResultActions addReservationFieldError(Reservation reservation, String... fieldErrors) throws Exception {
+		ResultActions resultActions = addReservationError(reservation, HttpStatus.BAD_REQUEST,
+				"Fehler beim Prüfen der Reservierung");
+		int i = 0;
+		while (i < fieldErrors.length) {
+			assertFieldError(resultActions, i / 2, fieldErrors[i++], fieldErrors[i++]);
+		}
+		return resultActions;
+	}
+
+	private ResultActions assertFieldError(ResultActions resultActions, int i, String field, String message)
+			throws Exception {
+		return resultActions.andExpect(jsonPath("$.fieldErrors[" + i + "].entity").value("reservation"))
+				.andExpect(jsonPath("$.fieldErrors[" + i + "].field").value(field))
+				.andExpect(jsonPath("$.fieldErrors[" + i + "].message").value(message));
 	}
 
 	private ResultActions addReservationOverlap(Reservation reservation) throws Exception {
@@ -338,8 +439,13 @@ public class ReservationServiceTest extends ProtocolTest {
 		;
 	}
 
-	private ResultActions checkError(ResultActions resultActions, HttpStatus status, String message) throws Exception {
+	private ResultActions checkError(ResultActions resultActions, HttpStatus status, String message,
+			String... errorDetails) throws Exception {
 
+		int i = 0;
+		while (i < errorDetails.length) {
+			assertFieldError(resultActions, i / 2, errorDetails[i++], errorDetails[i++]);
+		}
 		return resultActions //
 				.andExpect(status().is(status.value())) //
 				.andExpect(jsonPath("$.message").value(message)) //

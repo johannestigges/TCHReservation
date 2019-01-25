@@ -186,11 +186,6 @@ public class ReservationService extends UserAwareService {
 
 		ErrorDetails errorDetails = new ErrorDetails(msg("error_validation_reservation"), null);
 
-		// data consistency checks
-		if (reservation == null) {
-			throw new BadRequestException(msg("error_no_reservation_data"));
-		}
-
 		if (isEmpty(reservation.getText())) {
 			addReservationFieldError(errorDetails, "text", msg("error_null_not_allowed"));
 		}
@@ -262,11 +257,11 @@ public class ReservationService extends UserAwareService {
 		for (int i = 0; i < courts.length; i++) {
 			if (courts[i] < 1) {
 				addReservationFieldError(errorDetails, "court",
-						String.format(msg("error_court_n_too_small"), i, courts[i]));
+						String.format(msg("error_court_n_too_small"), i + 1, courts[i]));
 			}
 			if (courts[i] > systemConfig.getCourts()) {
 				addReservationFieldError(errorDetails, "court",
-						String.format(msg("error_court_n_too_big"), i, courts[i], systemConfig.getCourts()));
+						String.format(msg("error_court_n_too_big"), i + 1, courts[i], systemConfig.getCourts()));
 			}
 		}
 
