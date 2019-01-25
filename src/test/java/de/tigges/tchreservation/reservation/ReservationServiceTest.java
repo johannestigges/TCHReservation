@@ -131,7 +131,6 @@ public class ReservationServiceTest extends ProtocolTest {
 		addReservation(reservation);
 		addReservation(createReservation(1, admin, 1, 11, 2));
 	}
-	
 
 	@Test
 	@WithMockUser(username = "ADMIN")
@@ -489,13 +488,7 @@ public class ReservationServiceTest extends ProtocolTest {
 		;
 	}
 
-	private ResultActions checkError(ResultActions resultActions, HttpStatus status, String message,
-			String... errorDetails) throws Exception {
-
-		int i = 0;
-		while (i < errorDetails.length) {
-			assertFieldError(resultActions, i / 2, errorDetails[i++], errorDetails[i++]);
-		}
+	private ResultActions checkError(ResultActions resultActions, HttpStatus status, String message) throws Exception {
 		return resultActions //
 				.andExpect(status().is(status.value())) //
 				.andExpect(jsonPath("$.message").value(message)) //
@@ -515,5 +508,4 @@ public class ReservationServiceTest extends ProtocolTest {
 		return new Reservation(systemId, user, "reservation name", String.valueOf(court), LocalDate.now().plusDays(1),
 				LocalTime.of(hour, 0), duration, ReservationType.INDIVIDUAL);
 	}
-
 }
