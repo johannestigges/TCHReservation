@@ -362,7 +362,7 @@ public class ReservationServiceTest extends ProtocolTest {
 		Reservation reservation = getResponseJson(addReservation(createReservation(1, user, 1, 12, 2)),
 				Reservation.class);
 		reservation.setDuration(6);
-		updateReservation(reservation).andExpect(status().isOk());
+		checkReservation(updateReservation(reservation), reservation, ActionType.MODIFY);
 	}
 
 	@Test
@@ -384,7 +384,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	public void deleteReservation() throws Exception {
 		Reservation reservation = objectMapper.readValue(addReservation(createReservation(1, user, 1, 10, 2))
 				.andExpect(status().isCreated()).andReturn().getResponse().getContentAsString(), Reservation.class);
-		deleteReservation(reservation.getId()).andExpect(status().isOk());
+		checkReservation(deleteReservation(reservation.getId()), reservation, ActionType.DELETE);
 
 		assertThat(reservationRepository.findById(reservation.getId()), Matchers.equalTo(Optional.empty()));
 		assertThat(occupationRepository.findByReservationId(reservation.getId()), IsEmptyIterable.emptyIterable());
@@ -472,20 +472,25 @@ public class ReservationServiceTest extends ProtocolTest {
 
 	private ResultActions checkReservation(ResultActions resultActions, Reservation reservation, ActionType actionType)
 			throws Exception {
-		if (ActionType.CREATE.equals(actionType)) {
-			resultActions.andExpect(status().is(HttpStatus.CREATED.value()));
+		switch (actionType) {
+		case CREATE:
+			resultActions.andExpect(status().isCreated()) //
+					.andExpect(jsonPath("$.id").isNotEmpty())
+					.andExpect(jsonPath("$.type").value(reservation.getType().ordinal()));
 			Reservation createdReservation = getResponseJson(resultActions, Reservation.class);
 			resultActions.andExpect(jsonPath("$.id").value(createdReservation.getId()));
 			checkProtocol(createdReservation, actionType);
-		} else if (ActionType.MODIFY.equals(actionType) || ActionType.DELETE.equals(actionType)) {
+			break;
+		case MODIFY:
+			resultActions.andExpect(status().isOk());
 			checkProtocol(reservation, actionType);
+			break;
+		case DELETE:
+			resultActions.andExpect(status().isOk());
+			checkProtocol(reservation, actionType);
+			break;
 		}
-		return resultActions //
-				.andExpect(status().isCreated()) //
-				.andExpect(jsonPath("$.id").isNotEmpty())
-				.andExpect(jsonPath("$.type").value(reservation.getType().ordinal()))
-		//
-		;
+		return resultActions;
 	}
 
 	private ResultActions checkError(ResultActions resultActions, HttpStatus status, String message) throws Exception {
