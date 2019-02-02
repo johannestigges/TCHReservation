@@ -2,7 +2,6 @@ package de.tigges.tchreservation.protocol;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -129,12 +128,6 @@ public class Protocol {
 	}
 
 	public static class ProtocolField {
-		public ProtocolField(String name, String value, String oldValue) {
-			this.name = name;
-			this.value = value;
-			this.oldValue = oldValue;
-		}
-
 		public String name;
 		public String value;
 		public String oldValue;
@@ -147,13 +140,6 @@ public class Protocol {
 		return protocols;
 	}
 	
-	public static Optional<Protocol> setFields(Optional<Protocol> protocol) {
-		if (protocol.isPresent()) {
-			protocol.get().setFields();
-		}
-		return protocol;
-	}
-
 	private void setFields() {
 	}
 }

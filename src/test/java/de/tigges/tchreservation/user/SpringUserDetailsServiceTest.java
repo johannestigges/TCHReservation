@@ -9,6 +9,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import de.tigges.tchreservation.TchReservationApplication;
@@ -31,30 +32,39 @@ public class SpringUserDetailsServiceTest {
 	}
 
 	@Test
-	public void getUser() throws Exception {
-		addUser("abcdef", "1", UserRole.REGISTERED, ActivationStatus.ACTIVE);
-		new UserChecker(service.loadUserByUsername("abcdef")).assertCredentialsNotExpired().assertUserNotExpired()
-				.assertEnabled().assertNotLocked();
+	public void allRoles() {
+		createAndLoadUser(UserRole.ADMIN, ActivationStatus.ACTIVE).assertEnabled().assertNotLocked();
+		createAndLoadUser(UserRole.ANONYMOUS, ActivationStatus.ACTIVE).assertEnabled().assertNotLocked();
+		createAndLoadUser(UserRole.KIOSK, ActivationStatus.ACTIVE).assertEnabled().assertNotLocked();
+		createAndLoadUser(UserRole.REGISTERED, ActivationStatus.ACTIVE).assertEnabled().assertNotLocked();
+		createAndLoadUser(UserRole.TRAINER, ActivationStatus.ACTIVE).assertEnabled().assertNotLocked();
 	}
-
+	
 	@Test
-	public void getAnonymous() throws Exception {
-		addUser("abcdef", "1", UserRole.ANONYMOUS, ActivationStatus.ACTIVE);
-		new UserChecker(service.loadUserByUsername("abcdef")).assertCredentialsNotExpired().assertUserNotExpired()
-				.assertEnabled().assertNotLocked();
+	public void allStatus() {
+		createAndLoadUser(UserRole.REGISTERED, ActivationStatus.CREATED).assertDisabled().assertNotLocked();
+		createAndLoadUser(UserRole.REGISTERED, ActivationStatus.ACTIVE).assertEnabled().assertNotLocked();
+		createAndLoadUser(UserRole.REGISTERED, ActivationStatus.LOCKED).assertDisabled().assertLocked();
+		createAndLoadUser(UserRole.REGISTERED, ActivationStatus.REMOVED).assertDisabled().assertNotLocked();
+		createAndLoadUser(UserRole.REGISTERED, ActivationStatus.VERIFIED_BY_USER).assertDisabled().assertNotLocked();
 	}
-
+	
 	@Test
-	public void getUserCreated() throws Exception {
-		addUser("abcdef", "1", UserRole.REGISTERED, ActivationStatus.CREATED);
-		new UserChecker(service.loadUserByUsername("abcdef")).assertCredentialsNotExpired().assertUserNotExpired()
-				.assertDisabled().assertNotLocked();
+	public void findByEmail() {
+		userRepository.save(new User("my@email.de", "user", "mypassword", UserRole.REGISTERED, ActivationStatus.ACTIVE));
+		service.loadUserByUsername("my@email.de");
 	}
-
-	private User addUser(String name, String email, UserRole role, ActivationStatus status) {
-		return userRepository.save(new User(email, name, "password", role, status));
+	
+	@Test(expected= UsernameNotFoundException.class)
+	public void unknownUser() {
+		service.loadUserByUsername("unknownuser");
 	}
-
+	private UserChecker createAndLoadUser(UserRole role, ActivationStatus status) {
+		String username = role.name() + "." + status.name();
+		userRepository.save(new User("my@email.de", username, "mypassword", role, status));
+		return new UserChecker(service.loadUserByUsername(username));
+	}
+	
 	private class UserChecker {
 		private UserDetails userDetails;
 
@@ -80,26 +90,6 @@ public class SpringUserDetailsServiceTest {
 
 		public UserChecker assertLocked() {
 			assertFalse("user " + userDetails.getUsername() + " is not locked", userDetails.isAccountNonLocked());
-			return this;
-		}
-
-		public UserChecker assertUserNotExpired() {
-			assertTrue("user " + userDetails.getUsername() + " is expired", userDetails.isAccountNonExpired());
-			return this;
-		}
-
-		public UserChecker assertUserExpired() {
-			assertFalse(userDetails.isAccountNonExpired());
-			return this;
-		}
-
-		public UserChecker assertCredentialsNotExpired() {
-			assertTrue(userDetails.isCredentialsNonExpired());
-			return this;
-		}
-
-		public UserChecker assertCredentialsExpired() {
-			assertFalse(userDetails.isCredentialsNonExpired());
 			return this;
 		}
 	}
