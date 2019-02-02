@@ -120,7 +120,7 @@ public class ReservationService extends UserAwareService {
 				.orElseThrow(() -> new NotFoundException(EntityType.RESERVATION, id));
 
 		User loggedInUser = getLoggedInUser();
-		
+
 		occupationRepository.findByReservationId(id).forEach(o -> deleteOccupation(o, loggedInUser));
 		reservationRepository.delete(reservation);
 		protocolRepository.save(new Protocol(reservation, ActionType.DELETE, loggedInUser));
@@ -147,7 +147,7 @@ public class ReservationService extends UserAwareService {
 	@GetMapping("/getOccupations/{systemConfigId}/{date}")
 	public Iterable<Occupation> getOccupations(@PathVariable Long systemConfigId, @PathVariable Long date) {
 		LocalDate searchDate;
-		if (date == null || date.equals(0L)) {
+		if (date.equals(0L)) {
 			searchDate = LocalDate.now();
 		} else {
 			searchDate = Instant.ofEpochMilli(date).atZone(ZoneId.systemDefault()).toLocalDate();
