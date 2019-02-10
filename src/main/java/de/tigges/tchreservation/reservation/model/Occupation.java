@@ -9,6 +9,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import de.tigges.tchreservation.EntityType;
 import de.tigges.tchreservation.protocol.Protocollable;
 
@@ -32,6 +34,7 @@ public class Occupation implements Protocollable {
 	private long systemConfigId;
 
 	@ManyToOne(optional = false)
+	@JsonIgnore // avoid infinite serialization loop
 	private Reservation reservation;
 
 	public long getId() {

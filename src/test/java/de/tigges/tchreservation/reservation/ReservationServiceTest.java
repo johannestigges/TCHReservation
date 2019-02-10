@@ -1,5 +1,6 @@
 package de.tigges.tchreservation.reservation;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -92,28 +93,28 @@ public class ReservationServiceTest extends ProtocolTest {
 	@WithMockUser(username = "ADMIN")
 	public void addReservationOverlap() throws Exception {
 		addReservation(createReservation(1, user, 1, 10, 3));
-		addReservationOverlap(createReservation(1, user, 1, 11, 2));
+		addReservationOverlap(createReservation(1, user, 1, 11, 2), 0);
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void addReservationDuplicate() throws Exception {
 		addReservation(createReservation(1, user, 1, 10, 3));
-		addReservationOverlap(createReservation(1, user, 1, 10, 3));
+		addReservationOverlap(createReservation(1, user, 1, 10, 3), 0);
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void addReservationOverlap2() throws Exception {
 		addReservation(createReservation(1, admin, 1, 10, 6));
-		addReservationOverlap(createReservation(1, user, 1, 11, 2));
+		addReservationOverlap(createReservation(1, user, 1, 11, 2), 0);
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void addReservationOverlap3() throws Exception {
 		addReservation(createReservation(1, user, 1, 11, 2));
-		addReservationOverlap(createReservation(1, admin, 1, 10, 6));
+		addReservationOverlap(createReservation(1, admin, 1, 10, 6), 0);
 	}
 
 	@Test
@@ -196,7 +197,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	@WithMockUser(username = "ADMIN")
 	public void addReservationNoCourts() throws Exception {
 		Reservation reservation = createReservation(1, user, 0, 8, 2);
-		reservation.setCourts(null);
+		reservation.setCourts((String) null);
 		addReservationFieldError(reservation, "court", "Bitte geben Sie einen Wert an");
 	}
 
@@ -204,7 +205,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	@WithMockUser(username = "ADMIN")
 	public void addReservationTooManyCourts() throws Exception {
 		Reservation reservation = createReservation(1, user, 0, 8, 2);
-		reservation.setCourts("1 2 3 4 5 6 7");
+		reservation.setCourts(1, 2, 3, 4, 5, 6, 7);
 		addReservationFieldError(reservation, "court", "Mehr als 6 Plätze gibt es nicht.");
 	}
 
@@ -220,6 +221,15 @@ public class ReservationServiceTest extends ProtocolTest {
 	public void addReservationCourtTooBig() throws Exception {
 		Reservation reservation = createReservation(1, user, 7, 8, 2);
 		addReservationFieldError(reservation, "court", "Platz[1]: Platz 7 gibt es nicht");
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void addReservationMultipleCourts() throws Exception {
+		Reservation reservation = createReservation(1, user, 1, 8, 2);
+		reservation.setCourts(1, 2);
+		Reservation savedReservation = getReservation(addReservation(reservation));
+		assertEquals(2, savedReservation.getOccupations().size());
 	}
 
 	@Test
@@ -464,8 +474,8 @@ public class ReservationServiceTest extends ProtocolTest {
 				.andExpect(jsonPath("$.fieldErrors[" + i + "].message").value(message));
 	}
 
-	private ResultActions addReservationOverlap(Reservation reservation) throws Exception {
-		return addReservationError(reservation, HttpStatus.BAD_REQUEST,
+	private ResultActions addReservationOverlap(Reservation reservation, int nrOccupation) throws Exception {
+		return addReservationFieldError(reservation, "occupation[" + nrOccupation + "]",
 				String.format("Reservierung am %tF %tR nicht möglich, weil Platz %s belegt ist.", reservation.getDate(),
 						reservation.getStart(), reservation.getCourts()));
 	}
@@ -493,6 +503,11 @@ public class ReservationServiceTest extends ProtocolTest {
 				.andExpect(status().is(status.value())) //
 				.andExpect(jsonPath("$.message").value(message)) //
 		;
+	}
+
+	private Reservation getReservation(ResultActions resultAction) throws Exception {
+		String content = resultAction.andReturn().getResponse().getContentAsString();
+		return objectMapper.readValue(content, Reservation.class);
 	}
 
 	private User createUser(UserRole role, ActivationStatus status) {

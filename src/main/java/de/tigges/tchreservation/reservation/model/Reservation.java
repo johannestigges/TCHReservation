@@ -2,13 +2,17 @@ package de.tigges.tchreservation.reservation.model;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
+import javax.persistence.Transient;
 
 import de.tigges.tchreservation.EntityType;
 import de.tigges.tchreservation.protocol.Protocollable;
@@ -32,6 +36,9 @@ public class Reservation implements Protocollable {
 
 	@ManyToOne(optional = false)
 	private User user;
+
+	@Transient
+	private List<Occupation> occupations;
 
 	public Reservation() {
 	}
@@ -128,6 +135,19 @@ public class Reservation implements Protocollable {
 		this.user = user;
 	}
 
+	@Transient
+	public List<Occupation> getOccupations() {
+		if (occupations == null) {
+			occupations = new ArrayList<>();
+		}
+		return occupations;
+	}
+
+	public void addOccupation(Occupation occupation) {
+		occupation.setReservation(this);
+		getOccupations().add(occupation);
+	}
+
 	@Override
 	public Map<String, String> protocolFields() {
 		return protocolFields("text", text, //
@@ -148,19 +168,44 @@ public class Reservation implements Protocollable {
 		return id;
 	}
 
-	public void courts(int... courts) {
+	/**
+	 * set the courts
+	 * 
+	 * @param courts
+	 */
+	@Transient
+	public void setCourts(int... courts) {
 		this.courts = toCourts(courts);
 	}
 
+	/**
+	 * add courts to the list of courts
+	 * 
+	 * @param courts
+	 */
+	@Transient
 	public void addCourts(int... courts) {
 		this.courts = this.courts + ' ' + toCourts(courts);
 	}
 
-	public int[] courtsArray() {
+	/**
+	 * get the courts as int[]
+	 * 
+	 * @return courts as int[]
+	 */
+	@Transient
+	public int[] getCourtsAsArray() {
 		return toCourts(this.courts);
 	}
 
-	private int[] toCourts(String courtsString) {
+	/**
+	 * convert courts from String to int[]
+	 * 
+	 * @param courtsString
+	 * @return int[]
+	 */
+	@Transient
+	public int[] toCourts(String courtsString) {
 		if (courtsString == null) {
 			return new int[0];
 		}
@@ -172,9 +217,14 @@ public class Reservation implements Protocollable {
 		return courts;
 	}
 
-	public static String toCourts(int... courts) {
-		return Arrays.toString(courts).replaceAll("\\[|\\]|,|\\s", "");
-
+	/**
+	 * convert courts from int... to String
+	 * 
+	 * @param courts
+	 * @return courtsString
+	 */
+	@Transient
+	public String toCourts(int... courts) {
+		return Arrays.stream(courts).mapToObj(String::valueOf).collect(Collectors.joining(" "));
 	}
-
 }
