@@ -151,7 +151,7 @@ public class ReservationService extends UserAwareService {
 	@GetMapping("/getOccupations/{systemConfigId}/{date}")
 	public Iterable<Occupation> getOccupations(@PathVariable Long systemConfigId, @PathVariable Long date) {
 		LocalDate searchDate;
-		if (date == null || date.equals(0L)) {
+		if (date.equals(0L)) {
 			searchDate = LocalDate.now();
 		} else {
 			searchDate = Instant.ofEpochMilli(date).atZone(ZoneId.systemDefault()).toLocalDate();

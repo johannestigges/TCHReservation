@@ -1,5 +1,15 @@
 package de.tigges.tchreservation.user;
 
+import static de.tigges.tchreservation.user.model.ActivationStatus.ACTIVE;
+import static de.tigges.tchreservation.user.model.ActivationStatus.CREATED;
+import static de.tigges.tchreservation.user.model.ActivationStatus.LOCKED;
+import static de.tigges.tchreservation.user.model.ActivationStatus.REMOVED;
+import static de.tigges.tchreservation.user.model.ActivationStatus.VERIFIED_BY_USER;
+import static de.tigges.tchreservation.user.model.UserRole.ADMIN;
+import static de.tigges.tchreservation.user.model.UserRole.ANONYMOUS;
+import static de.tigges.tchreservation.user.model.UserRole.KIOSK;
+import static de.tigges.tchreservation.user.model.UserRole.REGISTERED;
+import static de.tigges.tchreservation.user.model.UserRole.TRAINER;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -33,38 +43,39 @@ public class SpringUserDetailsServiceTest {
 
 	@Test
 	public void allRoles() {
-		createAndLoadUser(UserRole.ADMIN, ActivationStatus.ACTIVE).assertEnabled().assertNotLocked();
-		createAndLoadUser(UserRole.ANONYMOUS, ActivationStatus.ACTIVE).assertEnabled().assertNotLocked();
-		createAndLoadUser(UserRole.KIOSK, ActivationStatus.ACTIVE).assertEnabled().assertNotLocked();
-		createAndLoadUser(UserRole.REGISTERED, ActivationStatus.ACTIVE).assertEnabled().assertNotLocked();
-		createAndLoadUser(UserRole.TRAINER, ActivationStatus.ACTIVE).assertEnabled().assertNotLocked();
+		createAndLoadUser(ADMIN, ACTIVE).assertEnabled().assertNotLocked();
+		createAndLoadUser(ANONYMOUS, ACTIVE).assertEnabled().assertNotLocked();
+		createAndLoadUser(KIOSK, ACTIVE).assertEnabled().assertNotLocked();
+		createAndLoadUser(REGISTERED, ACTIVE).assertEnabled().assertNotLocked();
+		createAndLoadUser(TRAINER, ACTIVE).assertEnabled().assertNotLocked();
 	}
-	
+
 	@Test
 	public void allStatus() {
-		createAndLoadUser(UserRole.REGISTERED, ActivationStatus.CREATED).assertDisabled().assertNotLocked();
-		createAndLoadUser(UserRole.REGISTERED, ActivationStatus.ACTIVE).assertEnabled().assertNotLocked();
-		createAndLoadUser(UserRole.REGISTERED, ActivationStatus.LOCKED).assertDisabled().assertLocked();
-		createAndLoadUser(UserRole.REGISTERED, ActivationStatus.REMOVED).assertDisabled().assertNotLocked();
-		createAndLoadUser(UserRole.REGISTERED, ActivationStatus.VERIFIED_BY_USER).assertDisabled().assertNotLocked();
+		createAndLoadUser(REGISTERED, CREATED).assertDisabled().assertNotLocked();
+		createAndLoadUser(REGISTERED, ACTIVE).assertEnabled().assertNotLocked();
+		createAndLoadUser(REGISTERED, LOCKED).assertDisabled().assertLocked();
+		createAndLoadUser(REGISTERED, REMOVED).assertDisabled().assertNotLocked();
+		createAndLoadUser(REGISTERED, VERIFIED_BY_USER).assertDisabled().assertNotLocked();
 	}
-	
+
 	@Test
 	public void findByEmail() {
-		userRepository.save(new User("my@email.de", "user", "mypassword", UserRole.REGISTERED, ActivationStatus.ACTIVE));
+		userRepository.save(new User("my@email.de", "user", "mypassword", REGISTERED, ACTIVE));
 		service.loadUserByUsername("my@email.de");
 	}
-	
-	@Test(expected= UsernameNotFoundException.class)
+
+	@Test(expected = UsernameNotFoundException.class)
 	public void unknownUser() {
 		service.loadUserByUsername("unknownuser");
 	}
+
 	private UserChecker createAndLoadUser(UserRole role, ActivationStatus status) {
 		String username = role.name() + "." + status.name();
 		userRepository.save(new User("my@email.de", username, "mypassword", role, status));
 		return new UserChecker(service.loadUserByUsername(username));
 	}
-	
+
 	private class UserChecker {
 		private UserDetails userDetails;
 
@@ -80,7 +91,6 @@ public class SpringUserDetailsServiceTest {
 		public UserChecker assertDisabled() {
 			assertFalse("user " + userDetails.getUsername() + " is not disabled", userDetails.isEnabled());
 			return this;
-
 		}
 
 		public UserChecker assertNotLocked() {
