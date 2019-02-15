@@ -111,7 +111,7 @@ public class ReservationValidator {
 		}
 
 		// validate courts
-		if (reservation.getCourts() == null) {
+		if (isEmpty(reservation.getCourts())) {
 			addReservationFieldError(errorDetails, "court", msg("error_null_not_allowed"));
 		}
 
@@ -172,7 +172,7 @@ public class ReservationValidator {
 		// validate occupations
 		for (int i = 0; i < reservation.getOccupations().size(); i++) {
 			try {
-				validateOccupation(reservation.getOccupations().get(i), loggedInUser);
+				validateOccupation(reservation, reservation.getOccupations().get(i), loggedInUser);
 			} catch (BadRequestException e) {
 				addReservationFieldError(errorDetails, "occupation[" + i + "]", e.getErrorDetails().getMessage());
 			}
@@ -183,7 +183,11 @@ public class ReservationValidator {
 		}
 	}
 
-	public void validateOccupation(Occupation occupation, User loggedInUser) {
+	public void validateOccupation(Reservation reservation, Occupation occupation, User loggedInUser) {
+		if (reservation.getSystemConfigId() != occupation.getSystemConfigId()) {
+			throw new BadRequestException("system config of occupation doesn't match");
+		}
+
 		occupationRepository.findBySystemConfigIdAndDate(occupation.getSystemConfigId(), occupation.getDate())
 				.forEach(o -> checkOverlap(occupation, o));
 	}

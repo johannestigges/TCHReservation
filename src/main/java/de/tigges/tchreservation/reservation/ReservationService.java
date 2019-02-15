@@ -66,6 +66,8 @@ public class ReservationService extends UserAwareService {
 
 		if (reservation.getOccupations().isEmpty()) {
 			createOccupations(reservation).forEach(o -> reservation.addOccupation(o));
+		} else {
+			reservation.getOccupations().forEach(o -> o.setReservation(reservation));
 		}
 
 		// check reservation data consistency
