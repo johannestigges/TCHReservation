@@ -226,10 +226,18 @@ public class ReservationServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void addReservationMultipleCourts() throws Exception {
-		Reservation reservation = createReservation(1, user, 1, 8, 2);
-		reservation.setCourts(1, 2);
+		checkReservationMultipleCourts(8, 1, 1, 2);
+		checkReservationMultipleCourts(9, 1, 1, 2, 3, 4, 5, 6);
+		checkReservationMultipleCourts(10, 2, 1, 3);
+		checkReservationMultipleCourts(11, 2, 1, 2, 4, 5, 6);
+		checkReservationMultipleCourts(12, 3, 2, 4, 6);
+	}
+
+	private void checkReservationMultipleCourts(int start, int expectedOccupations, int... courts) throws Exception {
+		Reservation reservation = createReservation(1, user, 1, start, 2);
+		reservation.setCourts(courts);
 		Reservation savedReservation = getReservation(addReservation(reservation));
-		assertEquals(2, savedReservation.getOccupations().size());
+		assertEquals(expectedOccupations, savedReservation.getOccupations().size());
 	}
 
 	@Test

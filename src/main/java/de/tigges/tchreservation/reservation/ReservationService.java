@@ -194,19 +194,35 @@ public class ReservationService extends UserAwareService {
 	 */
 	private List<Occupation> createOccupations(Reservation reservation) {
 		List<Occupation> occupations = new ArrayList<>();
+		Occupation occupation = createOccupation(reservation);
 		for (int court : reservation.getCourtsAsArray()) {
-			Occupation occupation = new Occupation();
-			occupation.setSystemConfigId(reservation.getSystemConfigId());
-			occupation.setReservation(reservation);
-			occupation.setText(reservation.getText());
-			occupation.setType(reservation.getType());
-			occupation.setCourt(court);
-			occupation.setLastCourt(occupation.getCourt());
-			occupation.setDate(reservation.getDate());
-			occupation.setStart(reservation.getStart());
-			occupation.setDuration(reservation.getDuration());
+			if (occupation.getCourt() == 0) {
+				occupation.setCourt(court);
+				occupation.setLastCourt(court);
+			} else if (court == occupation.getLastCourt() + 1) {
+				occupation.setLastCourt(court);
+			} else {
+				occupations.add(occupation);
+				occupation = createOccupation(reservation);
+				occupation.setCourt(court);
+				occupation.setLastCourt(court);
+			}
+		}
+		if (occupation.getCourt() > 0) {
 			occupations.add(occupation);
 		}
 		return occupations;
+	}
+
+	private Occupation createOccupation(Reservation reservation) {
+		Occupation occupation = new Occupation();
+		occupation.setSystemConfigId(reservation.getSystemConfigId());
+		occupation.setReservation(reservation);
+		occupation.setText(reservation.getText());
+		occupation.setType(reservation.getType());
+		occupation.setDate(reservation.getDate());
+		occupation.setStart(reservation.getStart());
+		occupation.setDuration(reservation.getDuration());
+		return occupation;
 	}
 }
