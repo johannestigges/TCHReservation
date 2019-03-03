@@ -14,11 +14,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tigges.tchreservation.EntityType;
 import de.tigges.tchreservation.exception.AuthorizationException;
 import de.tigges.tchreservation.exception.BadRequestException;
 import de.tigges.tchreservation.exception.NotFoundException;
 import de.tigges.tchreservation.protocol.ActionType;
+import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.protocol.Protocol;
 import de.tigges.tchreservation.protocol.ProtocolRepository;
 import de.tigges.tchreservation.user.model.ActivationStatus;

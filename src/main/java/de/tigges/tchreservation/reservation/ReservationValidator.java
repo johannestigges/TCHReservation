@@ -7,13 +7,13 @@ import java.util.Locale;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 
-import de.tigges.tchreservation.EntityType;
 import de.tigges.tchreservation.exception.AuthorizationException;
 import de.tigges.tchreservation.exception.BadRequestException;
 import de.tigges.tchreservation.exception.ErrorDetails;
 import de.tigges.tchreservation.exception.FieldError;
 import de.tigges.tchreservation.exception.InvalidDataException;
 import de.tigges.tchreservation.exception.NotFoundException;
+import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.reservation.model.Occupation;
 import de.tigges.tchreservation.reservation.model.Reservation;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
@@ -169,7 +169,14 @@ public class ReservationValidator {
 			}
 		}
 
-		// validate occupations
+		if (!errorDetails.getFieldErrors().isEmpty()) {
+			throw new InvalidDataException(errorDetails);
+		}
+	}
+
+	public void validateOccupations(Reservation reservation, User loggedInUser) {
+		ErrorDetails errorDetails = new ErrorDetails(msg("error_validation_reservation"), null);
+
 		for (int i = 0; i < reservation.getOccupations().size(); i++) {
 			try {
 				validateOccupation(reservation, reservation.getOccupations().get(i), loggedInUser);
@@ -177,10 +184,10 @@ public class ReservationValidator {
 				addReservationFieldError(errorDetails, "occupation[" + i + "]", e.getErrorDetails().getMessage());
 			}
 		}
-
 		if (!errorDetails.getFieldErrors().isEmpty()) {
 			throw new InvalidDataException(errorDetails);
 		}
+
 	}
 
 	public void validateOccupation(Reservation reservation, Occupation occupation, User loggedInUser) {

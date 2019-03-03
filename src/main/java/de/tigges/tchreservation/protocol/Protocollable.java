@@ -3,8 +3,6 @@ package de.tigges.tchreservation.protocol;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.tigges.tchreservation.EntityType;
-
 /**
  * interface for protocollable entities
  */

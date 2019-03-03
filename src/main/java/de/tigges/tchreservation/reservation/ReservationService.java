@@ -22,9 +22,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tigges.tchreservation.EntityType;
 import de.tigges.tchreservation.exception.NotFoundException;
 import de.tigges.tchreservation.protocol.ActionType;
+import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.protocol.Protocol;
 import de.tigges.tchreservation.protocol.ProtocolRepository;
 import de.tigges.tchreservation.reservation.model.Occupation;
@@ -64,14 +64,8 @@ public class ReservationService extends UserAwareService {
 		logger.info("add reservation {}", reservation.getText());
 		User loggedInUser = getLoggedInUser();
 
-		if (reservation.getOccupations().isEmpty()) {
-			createOccupations(reservation).forEach(o -> reservation.addOccupation(o));
-		} else {
-			reservation.getOccupations().forEach(o -> o.setReservation(reservation));
-		}
-
 		// check reservation data consistency
-		reservationValidator.validateReservation(reservation, loggedInUser);
+		checkOccupations(reservation);
 
 		// save occupations and reservation
 		Reservation savedReservation = reservationRepository.save(reservation);
@@ -79,6 +73,25 @@ public class ReservationService extends UserAwareService {
 
 		reservation.getOccupations().forEach(o -> saveOccupation(o, loggedInUser));
 		return savedReservation;
+	}
+
+	@GetMapping("/checkOccupations")
+	public @ResponseBody Reservation checkOccupations(@RequestBody Reservation reservation) {
+
+		logger.info("check occupations for reservation {}", reservation.getText());
+		User loggedInUser = getLoggedInUser();
+
+		// validate reservation
+		reservationValidator.validateReservation(reservation, loggedInUser);
+
+		if (reservation.getOccupations().isEmpty()) {
+			createOccupations(reservation).forEach(o -> reservation.addOccupation(o));
+		}
+
+		// validate occupations
+		reservationValidator.validateOccupations(reservation, loggedInUser);
+
+		return reservation;
 	}
 
 	@PutMapping("/update")
@@ -194,22 +207,35 @@ public class ReservationService extends UserAwareService {
 	 */
 	private List<Occupation> createOccupations(Reservation reservation) {
 		List<Occupation> occupations = new ArrayList<>();
-		Occupation occupation = createOccupation(reservation);
-		for (int court : reservation.getCourtsAsArray()) {
-			if (occupation.getCourt() == 0) {
-				occupation.setCourt(court);
-				occupation.setLastCourt(court);
-			} else if (court == occupation.getLastCourt() + 1) {
-				occupation.setLastCourt(court);
-			} else {
-				occupations.add(occupation);
-				occupation = createOccupation(reservation);
-				occupation.setCourt(court);
-				occupation.setLastCourt(court);
-			}
+
+		LocalDate occupationDate = reservation.getDate();
+		LocalDate repeatUntil = reservation.getDate();
+		if (reservation.getWeeklyRepeatUntil() != null) {
+			repeatUntil = reservation.getWeeklyRepeatUntil();
 		}
-		if (occupation.getCourt() > 0) {
-			occupations.add(occupation);
+		while (!occupationDate.isAfter(repeatUntil)) {
+			Occupation occupation = createOccupation(reservation);
+			occupation.setDate(occupationDate);
+
+			for (int court : reservation.getCourtsAsArray()) {
+				if (occupation.getCourt() == 0) {
+					occupation.setCourt(court);
+					occupation.setLastCourt(court);
+				} else if (court == occupation.getLastCourt() + 1) {
+					occupation.setLastCourt(court);
+				} else {
+					occupations.add(occupation);
+					occupation = createOccupation(reservation);
+					occupation.setDate(occupationDate);
+					occupation.setCourt(court);
+					occupation.setLastCourt(court);
+				}
+			}
+			if (occupation.getCourt() > 0) {
+				occupations.add(occupation);
+			}
+
+			occupationDate = occupationDate.plusDays(7);
 		}
 		return occupations;
 	}

@@ -12,7 +12,6 @@ import javax.persistence.Transient;
 
 import org.json.JSONObject;
 
-import de.tigges.tchreservation.EntityType;
 import de.tigges.tchreservation.user.model.User;
 
 @Entity

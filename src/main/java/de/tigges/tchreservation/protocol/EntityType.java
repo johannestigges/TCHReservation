@@ -1,4 +1,4 @@
-package de.tigges.tchreservation;
+package de.tigges.tchreservation.protocol;
 
 public enum EntityType {
 	USER,
