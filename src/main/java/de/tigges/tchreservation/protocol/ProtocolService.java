@@ -21,13 +21,13 @@ public class ProtocolService {
 
 	@GetMapping("/get")
 	public Iterable<Protocol> getAll() {
-		return Protocol.setFields(protocolRepository.findAll());
+		return protocolRepository.findAll();
 	}
 
 	@GetMapping("/get/{time}")
 	public Iterable<Protocol> getSince(@PathVariable Long time) {
 		LocalDateTime localDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(time),
 				TimeZone.getDefault().toZoneId());
-		return Protocol.setFields(protocolRepository.findByTimeGreaterThan(localDateTime));
+		return protocolRepository.findByTimeGreaterThan(localDateTime);
 	}
 }

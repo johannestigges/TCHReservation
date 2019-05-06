@@ -1,36 +1,25 @@
 spring:
   datasource:
-    url: "jdbc:mysql://localhost:3306/tch"
+    url: "jdbc:mysql://localhost:3306/tch?serverTimezone=UTC"
     username: springuser
     password: springpassword
   jpa:
     hibernate:
       ddl-auto: validate # validate update create create-drop
       
-  # configure facebook login
-# security:
-#    oauth2:
-#      client:
-#        registration:
-#          facebook:
-#          # account kit
-#          #  clientId: 7b57c4a75dfa5b42ab806bdfa5997292
-#          #  clientSecret: 9c0f1a93792c22327d33dc443a75c2b6
-#            clientId: 1819260511438509
-#            clientSecret: 34927c11f97afc43db39ea3bf130e5eb
-            
-#logging:
-#  level:
-#    org.springframework.web.filter.CommonsRequestLoggingFilter: DEBUG
-      
+logging:
+  level:
+    org:
+     springframework: debug
+#        web: DEBUG
+#       web.filter.CommonsRequestLoggingFilter: DEBUG
+     hibernate: ERROR
+          
 server:
-  port: "8443"
-  ssl:
-    key-store-type: "PKCS12"
-    key-store: "classpath:keystore.p12"
-    key-store-password: "knofensa"
-    key-alias: "tomcat"
-  
-security:
-  require-ssl: true
-  
+   port: "8080"
+#  port: "8443"
+#  ssl:
+#    key-store-type: "PKCS12"
+#    key-store: "classpath:keystore.p12"
+#    key-store-password: "knofensa"
+#    key-alias: "tomcat"

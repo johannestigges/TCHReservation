@@ -5,6 +5,7 @@ import static org.junit.Assert.assertThat;
 import java.util.Iterator;
 
 import org.hamcrest.Matchers;
+import org.json.JSONException;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -26,8 +27,9 @@ public class ProtocolTest extends UserTest {
 	 * 
 	 * @param entity
 	 * @param actionType
+	 * @throws JSONException
 	 */
-	public void checkProtocol(Protocollable entity, ActionType actionType) {
+	public void checkProtocol(Protocollable entity, ActionType actionType) throws JSONException {
 		Iterable<Protocol> protocols = protocolRepository.findByEntityTypeAndEntityId(entity.protocolEntityType(),
 				entity.protocolEntityId());
 		int found = 0;
@@ -48,8 +50,9 @@ public class ProtocolTest extends UserTest {
 	 * @param p
 	 * @param actionType
 	 * @param value
+	 * @throws JSONException
 	 */
-	public void checkProtocol(Protocol p, Protocollable entity) {
+	public void checkProtocol(Protocol p, Protocollable entity) throws JSONException {
 		assertThat(p.getEntityType(), Matchers.is(entity.protocolEntityType()));
 		assertThat(p.getEntityId(), Matchers.is(entity.protocolEntityId()));
 		JSONAssert.assertEquals(p.getValue(), new org.json.JSONObject(entity.protocolFields()), true);

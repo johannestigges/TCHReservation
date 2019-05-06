@@ -197,7 +197,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	@WithMockUser(username = "ADMIN")
 	public void addReservationNoCourts() throws Exception {
 		Reservation reservation = createReservation(1, user, 0, 8, 2);
-		reservation.setCourts((String) null);
+		reservation.setCourts(null);
 		addReservationFieldError(reservation, "court", "Bitte geben Sie einen Wert an");
 	}
 
@@ -205,7 +205,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	@WithMockUser(username = "ADMIN")
 	public void addReservationTooManyCourts() throws Exception {
 		Reservation reservation = createReservation(1, user, 0, 8, 2);
-		reservation.setCourts(1, 2, 3, 4, 5, 6, 7);
+		reservation.setCourtsFromInteger(1, 2, 3, 4, 5, 6, 7);
 		addReservationFieldError(reservation, "court", "Mehr als 6 Plätze gibt es nicht.");
 	}
 
@@ -235,7 +235,27 @@ public class ReservationServiceTest extends ProtocolTest {
 
 	private void checkReservationMultipleCourts(int start, int expectedOccupations, int... courts) throws Exception {
 		Reservation reservation = createReservation(1, user, 1, start, 2);
-		reservation.setCourts(courts);
+		reservation.setCourtsFromInteger(courts);
+		Reservation savedReservation = getReservation(addReservation(reservation));
+		assertEquals(expectedOccupations, savedReservation.getOccupations().size());
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void addReservationWeeklyRepeat() throws Exception {
+		checkReservationRepeat(8, 2, 1, 1);
+		checkReservationRepeat(8, 7, 2, 2);
+		checkReservationRepeat(8, 21, 8, 3, 5);
+		checkReservationRepeat(9, 20, 6, 3, 5);
+		checkReservationRepeat(10, 21, 8, 3, 5);
+		checkReservationRepeat(11, 21, 8, 3, 5);
+	}
+
+	private void checkReservationRepeat(int hour, int repeatDays, int expectedOccupations, int... courts)
+			throws Exception {
+		Reservation reservation = createReservation(1, user, 1, hour, 2);
+		reservation.setWeeklyRepeatUntil(reservation.getDate().plusDays(repeatDays));
+		reservation.setCourtsFromInteger(courts);
 		Reservation savedReservation = getReservation(addReservation(reservation));
 		assertEquals(expectedOccupations, savedReservation.getOccupations().size());
 	}

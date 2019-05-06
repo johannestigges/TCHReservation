@@ -17,8 +17,10 @@ import javax.persistence.Transient;
 import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.protocol.Protocollable;
 import de.tigges.tchreservation.user.model.User;
+import lombok.Data;
 
 @Entity
+@Data
 public class Reservation implements Protocollable {
 
 	@Id
@@ -45,7 +47,7 @@ public class Reservation implements Protocollable {
 
 	public Reservation(long systemConfigId, User user, String text, String courts, LocalDate date, LocalTime start,
 			int duration, ReservationType type) {
-		setSystemConfig(systemConfigId);
+		setSystemConfigId(systemConfigId);
 		setUser(user);
 		setText(text);
 		setCourts(courts);
@@ -53,86 +55,6 @@ public class Reservation implements Protocollable {
 		setStart(start);
 		setDuration(duration);
 		setType(type);
-	}
-
-	public long getId() {
-		return id;
-	}
-
-	public void setId(long id) {
-		this.id = id;
-	}
-
-	public String getText() {
-		return text;
-	}
-
-	public void setText(String text) {
-		this.text = text;
-	}
-
-	public long getSystemConfigId() {
-		return systemConfigId;
-	}
-
-	public void setSystemConfig(long systemConfigId) {
-		this.systemConfigId = systemConfigId;
-	}
-
-	public LocalDate getDate() {
-		return date;
-	}
-
-	public void setDate(LocalDate date) {
-		this.date = date;
-	}
-
-	public LocalTime getStart() {
-		return start;
-	}
-
-	public void setStart(LocalTime start) {
-		this.start = start;
-	}
-
-	public LocalDate getWeeklyRepeatUntil() {
-		return weeklyRepeatUntil;
-	}
-
-	public void setWeeklyRepeatUntil(LocalDate weeklyRepeatUntil) {
-		this.weeklyRepeatUntil = weeklyRepeatUntil;
-	}
-
-	public String getCourts() {
-		return courts;
-	}
-
-	public void setCourts(String courts) {
-		this.courts = courts;
-	}
-
-	public int getDuration() {
-		return duration;
-	}
-
-	public void setDuration(int duration) {
-		this.duration = duration;
-	}
-
-	public ReservationType getType() {
-		return type;
-	}
-
-	public void setType(ReservationType type) {
-		this.type = type;
-	}
-
-	public User getUser() {
-		return user;
-	}
-
-	public void setUser(User user) {
-		this.user = user;
 	}
 
 	@Transient
@@ -154,7 +76,9 @@ public class Reservation implements Protocollable {
 				"date", date.toString(), //
 				"start", start.toString(), //
 				"duration", Integer.toString(duration), //
+				"courts", courts, //
 				"type", type.name(), //
+				"weekly repeat until", weeklyRepeatUntil == null ? "" : weeklyRepeatUntil.toString(), //
 				"system config", Long.toString(systemConfigId));
 	}
 
@@ -174,7 +98,7 @@ public class Reservation implements Protocollable {
 	 * @param courts
 	 */
 	@Transient
-	public void setCourts(int... courts) {
+	public void setCourtsFromInteger(int... courts) {
 		this.courts = toCourts(courts);
 	}
 

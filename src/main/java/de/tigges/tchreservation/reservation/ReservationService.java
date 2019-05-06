@@ -157,7 +157,7 @@ public class ReservationService extends UserAwareService {
 	}
 
 	/**
-	 * get all occupations
+	 * get all occupations for one day
 	 * 
 	 * @return list of all occupations for one day
 	 */
@@ -169,7 +169,7 @@ public class ReservationService extends UserAwareService {
 		} else {
 			searchDate = Instant.ofEpochMilli(date).atZone(ZoneId.systemDefault()).toLocalDate();
 		}
-		logger.info("get occupations date {} ({})", searchDate.toString(), date);
+		logger.info("get occupations for date {} ({})", searchDate.toString(), date);
 		return occupationRepository.findBySystemConfigIdAndDate(systemConfigId, searchDate);
 	}
 
@@ -197,10 +197,6 @@ public class ReservationService extends UserAwareService {
 
 	/**
 	 * create all occupations for a reservation
-	 * 
-	 * TODO: handle multiple courts
-	 * 
-	 * TODO: handle weekly repeat
 	 * 
 	 * @param reservation
 	 * @return list of created occupations
