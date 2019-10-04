@@ -6,6 +6,8 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,14 +27,20 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tigges.tchreservation.exception.NotFoundException;
 import de.tigges.tchreservation.protocol.ActionType;
 import de.tigges.tchreservation.protocol.EntityType;
-import de.tigges.tchreservation.protocol.Protocol;
-import de.tigges.tchreservation.protocol.ProtocolRepository;
+import de.tigges.tchreservation.protocol.jpa.ProtocolEntity;
+import de.tigges.tchreservation.protocol.jpa.ProtocolRepository;
+import de.tigges.tchreservation.reservation.jpa.OccupationEntity;
+import de.tigges.tchreservation.reservation.jpa.OccupationRepository;
+import de.tigges.tchreservation.reservation.jpa.ReservationEntity;
+import de.tigges.tchreservation.reservation.jpa.ReservationRepository;
 import de.tigges.tchreservation.reservation.model.Occupation;
+import de.tigges.tchreservation.reservation.model.OccupationMapper;
 import de.tigges.tchreservation.reservation.model.Reservation;
+import de.tigges.tchreservation.reservation.model.ReservationMapper;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 import de.tigges.tchreservation.user.UserAwareService;
-import de.tigges.tchreservation.user.UserRepository;
-import de.tigges.tchreservation.user.model.User;
+import de.tigges.tchreservation.user.jpa.UserEntity;
+import de.tigges.tchreservation.user.jpa.UserRepository;
 
 @RestController
 @RequestMapping("/reservation")
@@ -62,24 +70,28 @@ public class ReservationService extends UserAwareService {
 	public @ResponseBody Reservation addReservation(@RequestBody Reservation reservation) {
 
 		logger.info("add reservation {}", reservation.getText());
-		User loggedInUser = getLoggedInUser();
+		UserEntity loggedInUser = getLoggedInUser();
 
 		// check reservation data consistency
 		checkOccupations(reservation);
 
 		// save occupations and reservation
-		Reservation savedReservation = reservationRepository.save(reservation);
-		protocolRepository.save(new Protocol(savedReservation, ActionType.CREATE, loggedInUser));
+		ReservationEntity savedReservation = reservationRepository.save(ReservationMapper.map(reservation));
+		protocolRepository.save(new ProtocolEntity(savedReservation, ActionType.CREATE, loggedInUser));
 
-		reservation.getOccupations().forEach(o -> saveOccupation(o, loggedInUser));
-		return savedReservation;
+		reservation.getOccupations().forEach(o -> {
+			OccupationEntity occupationEntity = OccupationMapper.map(o);
+			occupationEntity.setReservation(savedReservation);
+			saveOccupation(occupationEntity, loggedInUser);
+		});
+		return ReservationMapper.map(savedReservation);
 	}
 
 	@GetMapping("/checkOccupations")
 	public @ResponseBody Reservation checkOccupations(@RequestBody Reservation reservation) {
 
 		logger.info("check occupations for reservation {}", reservation.getText());
-		User loggedInUser = getLoggedInUser();
+		UserEntity loggedInUser = getLoggedInUser();
 
 		// validate reservation
 		reservationValidator.validateReservation(reservation, loggedInUser);
@@ -100,10 +112,10 @@ public class ReservationService extends UserAwareService {
 
 		logger.info("update reservation {}", reservation.getText());
 
-		Reservation dbReservation = reservationRepository.findById(reservation.getId())
+		ReservationEntity dbReservation = reservationRepository.findById(reservation.getId())
 				.orElseThrow(() -> new NotFoundException(EntityType.RESERVATION, reservation.getId()));
 
-		User loggedInUser = getLoggedInUser();
+		UserEntity loggedInUser = getLoggedInUser();
 
 		if (reservation.getOccupations().isEmpty()) {
 			createOccupations(reservation).forEach(o -> reservation.addOccupation(o));
@@ -114,12 +126,12 @@ public class ReservationService extends UserAwareService {
 		// check reservation data consistency
 		reservationValidator.validateReservation(reservation, loggedInUser);
 
-		Reservation savedReservation = reservationRepository.save(reservation);
-		protocolRepository.save(new Protocol(reservation, dbReservation, loggedInUser));
+		ReservationEntity savedReservation = reservationRepository.save(ReservationMapper.map(reservation));
+		protocolRepository.save(new ProtocolEntity(savedReservation, dbReservation, loggedInUser));
 
 		occupationRepository.deleteByReservationId(reservation.getId());
-		reservation.getOccupations().forEach(o -> saveOccupation(o, loggedInUser));
-		return savedReservation;
+		reservation.getOccupations().forEach(o -> saveOccupation(OccupationMapper.map(o), loggedInUser));
+		return ReservationMapper.map(savedReservation);
 	}
 
 	@DeleteMapping("/delete/{id}")
@@ -128,14 +140,14 @@ public class ReservationService extends UserAwareService {
 
 		logger.info("delete reservation {}", id);
 
-		Reservation reservation = reservationRepository.findById(id)
+		ReservationEntity reservation = reservationRepository.findById(id)
 				.orElseThrow(() -> new NotFoundException(EntityType.RESERVATION, id));
 
-		User loggedInUser = getLoggedInUser();
+		UserEntity loggedInUser = getLoggedInUser();
 
 		occupationRepository.findByReservationId(id).forEach(o -> deleteOccupation(o, loggedInUser));
 		reservationRepository.delete(reservation);
-		protocolRepository.save(new Protocol(reservation, ActionType.DELETE, loggedInUser));
+		protocolRepository.save(new ProtocolEntity(reservation, ActionType.DELETE, loggedInUser));
 	}
 
 	/**
@@ -148,11 +160,14 @@ public class ReservationService extends UserAwareService {
 	 */
 	@GetMapping("/get/{id}")
 	public Optional<Reservation> getReservation(@PathVariable long id) {
-		logger.info("get reservation ()", id);
 
-		Optional<Reservation> reservation = reservationRepository.findById(id);
-		reservation.ifPresent( //
-				r -> occupationRepository.findByReservationId(r.getId()).forEach(o -> r.addOccupation(o)));
+		logger.info("get reservation {}", id);
+
+		Optional<Reservation> reservation = reservationRepository.findById(id).map(ReservationMapper::map);
+
+		reservation.ifPresent(r -> occupationRepository.findByReservationId(r.getId())
+				.forEach(o -> r.addOccupation(OccupationMapper.map(o))));
+
 		return reservation;
 	}
 
@@ -163,14 +178,21 @@ public class ReservationService extends UserAwareService {
 	 */
 	@GetMapping("/getOccupations/{systemConfigId}/{date}")
 	public Iterable<Occupation> getOccupations(@PathVariable Long systemConfigId, @PathVariable Long date) {
+
 		LocalDate searchDate;
 		if (date.equals(0L)) {
 			searchDate = LocalDate.now();
 		} else {
 			searchDate = Instant.ofEpochMilli(date).atZone(ZoneId.systemDefault()).toLocalDate();
 		}
+
 		logger.info("get occupations for date {} ({})", searchDate.toString(), date);
-		return occupationRepository.findBySystemConfigIdAndDate(systemConfigId, searchDate);
+
+		Iterable<OccupationEntity> occupations = occupationRepository.findBySystemConfigIdAndDate(systemConfigId,
+				searchDate);
+
+		return StreamSupport.stream(occupations.spliterator(), false).map(OccupationMapper::map)
+				.collect(Collectors.toList());
 	}
 
 	/**
@@ -184,15 +206,15 @@ public class ReservationService extends UserAwareService {
 		return systemConfigRepository.get(id);
 	}
 
-	private Occupation saveOccupation(Occupation o, User user) {
-		Occupation savedOccupation = occupationRepository.save(o);
-		protocolRepository.save(new Protocol(savedOccupation, ActionType.CREATE, user));
+	private OccupationEntity saveOccupation(OccupationEntity o, UserEntity user) {
+		OccupationEntity savedOccupation = occupationRepository.save(o);
+		protocolRepository.save(new ProtocolEntity(savedOccupation, ActionType.CREATE, user));
 		return savedOccupation;
 	}
 
-	private void deleteOccupation(Occupation occupation, User user) {
+	private void deleteOccupation(OccupationEntity occupation, UserEntity user) {
 		occupationRepository.delete(occupation);
-		protocolRepository.save(new Protocol(occupation, ActionType.DELETE, user));
+		protocolRepository.save(new ProtocolEntity(occupation, ActionType.DELETE, user));
 	}
 
 	/**

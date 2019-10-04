@@ -4,7 +4,8 @@ import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import de.tigges.tchreservation.user.model.User;
+import de.tigges.tchreservation.user.jpa.UserEntity;
+import de.tigges.tchreservation.user.jpa.UserRepository;
 
 public class UserAwareService {
 
@@ -14,12 +15,12 @@ public class UserAwareService {
 		this.userRepository = userRepository;
 	}
 
-	public User getLoggedInUser() {
+	public UserEntity getLoggedInUser() {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		if (authentication instanceof AnonymousAuthenticationToken || authentication == null) {
-			return User.anonymous();
+			return UserUtils.anonymous();
 		}
 		String name = authentication.getName();
-		return userRepository.findByNameOrEmail(name, name).orElse(User.anonymous());
+		return userRepository.findByNameOrEmail(name, name).orElse(UserUtils.anonymous());
 	}
 }

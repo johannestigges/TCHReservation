@@ -1,24 +1,31 @@
 package de.tigges.tchreservation.user.model;
 
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Transient;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
-import de.tigges.tchreservation.protocol.EntityType;
-import de.tigges.tchreservation.protocol.Protocollable;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Entity
-public class User implements Protocollable {
+@NoArgsConstructor
+@Data
+public class User {
 
-	public User() {
-	}
+	private long id;
+
+	private String email;
+
+	private String name;
+
+	private String password;
+
+	private UserRole role;
+
+	private ActivationStatus status;
+
+	@JsonManagedReference
+	private Set<UserDevice> devices = new HashSet<>();
 
 	public User(String email, String name, String password, UserRole role, ActivationStatus status) {
 		this.email = email;
@@ -33,95 +40,6 @@ public class User implements Protocollable {
 		setId(user.getId());
 	}
 
-	public static User anonymous() {
-		return new User("", "", "", UserRole.ANONYMOUS, ActivationStatus.ACTIVE);
-	}
-
-	public User hidePassword() {
-		this.password = null;
-		return this;
-	}
-
-	public static Optional<User> hidePassword(Optional<User> user) {
-		if (user.isPresent()) {
-			user.get().hidePassword();
-		}
-		return user;
-	}
-
-	public static Iterable<User> hidePasswords(Iterable<User> users) {
-		if (users != null) {
-			users.forEach(User::hidePassword);
-		}
-		return users;
-	}
-
-	@Id
-	@GeneratedValue
-	private long id;
-
-	@Column(nullable = false)
-	private String email;
-
-	@Column(nullable = false)
-	private String name;
-
-	@Column(nullable = true)
-	private String password;
-
-	@Column(nullable = false)
-	private UserRole role;
-
-	@Column(nullable = false)
-	private ActivationStatus status;
-
-	@Transient
-	private Set<UserDevice> devices = new HashSet<>();
-
-	public long getId() {
-		return id;
-	}
-
-	public void setId(long id) {
-		this.id = id;
-	}
-
-	public String getEmail() {
-		return email;
-	}
-
-	public void setEmail(String email) {
-		this.email = email;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public String getPassword() {
-		return password;
-	}
-
-	public void setPassword(String password) {
-		this.password = password;
-	}
-
-	public UserRole getRole() {
-		return role;
-	}
-
-	public void setRole(UserRole role) {
-		this.role = role;
-	}
-
-	public ActivationStatus getStatus() {
-		return status;
-	}
-
 	public void setStatus(ActivationStatus status) {
 		ActivationStatus.checkStatusChange(this.status, status, "user " + id);
 		this.status = status;
@@ -131,32 +49,7 @@ public class User implements Protocollable {
 		return devices;
 	}
 
-	public boolean hasRole(UserRole... roles) {
-		for (UserRole role : roles) {
-			if (role.equals(getRole())) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	@Override
-	public Map<String, String> protocolFields() {
-		return protocolFields(//
-				"name", name, //
-				"email", email, //
-				"password", password, //
-				"role", role.name(), //
-				"status", status.name());
-	}
-
-	@Override
-	public EntityType protocolEntityType() {
-		return EntityType.USER;
-	}
-
-	@Override
-	public long protocolEntityId() {
-		return id;
+	public void setDevices(Set<UserDevice> devices) {
+		this.devices = devices;
 	}
 }

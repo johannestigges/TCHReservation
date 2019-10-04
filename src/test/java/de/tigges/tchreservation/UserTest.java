@@ -2,10 +2,10 @@ package de.tigges.tchreservation;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tigges.tchreservation.user.UserRepository;
 import de.tigges.tchreservation.user.UserService;
+import de.tigges.tchreservation.user.jpa.UserEntity;
+import de.tigges.tchreservation.user.jpa.UserRepository;
 import de.tigges.tchreservation.user.model.ActivationStatus;
-import de.tigges.tchreservation.user.model.User;
 import de.tigges.tchreservation.user.model.UserRole;
 
 /**
@@ -26,9 +26,8 @@ public class UserTest extends ServiceTest {
 	 * @param status
 	 * @return inserted user
 	 */
-	public User addUser(UserRole role) {
+	public UserEntity addUser(UserRole role) {
 		return userRepository.save(
-				new User("myemail@mydomain.de", role.name(), 
-						"mySecretPassword", role, ActivationStatus.ACTIVE));
+				new UserEntity("myemail@mydomain.de", role.name(), "mySecretPassword", role, ActivationStatus.ACTIVE));
 	}
 }

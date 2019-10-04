@@ -20,9 +20,10 @@ import org.springframework.test.context.web.WebAppConfiguration;
 
 import de.tigges.tchreservation.ProtocolTest;
 import de.tigges.tchreservation.TchReservationApplication;
-import de.tigges.tchreservation.reservation.model.Occupation;
+import de.tigges.tchreservation.protocol.jpa.ProtocolEntity;
+import de.tigges.tchreservation.reservation.jpa.OccupationEntity;
 import de.tigges.tchreservation.reservation.model.ReservationType;
-import de.tigges.tchreservation.user.model.User;
+import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.model.UserRole;
 
 @RunWith(SpringRunner.class)
@@ -30,7 +31,7 @@ import de.tigges.tchreservation.user.model.UserRole;
 @WebAppConfiguration
 public class ProtocolServiceTest extends ProtocolTest {
 
-	private User user;
+	private UserEntity user;
 
 	@Before
 	public void setup() throws Exception {
@@ -43,8 +44,8 @@ public class ProtocolServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void addProtocol() throws Exception {
-		Occupation occupation = createOccupation();
-		Protocol protocol = protocolRepository.save(new Protocol(occupation, ActionType.CREATE, user));
+		OccupationEntity occupation = createOccupation();
+		ProtocolEntity protocol = protocolRepository.save(new ProtocolEntity(occupation, ActionType.CREATE, user));
 
 		checkProtocol(protocol, occupation);
 	}
@@ -63,7 +64,7 @@ public class ProtocolServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void getAll() throws Exception {
-		protocolRepository.save(new Protocol(createOccupation(), ActionType.CREATE, user));
+		protocolRepository.save(new ProtocolEntity(createOccupation(), ActionType.CREATE, user));
 		performGet("/protocol/get").andExpect(status().isOk()).andExpect(jsonPath("$.*", Matchers.hasSize(1)));
 	}
 
@@ -71,15 +72,15 @@ public class ProtocolServiceTest extends ProtocolTest {
 	@WithMockUser(username = "REGISTERED")
 	public void getAllSince() throws Exception {
 		long now = new Date().getTime() - 1000;
-		protocolRepository.save(new Protocol(createOccupation(), ActionType.CREATE, user));
+		protocolRepository.save(new ProtocolEntity(createOccupation(), ActionType.CREATE, user));
 		performGet("/protocol/get/" + now).andExpect(status().isOk()).andExpect(jsonPath("$.*", Matchers.hasSize(1)));
-		now +=5000;
+		now += 5000;
 		performGet("/protocol/get/" + now).andExpect(status().isOk()).andExpect(jsonPath("$.*", Matchers.hasSize(0)));
 
 	}
 
-	private Occupation createOccupation() {
-		Occupation occupation = new Occupation();
+	private OccupationEntity createOccupation() {
+		OccupationEntity occupation = new OccupationEntity();
 		occupation.setId(new Random().nextLong());
 		occupation.setCourt(1);
 		occupation.setLastCourt(1);
