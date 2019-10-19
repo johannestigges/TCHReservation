@@ -1,7 +1,5 @@
 package de.tigges.tchreservation.user.model;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-
 import lombok.Data;
 
 @Data
@@ -19,7 +17,6 @@ public class UserDevice {
 
 	private long id;
 
-	@JsonBackReference
 	private User user;
 
 	private String deviceId; // unique device id, such as ISME or MAC address

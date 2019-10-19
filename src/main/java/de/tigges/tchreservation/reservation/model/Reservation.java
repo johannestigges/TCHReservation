@@ -49,11 +49,6 @@ public class Reservation {
 		return occupations;
 	}
 
-	public void addOccupation(Occupation occupation) {
-		occupation.setReservation(this);
-		getOccupations().add(occupation);
-	}
-
 	/**
 	 * set the courts
 	 * 

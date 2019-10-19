@@ -25,6 +25,7 @@ import de.tigges.tchreservation.ProtocolTest;
 import de.tigges.tchreservation.TchReservationApplication;
 import de.tigges.tchreservation.protocol.ActionType;
 import de.tigges.tchreservation.user.jpa.UserDeviceEntity;
+import de.tigges.tchreservation.user.jpa.UserDeviceRepository;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.User;
@@ -168,6 +169,8 @@ public class UserServiceTest extends ProtocolTest {
 	public void addUserDeviceWithoutAuthorization() throws Exception {
 		UserDevice device = UserDeviceMapper
 				.map(userDeviceRepository.save(createDeviceEntity(adminUser, 0, ActivationStatus.CREATED)));
+		device.setUser(UserMapper.map(adminUser));
+		System.out.println(device.getUser());
 		performPost("/user/device", device).andExpect(status().isUnauthorized());
 	}
 
@@ -326,12 +329,13 @@ public class UserServiceTest extends ProtocolTest {
 		UserDeviceEntity device0 = userDeviceRepository.save(createDeviceEntity(user, 0, ActivationStatus.CREATED));
 		UserDeviceEntity device1 = userDeviceRepository.save(createDeviceEntity(user, 1, ActivationStatus.CREATED));
 
-		user.getDevices().add(device0);
-		checkUser(performGet("/user/getByDevice/" + device0.getId()).andExpect(status().isOk()), user);
+		User u = UserMapper.map(user);
+		u.getDevices().add(UserDeviceMapper.map(device0));
+		u.getDevices().add(UserDeviceMapper.map(device1));
 
-		user.getDevices().clear();
-		user.getDevices().add(device1);
-		checkUser(performGet("/user/getByDevice/" + device1.getId()).andExpect(status().isOk()), user);
+		checkUser(performGet("/user/getByDevice/" + device0.getId()).andExpect(status().isOk()), u, false, null);
+
+		checkUser(performGet("/user/getByDevice/" + device1.getId()).andExpect(status().isOk()), u, false, null);
 	}
 
 	@Test
@@ -462,6 +466,7 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	private ResultActions checkDevices(ResultActions resultActions, User user) throws Exception {
+
 		if (user.getDevices().isEmpty()) {
 			resultActions.andExpect(jsonPath("$.devices").isEmpty());
 		} else {

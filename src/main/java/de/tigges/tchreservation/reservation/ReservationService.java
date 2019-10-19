@@ -84,7 +84,10 @@ public class ReservationService extends UserAwareService {
 			occupationEntity.setReservation(savedReservation);
 			saveOccupation(occupationEntity, loggedInUser);
 		});
-		return ReservationMapper.map(savedReservation);
+		Reservation r = ReservationMapper.map(savedReservation);
+		r.getOccupations().addAll(reservation.getOccupations());
+		return r;
+
 	}
 
 	@GetMapping("/checkOccupations")
@@ -97,7 +100,7 @@ public class ReservationService extends UserAwareService {
 		reservationValidator.validateReservation(reservation, loggedInUser);
 
 		if (reservation.getOccupations().isEmpty()) {
-			createOccupations(reservation).forEach(o -> reservation.addOccupation(o));
+			createOccupations(reservation).forEach(o -> reservation.getOccupations().add(o));
 		}
 
 		// validate occupations
@@ -118,7 +121,7 @@ public class ReservationService extends UserAwareService {
 		UserEntity loggedInUser = getLoggedInUser();
 
 		if (reservation.getOccupations().isEmpty()) {
-			createOccupations(reservation).forEach(o -> reservation.addOccupation(o));
+			createOccupations(reservation).forEach(o -> reservation.getOccupations().add(o));
 		} else {
 			reservation.getOccupations().forEach(o -> o.setReservation(reservation));
 		}
@@ -131,7 +134,9 @@ public class ReservationService extends UserAwareService {
 
 		occupationRepository.deleteByReservationId(reservation.getId());
 		reservation.getOccupations().forEach(o -> saveOccupation(OccupationMapper.map(o), loggedInUser));
-		return ReservationMapper.map(savedReservation);
+		Reservation r = ReservationMapper.map(savedReservation);
+		r.getOccupations().addAll(reservation.getOccupations());
+		return r;
 	}
 
 	@DeleteMapping("/delete/{id}")
@@ -166,7 +171,7 @@ public class ReservationService extends UserAwareService {
 		Optional<Reservation> reservation = reservationRepository.findById(id).map(ReservationMapper::map);
 
 		reservation.ifPresent(r -> occupationRepository.findByReservationId(r.getId())
-				.forEach(o -> r.addOccupation(OccupationMapper.map(o))));
+				.forEach(o -> r.getOccupations().add(OccupationMapper.map(o))));
 
 		return reservation;
 	}
@@ -261,7 +266,6 @@ public class ReservationService extends UserAwareService {
 	private Occupation createOccupation(Reservation reservation) {
 		Occupation occupation = new Occupation();
 		occupation.setSystemConfigId(reservation.getSystemConfigId());
-		occupation.setReservation(reservation);
 		occupation.setText(reservation.getText());
 		occupation.setType(reservation.getType());
 		occupation.setDate(reservation.getDate());

@@ -24,6 +24,7 @@ import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.protocol.jpa.ProtocolEntity;
 import de.tigges.tchreservation.protocol.jpa.ProtocolRepository;
 import de.tigges.tchreservation.user.jpa.UserDeviceEntity;
+import de.tigges.tchreservation.user.jpa.UserDeviceRepository;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.jpa.UserRepository;
 import de.tigges.tchreservation.user.model.ActivationStatus;
@@ -63,7 +64,7 @@ public class UserService extends UserAwareService {
 
 	@GetMapping("/{userId}")
 	public @ResponseBody Optional<User> get(@PathVariable Long userId) {
-		return find(userId, getLoggedInUser()).map(UserMapper::map);
+		return find(userId, getLoggedInUser()).map(UserMapper::map).map(this::addDevices);
 	}
 
 	@GetMapping("/getByDevice/{deviceId}")
@@ -72,8 +73,7 @@ public class UserService extends UserAwareService {
 		long userId = device.getUser().getId();
 		User user = userRepository.findById(userId).map(UserMapper::map)
 				.orElseThrow(() -> new NotFoundException(EntityType.USER, userId));
-		user.getDevices().add(device);
-		return user;
+		return addDevices(user);
 	}
 
 	@GetMapping("/device/{deviceId}")
@@ -101,7 +101,7 @@ public class UserService extends UserAwareService {
 			protocolRepository.save(new ProtocolEntity(savedDevice, ActionType.CREATE, loggedInUser));
 			savedUserEntity.getDevices().add(savedDevice);
 		});
-		return savedUser;
+		return addDevices(savedUser);
 	}
 
 	@PostMapping("/device")
@@ -184,6 +184,11 @@ public class UserService extends UserAwareService {
 			throw new AuthorizationException("not authorized");
 		return userRepository.findById(userId);
 
+	}
+
+	private User addDevices(User user) {
+		userDeviceRepository.findByUserId(user.getId()).forEach(d -> user.getDevices().add(UserDeviceMapper.map(d)));
+		return user;
 	}
 
 	private void checkUser(User user) {

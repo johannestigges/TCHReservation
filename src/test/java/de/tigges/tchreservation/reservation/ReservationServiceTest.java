@@ -7,7 +7,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.Date;
+import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.StreamSupport;
 
@@ -33,6 +34,7 @@ import de.tigges.tchreservation.reservation.jpa.OccupationEntity;
 import de.tigges.tchreservation.reservation.jpa.OccupationRepository;
 import de.tigges.tchreservation.reservation.jpa.ReservationEntity;
 import de.tigges.tchreservation.reservation.jpa.ReservationRepository;
+import de.tigges.tchreservation.reservation.model.Occupation;
 import de.tigges.tchreservation.reservation.model.Reservation;
 import de.tigges.tchreservation.reservation.model.ReservationMapper;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
@@ -435,16 +437,23 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "REGISTERED")
+	@WithMockUser(username = "ADMIN")
 	public void getOccupations() throws Exception {
+
 		Reservation reservation = createReservation(1, user, 1, 10, 2);
-		addReservation(reservation);
-		performGet("/reservation/getOccupations/1/0").andExpect(status().isOk());
+		reservation.setDate(LocalDate.now());
+		reservation = getReservation(addReservation(reservation));
+		checkOccupations(performGet("/reservation/getOccupations/1/0").andExpect(status().isOk()),
+				reservation.getOccupations());
 	}
 
 	@Test
+	@WithMockUser(username = "REGISTERED")
 	public void getOccupationsWithDate() throws Exception {
-		performGet("/reservation/getOccupations/15/" + new Date().getTime()).andExpect(status().isOk());
+		Reservation reservation = getReservation(addReservation(createReservation(2, user, 2, 12, 2)));
+		long epochMilli = LocalDate.now().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
+		checkOccupations(performGet("/reservation/getOccupations/2/" + epochMilli).andExpect(status().isOk()),
+				reservation.getOccupations());
 	}
 
 	@Test
@@ -528,6 +537,16 @@ public class ReservationServiceTest extends ProtocolTest {
 			break;
 		}
 		return resultActions;
+	}
+
+	private ResultActions checkOccupations(ResultActions resultActions, List<Occupation> occupations) throws Exception {
+		if (occupations == null || occupations.isEmpty()) {
+			resultActions.andExpect(jsonPath("$").isEmpty());
+		} else {
+			resultActions.andExpect(jsonPath("$", Matchers.hasSize(occupations.size())));
+		}
+		return resultActions;
+
 	}
 
 	private ResultActions checkError(ResultActions resultActions, HttpStatus status, String message) throws Exception {

@@ -201,11 +201,11 @@ public class ReservationValidator {
 		}
 
 		occupationRepository.findBySystemConfigIdAndDate(occupation.getSystemConfigId(), occupation.getDate())
-				.forEach(o -> checkOverlap(occupation, o));
+				.forEach(o -> checkOverlap(reservation, occupation, o));
 	}
 
-	private void checkOverlap(Occupation o1, OccupationEntity o2) {
-		if (o1.getReservation().getId() == o2.getReservation().getId()) {
+	private void checkOverlap(Reservation r, Occupation o1, OccupationEntity o2) {
+		if (r.getId() == o2.getReservation().getId()) {
 			return;
 		}
 		if (o1.getSystemConfigId() != o2.getSystemConfigId()) {

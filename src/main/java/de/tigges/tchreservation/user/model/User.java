@@ -3,8 +3,6 @@ package de.tigges.tchreservation.user.model;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -24,7 +22,6 @@ public class User {
 
 	private ActivationStatus status;
 
-	@JsonManagedReference
 	private Set<UserDevice> devices = new HashSet<>();
 
 	public User(String email, String name, String password, UserRole role, ActivationStatus status) {
