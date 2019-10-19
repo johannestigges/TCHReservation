@@ -23,8 +23,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import de.tigges.tchreservation.TchReservationApplication;
+import de.tigges.tchreservation.user.jpa.UserEntity;
+import de.tigges.tchreservation.user.jpa.UserRepository;
 import de.tigges.tchreservation.user.model.ActivationStatus;
-import de.tigges.tchreservation.user.model.User;
 import de.tigges.tchreservation.user.model.UserRole;
 
 @RunWith(SpringRunner.class)
@@ -61,7 +62,7 @@ public class SpringUserDetailsServiceTest {
 
 	@Test
 	public void findByEmail() {
-		userRepository.save(new User("my@email.de", "user", "mypassword", REGISTERED, ACTIVE));
+		userRepository.save(new UserEntity("my@email.de", "user", "mypassword", REGISTERED, ACTIVE));
 		service.loadUserByUsername("my@email.de");
 	}
 
@@ -72,7 +73,7 @@ public class SpringUserDetailsServiceTest {
 
 	private UserChecker createAndLoadUser(UserRole role, ActivationStatus status) {
 		String username = role.name() + "." + status.name();
-		userRepository.save(new User("my@email.de", username, "mypassword", role, status));
+		userRepository.save(new UserEntity("my@email.de", username, "mypassword", role, status));
 		return new UserChecker(service.loadUserByUsername(username));
 	}
 

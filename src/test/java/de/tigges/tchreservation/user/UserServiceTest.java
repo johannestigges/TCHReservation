@@ -24,6 +24,9 @@ import org.springframework.test.web.servlet.ResultActions;
 import de.tigges.tchreservation.ProtocolTest;
 import de.tigges.tchreservation.TchReservationApplication;
 import de.tigges.tchreservation.protocol.ActionType;
+import de.tigges.tchreservation.user.jpa.UserDeviceEntity;
+import de.tigges.tchreservation.user.jpa.UserDeviceRepository;
+import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.User;
 import de.tigges.tchreservation.user.model.UserDevice;
@@ -36,8 +39,8 @@ public class UserServiceTest extends ProtocolTest {
 
 	@Autowired
 	private UserDeviceRepository userDeviceRepository;
-	private User adminUser;
-	private User registeredUser;
+	private UserEntity adminUser;
+	private UserEntity registeredUser;
 
 	@Before
 	public void setup() throws Exception {
@@ -52,7 +55,7 @@ public class UserServiceTest extends ProtocolTest {
 	@WithMockUser(username = "ADMIN")
 	public void addUser() throws Exception {
 		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE);
-		checkUser(performPost("/user/", user).andExpect(status().isOk()), user, true, ActionType.CREATE);
+		checkUser(performPost("/user/", user).andExpect(status().isOk()), user, false, ActionType.CREATE);
 	}
 
 	@Test
@@ -74,16 +77,16 @@ public class UserServiceTest extends ProtocolTest {
 	public void addUserWithDevices() throws Exception {
 		User user = createUser(0, UserRole.ADMIN, ActivationStatus.CREATED);
 		for (int i = 0; i < 5; i++) {
-			user.getDevices().add(createDevice(user, i, ActivationStatus.CREATED));
+			user.getDevices().add(createDevice(UserMapper.map(user), i, ActivationStatus.CREATED));
 		}
 
-		checkUser(performPost("/user/", user).andExpect(status().isOk()), user, true, ActionType.CREATE);
+		checkUser(performPost("/user/", user).andExpect(status().isOk()), user, false, ActionType.CREATE);
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void addDevice() throws Exception {
-		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
+		UserEntity user = userRepository.save(createUserEntity(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
 
 		performPost("/user/device", createDevice(user, 0, ActivationStatus.CREATED)).andExpect(status().isOk());
 	}
@@ -91,7 +94,7 @@ public class UserServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void setStatus() throws Exception {
-		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.CREATED));
+		UserEntity user = userRepository.save(createUserEntity(0, UserRole.REGISTERED, ActivationStatus.CREATED));
 		performPut("/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER.toString())
 				.andExpect(status().isOk());
 		user.setStatus(ActivationStatus.VERIFIED_BY_USER);
@@ -102,7 +105,7 @@ public class UserServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void setStatusAllCombinations() throws Exception {
-		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.CREATED));
+		UserEntity user = userRepository.save(createUserEntity(0, UserRole.REGISTERED, ActivationStatus.CREATED));
 
 		// check from CREATED
 		changeStatus(user, ActivationStatus.ACTIVE, false);
@@ -137,7 +140,7 @@ public class UserServiceTest extends ProtocolTest {
 		changeStatus(user, ActivationStatus.ACTIVE, true);
 	}
 
-	private void changeStatus(User user, ActivationStatus status, boolean expectOk) throws Exception {
+	private void changeStatus(UserEntity user, ActivationStatus status, boolean expectOk) throws Exception {
 		ResultActions actions = performPut("/user/setStatus/" + user.getId() + "/" + status.toString());
 		if (expectOk) {
 			actions.andExpect(status().isOk());
@@ -164,14 +167,18 @@ public class UserServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void addUserDeviceWithoutAuthorization() throws Exception {
-		UserDevice device = userDeviceRepository.save(createDevice(adminUser, 0, ActivationStatus.CREATED));
+		UserDevice device = UserDeviceMapper
+				.map(userDeviceRepository.save(createDeviceEntity(adminUser, 0, ActivationStatus.CREATED)));
+		device.setUser(UserMapper.map(adminUser));
+		System.out.println(device.getUser());
 		performPost("/user/device", device).andExpect(status().isUnauthorized());
 	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void addUserOwnDevice() throws Exception {
-		UserDevice device = userDeviceRepository.save(createDevice(registeredUser, 0, ActivationStatus.CREATED));
+		UserDevice device = UserDeviceMapper
+				.map(userDeviceRepository.save(createDeviceEntity(registeredUser, 0, ActivationStatus.CREATED)));
 		performPost("/user/device", device).andExpect(status().isOk());
 	}
 
@@ -185,7 +192,7 @@ public class UserServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void setStatusWithoutAuthorization() throws Exception {
-		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.CREATED));
+		UserEntity user = userRepository.save(createUserEntity(0, UserRole.REGISTERED, ActivationStatus.CREATED));
 		performPut("/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER.toString())
 				.andExpect(status().isUnauthorized());
 	}
@@ -193,8 +200,8 @@ public class UserServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void update() throws Exception {
-		User user = userRepository
-				.save(new User("email", "name", "password", UserRole.REGISTERED, ActivationStatus.CREATED));
+		UserEntity user = userRepository
+				.save(new UserEntity("email", "name", "password", UserRole.REGISTERED, ActivationStatus.CREATED));
 		User modifiedUser = new User("modifiedEmail", "modifiedName", "modifiedPassword", UserRole.KIOSK,
 				ActivationStatus.VERIFIED_BY_USER);
 		modifiedUser.setId(user.getId());
@@ -205,8 +212,8 @@ public class UserServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void updateWithoutPassword() throws Exception {
-		User user = userRepository
-				.save(new User("email", "name", "password", UserRole.REGISTERED, ActivationStatus.CREATED));
+		UserEntity user = userRepository
+				.save(new UserEntity("email", "name", "password", UserRole.REGISTERED, ActivationStatus.CREATED));
 		User modifiedUser = new User("modifiedEmail", "modifiedName", null, UserRole.KIOSK,
 				ActivationStatus.VERIFIED_BY_USER);
 		modifiedUser.setId(user.getId());
@@ -259,10 +266,10 @@ public class UserServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void getUser() throws Exception {
-		List<User> userList = new ArrayList<>();
+		List<UserEntity> userList = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			userList.add(userRepository.save(
-					new User("email " + i, "name " + i, "password", UserRole.REGISTERED, ActivationStatus.ACTIVE)));
+			userList.add(userRepository.save(new UserEntity("email " + i, "name " + i, "password", UserRole.REGISTERED,
+					ActivationStatus.ACTIVE)));
 		}
 		for (int i = 0; i < userList.size(); i++) {
 			checkUser(performGet("/user/" + userList.get(i).getId()).andExpect(status().isOk()), userList.get(i));
@@ -290,12 +297,13 @@ public class UserServiceTest extends ProtocolTest {
 	@WithMockUser(username = "ADMIN")
 	public void getDevices() throws Exception {
 		List<UserDevice> devices = new ArrayList<>();
-		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.CREATED);
+		UserEntity user = createUserEntity(0, UserRole.REGISTERED, ActivationStatus.CREATED);
 		for (int i = 0; i < 15; i++) {
 			if (i % 3 == 0) {
-				user = userRepository.save(createUser(i, UserRole.REGISTERED, ActivationStatus.CREATED));
+				user = userRepository.save(createUserEntity(i, UserRole.REGISTERED, ActivationStatus.CREATED));
 			}
-			devices.add(userDeviceRepository.save(createDevice(user, i, ActivationStatus.CREATED)));
+			devices.add(UserDeviceMapper
+					.map(userDeviceRepository.save(createDeviceEntity(user, i, ActivationStatus.CREATED))));
 		}
 
 		for (UserDevice device : devices) {
@@ -305,7 +313,7 @@ public class UserServiceTest extends ProtocolTest {
 
 	@Test
 	public void getLoggedInUserAnonymous() throws Exception {
-		checkUser(performGet("/user/me").andExpect(status().isOk()), User.anonymous());
+		checkUser(performGet("/user/me").andExpect(status().isOk()), UserUtils.anonymous());
 	}
 
 	@Test
@@ -317,16 +325,17 @@ public class UserServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void getUserByDevice() throws Exception {
-		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.CREATED));
-		UserDevice device0 = userDeviceRepository.save(createDevice(user, 0, ActivationStatus.CREATED));
-		UserDevice device1 = userDeviceRepository.save(createDevice(user, 1, ActivationStatus.CREATED));
+		UserEntity user = userRepository.save(createUserEntity(0, UserRole.REGISTERED, ActivationStatus.CREATED));
+		UserDeviceEntity device0 = userDeviceRepository.save(createDeviceEntity(user, 0, ActivationStatus.CREATED));
+		UserDeviceEntity device1 = userDeviceRepository.save(createDeviceEntity(user, 1, ActivationStatus.CREATED));
 
-		user.getDevices().add(device0);
-		checkUser(performGet("/user/getByDevice/" + device0.getId()).andExpect(status().isOk()), user);
+		User u = UserMapper.map(user);
+		u.getDevices().add(UserDeviceMapper.map(device0));
+		u.getDevices().add(UserDeviceMapper.map(device1));
 
-		user.getDevices().clear();
-		user.getDevices().add(device1);
-		checkUser(performGet("/user/getByDevice/" + device1.getId()).andExpect(status().isOk()), user);
+		checkUser(performGet("/user/getByDevice/" + device0.getId()).andExpect(status().isOk()), u, false, null);
+
+		checkUser(performGet("/user/getByDevice/" + device1.getId()).andExpect(status().isOk()), u, false, null);
 	}
 
 	@Test
@@ -344,8 +353,8 @@ public class UserServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void getUserByName() throws Exception {
-		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
-		Optional<User> foundUser = userRepository.findByNameOrEmail(user.getName(), "");
+		UserEntity user = userRepository.save(createUserEntity(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
+		Optional<UserEntity> foundUser = userRepository.findByNameOrEmail(user.getName(), "");
 		assertTrue(foundUser.isPresent());
 		assertThat(foundUser.get().getId(), Matchers.is(user.getId()));
 	}
@@ -353,8 +362,8 @@ public class UserServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void getUserByEMail() throws Exception {
-		User user = userRepository.save(createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
-		Optional<User> foundUser = userRepository.findByNameOrEmail("", user.getEmail());
+		UserEntity user = userRepository.save(createUserEntity(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
+		Optional<UserEntity> foundUser = userRepository.findByNameOrEmail("", user.getEmail());
 		assertTrue(foundUser.isPresent());
 		assertThat(foundUser.get().getId(), Matchers.is(user.getId()));
 	}
@@ -378,7 +387,8 @@ public class UserServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void getDevice() throws Exception {
-		checkDevice(userDeviceRepository.save(createDevice(registeredUser, 0, ActivationStatus.CREATED)));
+		checkDevice(UserDeviceMapper
+				.map(userDeviceRepository.save(createDeviceEntity(registeredUser, 0, ActivationStatus.CREATED))));
 	}
 
 	@Test
@@ -390,7 +400,8 @@ public class UserServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void deleteDevice() throws Exception {
-		UserDevice device = userDeviceRepository.save(createDevice(registeredUser, 0, ActivationStatus.CREATED));
+		UserDeviceEntity device = userDeviceRepository
+				.save(createDeviceEntity(registeredUser, 0, ActivationStatus.CREATED));
 		performDelete("/user/device/" + device.getId()).andExpect(status().isOk());
 		performGet("/user/device/" + device.getId()).andExpect(status().isOk())
 				.andExpect(jsonPath("$.status").value(ActivationStatus.REMOVED.toString()));
@@ -417,14 +428,14 @@ public class UserServiceTest extends ProtocolTest {
 				.andExpect(jsonPath("$.user.id").value(device.getUser().getId()));
 	}
 
-	private User createRandomUser() {
+	private UserEntity createRandomUser() {
 		int i = new Random().nextInt(100000);
-		return new User("email " + i, "name_" + i, "password_" + i, UserRole.values()[i % 5],
+		return new UserEntity("email " + i, "name_" + i, "password_" + i, UserRole.values()[i % 5],
 				ActivationStatus.values()[i % 5]);
 	}
 
-	private ResultActions checkUser(ResultActions resultActions, User user) throws Exception {
-		return checkUser(resultActions, user, false, null);
+	private ResultActions checkUser(ResultActions resultActions, UserEntity user) throws Exception {
+		return checkUser(resultActions, UserMapper.map(user), false, null);
 	}
 
 	private ResultActions checkUser(ResultActions resultActions, User user, boolean passwordEncoded,
@@ -445,9 +456,9 @@ public class UserServiceTest extends ProtocolTest {
 			// assertThat(new BCryptPasswordEncoder().matches(user.getPassword(),
 			// createdUser.getPassword()),
 			// Matchers.is(true));
-			checkProtocol(createdUser, actionType);
+			checkProtocol(UserMapper.map(createdUser), actionType);
 		} else if (ActionType.MODIFY.equals(actionType) || ActionType.DELETE.equals(actionType)) {
-			checkProtocol(user, actionType);
+			checkProtocol(UserMapper.map(user), actionType);
 		}
 
 		checkDevices(resultActions, user);
@@ -455,6 +466,7 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	private ResultActions checkDevices(ResultActions resultActions, User user) throws Exception {
+
 		if (user.getDevices().isEmpty()) {
 			resultActions.andExpect(jsonPath("$.devices").isEmpty());
 		} else {
@@ -468,7 +480,15 @@ public class UserServiceTest extends ProtocolTest {
 		return new User("myEmail " + i, "myName " + i, "mypass" + i, role, status);
 	}
 
-	private UserDevice createDevice(User user, int i, ActivationStatus status) {
-		return new UserDevice(user, "deviceId " + i, status, "publicKey " + i);
+	private UserEntity createUserEntity(int i, UserRole role, ActivationStatus status) {
+		return new UserEntity("myEmail " + i, "myName " + i, "mypass" + i, role, status);
+	}
+
+	private UserDevice createDevice(UserEntity user, int i, ActivationStatus status) {
+		return new UserDevice(UserMapper.map(user), "deviceId " + i, status, "publicKey " + i);
+	}
+
+	private UserDeviceEntity createDeviceEntity(UserEntity user, int i, ActivationStatus status) {
+		return new UserDeviceEntity(user, "deviceId " + i, status, "publicKey " + i);
 	}
 }

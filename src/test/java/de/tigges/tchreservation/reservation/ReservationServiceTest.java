@@ -7,8 +7,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.Date;
+import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.StreamSupport;
 
 import org.hamcrest.Matchers;
 import org.hamcrest.collection.IsEmptyIterable;
@@ -28,11 +30,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tigges.tchreservation.ProtocolTest;
 import de.tigges.tchreservation.TchReservationApplication;
 import de.tigges.tchreservation.protocol.ActionType;
+import de.tigges.tchreservation.reservation.jpa.OccupationEntity;
+import de.tigges.tchreservation.reservation.jpa.OccupationRepository;
+import de.tigges.tchreservation.reservation.jpa.ReservationEntity;
+import de.tigges.tchreservation.reservation.jpa.ReservationRepository;
+import de.tigges.tchreservation.reservation.model.Occupation;
 import de.tigges.tchreservation.reservation.model.Reservation;
+import de.tigges.tchreservation.reservation.model.ReservationMapper;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 import de.tigges.tchreservation.reservation.model.ReservationType;
+import de.tigges.tchreservation.user.UserMapper;
+import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.model.ActivationStatus;
-import de.tigges.tchreservation.user.model.User;
 import de.tigges.tchreservation.user.model.UserRole;
 
 @RunWith(SpringRunner.class)
@@ -48,8 +57,8 @@ public class ReservationServiceTest extends ProtocolTest {
 	@Autowired
 	ObjectMapper objectMapper;
 
-	private User user;
-	private User admin;
+	private UserEntity user;
+	private UserEntity admin;
 
 	@Before
 	public void setup() throws Exception {
@@ -237,7 +246,8 @@ public class ReservationServiceTest extends ProtocolTest {
 		Reservation reservation = createReservation(1, user, 1, start, 2);
 		reservation.setCourtsFromInteger(courts);
 		Reservation savedReservation = getReservation(addReservation(reservation));
-		assertEquals(expectedOccupations, savedReservation.getOccupations().size());
+		Iterable<OccupationEntity> occupations = occupationRepository.findByReservationId(savedReservation.getId());
+		assertEquals(expectedOccupations, StreamSupport.stream(occupations.spliterator(), false).count());
 	}
 
 	@Test
@@ -257,7 +267,8 @@ public class ReservationServiceTest extends ProtocolTest {
 		reservation.setWeeklyRepeatUntil(reservation.getDate().plusDays(repeatDays));
 		reservation.setCourtsFromInteger(courts);
 		Reservation savedReservation = getReservation(addReservation(reservation));
-		assertEquals(expectedOccupations, savedReservation.getOccupations().size());
+		Iterable<OccupationEntity> occupations = occupationRepository.findByReservationId(savedReservation.getId());
+		assertEquals(expectedOccupations, StreamSupport.stream(occupations.spliterator(), false).count());
 	}
 
 	@Test
@@ -282,22 +293,8 @@ public class ReservationServiceTest extends ProtocolTest {
 
 	@Test
 	@WithMockUser(username = "ADMIN")
-	public void addReservationNoUser() throws Exception {
-		addReservationError(createReservation(1, null, 1, 8, 2), HttpStatus.BAD_REQUEST, "Kein User angegeben");
-	}
-
-	@Test
-	@WithMockUser(username = "ADMIN")
-	public void addReservationInvalidUser() throws Exception {
-		User user = new User();
-		user.setId(0);
-		addReservationError(createReservation(1, user, 1, 8, 2), HttpStatus.BAD_REQUEST, "Kein User angegeben");
-	}
-
-	@Test
-	@WithMockUser(username = "ADMIN")
 	public void addReservationUnknownUser() throws Exception {
-		User user = new User();
+		UserEntity user = new UserEntity();
 		user.setId(100);
 		addReservationError(createReservation(1, user, 1, 8, 2), HttpStatus.NOT_FOUND, "USER with id 100 not found");
 	}
@@ -440,19 +437,30 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
+	@WithMockUser(username = "ADMIN")
 	public void getOccupations() throws Exception {
-		performGet("/reservation/getOccupations/1/0").andExpect(status().isOk());
+
+		Reservation reservation = createReservation(1, user, 1, 10, 2);
+		reservation.setDate(LocalDate.now());
+		reservation = getReservation(addReservation(reservation));
+		checkOccupations(performGet("/reservation/getOccupations/1/0").andExpect(status().isOk()),
+				reservation.getOccupations());
 	}
 
 	@Test
+	@WithMockUser(username = "REGISTERED")
 	public void getOccupationsWithDate() throws Exception {
-		performGet("/reservation/getOccupations/15/" + new Date().getTime()).andExpect(status().isOk());
+		Reservation reservation = getReservation(addReservation(createReservation(2, user, 2, 12, 2)));
+		long epochMilli = LocalDate.now().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
+		checkOccupations(performGet("/reservation/getOccupations/2/" + epochMilli).andExpect(status().isOk()),
+				reservation.getOccupations());
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void getReservation() throws Exception {
-		Reservation reservation = reservationRepository.save(createReservation(1, user, 1, 10, 2));
+		ReservationEntity reservation = reservationRepository
+				.save(ReservationMapper.map(createReservation(1, user, 1, 10, 2)));
 
 		performGet("/reservation/get/" + reservation.getId()).andExpect(status().isOk());
 	}
@@ -517,18 +525,28 @@ public class ReservationServiceTest extends ProtocolTest {
 					.andExpect(jsonPath("$.type").value(reservation.getType().ordinal()));
 			Reservation createdReservation = getResponseJson(resultActions, Reservation.class);
 			resultActions.andExpect(jsonPath("$.id").value(createdReservation.getId()));
-			checkProtocol(createdReservation, actionType);
+			checkProtocol(ReservationMapper.map(createdReservation), actionType);
 			break;
 		case MODIFY:
 			resultActions.andExpect(status().isOk());
-			checkProtocol(reservation, actionType);
+			checkProtocol(ReservationMapper.map(reservation), actionType);
 			break;
 		case DELETE:
 			resultActions.andExpect(status().isOk());
-			checkProtocol(reservation, actionType);
+			checkProtocol(ReservationMapper.map(reservation), actionType);
 			break;
 		}
 		return resultActions;
+	}
+
+	private ResultActions checkOccupations(ResultActions resultActions, List<Occupation> occupations) throws Exception {
+		if (occupations == null || occupations.isEmpty()) {
+			resultActions.andExpect(jsonPath("$").isEmpty());
+		} else {
+			resultActions.andExpect(jsonPath("$", Matchers.hasSize(occupations.size())));
+		}
+		return resultActions;
+
 	}
 
 	private ResultActions checkError(ResultActions resultActions, HttpStatus status, String message) throws Exception {
@@ -543,17 +561,17 @@ public class ReservationServiceTest extends ProtocolTest {
 		return objectMapper.readValue(content, Reservation.class);
 	}
 
-	private User createUser(UserRole role, ActivationStatus status) {
+	private UserEntity createUser(UserRole role, ActivationStatus status) {
 		String name = role.toString() + "." + status.toString();
-		return new User(name + "@myDomain.de", name, "top secret", role, status);
+		return new UserEntity(name + "@myDomain.de", name, "top secret", role, status);
 	}
 
-	private User insertUser(UserRole role, ActivationStatus status) {
+	private UserEntity insertUser(UserRole role, ActivationStatus status) {
 		return userRepository.save(createUser(role, status));
 	}
 
-	private Reservation createReservation(long systemId, User user, int court, int hour, int duration) {
-		return new Reservation(systemId, user, "reservation name", String.valueOf(court), LocalDate.now().plusDays(1),
-				LocalTime.of(hour, 0), duration, ReservationType.INDIVIDUAL);
+	private Reservation createReservation(long systemId, UserEntity user, int court, int hour, int duration) {
+		return new Reservation(systemId, UserMapper.map(user), "reservation name", String.valueOf(court),
+				LocalDate.now().plusDays(1), LocalTime.of(hour, 0), duration, ReservationType.INDIVIDUAL);
 	}
 }

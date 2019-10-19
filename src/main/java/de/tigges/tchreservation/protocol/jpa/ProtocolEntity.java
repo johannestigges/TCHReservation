@@ -1,4 +1,4 @@
-package de.tigges.tchreservation.protocol;
+package de.tigges.tchreservation.protocol.jpa;
 
 import java.time.LocalDateTime;
 
@@ -7,19 +7,24 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
 import org.json.JSONObject;
 
-import de.tigges.tchreservation.user.model.User;
+import de.tigges.tchreservation.protocol.ActionType;
+import de.tigges.tchreservation.protocol.EntityType;
+import de.tigges.tchreservation.protocol.Protocollable;
+import de.tigges.tchreservation.user.jpa.UserEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Table(name = "protocol")
 @Data
 @NoArgsConstructor
-public class Protocol {
+public class ProtocolEntity {
 
-	public Protocol(Protocollable entity, ActionType actionType, User user) {
+	public ProtocolEntity(Protocollable entity, ActionType actionType, UserEntity user) {
 		setTime(LocalDateTime.now());
 		setEntityType(entity.protocolEntityType());
 		setEntityId(entity.protocolEntityId());
@@ -35,7 +40,7 @@ public class Protocol {
 	 * @param oldEntity
 	 * @param user
 	 */
-	public Protocol(Protocollable entity, Protocollable oldEntity, User user) {
+	public ProtocolEntity(Protocollable entity, Protocollable oldEntity, UserEntity user) {
 		this(entity, ActionType.MODIFY, user);
 		this.setOldValue(new JSONObject(oldEntity.protocolFields()).toString());
 	}
@@ -43,14 +48,25 @@ public class Protocol {
 	@Id
 	@GeneratedValue
 	private long id;
+
+	@Column(nullable = false)
 	private LocalDateTime time;
+
+	@Column(nullable = false)
 	private EntityType entityType;
+
+	@Column(nullable = false)
 	private long entityId;
+
+	@Column(nullable = false)
 	private ActionType actionType;
-	@Column(length = 2000)
+
+	@Column(length = 20000, nullable = false)
 	private String value;
-	@Column(length = 2000, nullable = true)
+
+	@Column(length = 20000, nullable = true)
 	private String oldValue;
+
 	@ManyToOne(optional = false)
-	private User user;
+	private UserEntity user;
 }

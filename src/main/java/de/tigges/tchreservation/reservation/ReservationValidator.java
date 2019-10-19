@@ -14,13 +14,17 @@ import de.tigges.tchreservation.exception.FieldError;
 import de.tigges.tchreservation.exception.InvalidDataException;
 import de.tigges.tchreservation.exception.NotFoundException;
 import de.tigges.tchreservation.protocol.EntityType;
+import de.tigges.tchreservation.reservation.jpa.OccupationEntity;
+import de.tigges.tchreservation.reservation.jpa.OccupationRepository;
 import de.tigges.tchreservation.reservation.model.Occupation;
 import de.tigges.tchreservation.reservation.model.Reservation;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 import de.tigges.tchreservation.reservation.model.ReservationType;
-import de.tigges.tchreservation.user.UserRepository;
+import de.tigges.tchreservation.user.UserMapper;
+import de.tigges.tchreservation.user.UserUtils;
+import de.tigges.tchreservation.user.jpa.UserEntity;
+import de.tigges.tchreservation.user.jpa.UserRepository;
 import de.tigges.tchreservation.user.model.ActivationStatus;
-import de.tigges.tchreservation.user.model.User;
 import de.tigges.tchreservation.user.model.UserRole;
 
 @Component
@@ -49,7 +53,8 @@ public class ReservationValidator {
 	 * @param reservation
 	 * @param loggedInUser
 	 */
-	public void validateReservation(Reservation reservation, User loggedInUser) {
+	public void validateReservation(Reservation reservation, UserEntity loggedInUser) {
+
 		ErrorDetails errorDetails = new ErrorDetails(msg("error_validation_reservation"), null);
 
 		// validate ReservationSystemConfig
@@ -62,9 +67,9 @@ public class ReservationValidator {
 		if (reservation.getUser() == null || reservation.getUser().getId() <= 0) {
 			throw new BadRequestException(msg("error_no_user"));
 		}
-		User user = userRepository.findById(reservation.getUser().getId())
+		UserEntity user = userRepository.findById(reservation.getUser().getId())
 				.orElseThrow(() -> new NotFoundException(EntityType.USER, reservation.getUser().getId()));
-		reservation.setUser(user);
+		reservation.setUser(UserMapper.map(user));
 
 		// validate text
 		if (isEmpty(reservation.getText())) {
@@ -138,7 +143,7 @@ public class ReservationValidator {
 		}
 
 		// authorization checks
-		if (loggedInUser.hasRole(UserRole.ANONYMOUS)) {
+		if (UserUtils.hasRole(loggedInUser.getRole(), UserRole.ANONYMOUS)) {
 			throw new AuthorizationException(msg("error_anonymous_cannot_add"));
 		}
 
@@ -146,7 +151,7 @@ public class ReservationValidator {
 			throw new AuthorizationException(String.format(msg("error_user_not_active"), loggedInUser.getName()));
 		}
 
-		if (loggedInUser.hasRole(UserRole.REGISTERED, UserRole.KIOSK)) {
+		if (UserUtils.hasRole(loggedInUser.getRole(), UserRole.REGISTERED, UserRole.KIOSK)) {
 			// only reservation type individual allowed
 			if (!ReservationType.INDIVIDUAL.equals(reservation.getType())) {
 				addReservationFieldError(errorDetails, "type", String.format(msg("error_registered_cannot_add_type"),
@@ -174,7 +179,7 @@ public class ReservationValidator {
 		}
 	}
 
-	public void validateOccupations(Reservation reservation, User loggedInUser) {
+	public void validateOccupations(Reservation reservation, UserEntity loggedInUser) {
 		ErrorDetails errorDetails = new ErrorDetails(msg("error_validation_reservation"), null);
 
 		for (int i = 0; i < reservation.getOccupations().size(); i++) {
@@ -190,17 +195,17 @@ public class ReservationValidator {
 
 	}
 
-	public void validateOccupation(Reservation reservation, Occupation occupation, User loggedInUser) {
+	public void validateOccupation(Reservation reservation, Occupation occupation, UserEntity loggedInUser) {
 		if (reservation.getSystemConfigId() != occupation.getSystemConfigId()) {
 			throw new BadRequestException("system config of occupation doesn't match");
 		}
 
 		occupationRepository.findBySystemConfigIdAndDate(occupation.getSystemConfigId(), occupation.getDate())
-				.forEach(o -> checkOverlap(occupation, o));
+				.forEach(o -> checkOverlap(reservation, occupation, o));
 	}
 
-	private void checkOverlap(Occupation o1, Occupation o2) {
-		if (o1.getReservation().getId() == o2.getReservation().getId()) {
+	private void checkOverlap(Reservation r, Occupation o1, OccupationEntity o2) {
+		if (r.getId() == o2.getReservation().getId()) {
 			return;
 		}
 		if (o1.getSystemConfigId() != o2.getSystemConfigId()) {
@@ -224,6 +229,12 @@ public class ReservationValidator {
 	}
 
 	private LocalTime getEnd(Occupation o) {
+		ReservationSystemConfig config = systemConfigRepository.get(o.getSystemConfigId());
+		return LocalTime.of(o.getStart().getHour(), o.getStart().getMinute())
+				.plusMinutes(o.getDuration() * config.getDurationUnitInMinutes());
+	}
+
+	private LocalTime getEnd(OccupationEntity o) {
 		ReservationSystemConfig config = systemConfigRepository.get(o.getSystemConfigId());
 		return LocalTime.of(o.getStart().getHour(), o.getStart().getMinute())
 				.plusMinutes(o.getDuration() * config.getDurationUnitInMinutes());

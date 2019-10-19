@@ -10,16 +10,16 @@ spring:
 logging:
   level:
     org:
-     springframework: debug
+     springframework: info
 #        web: DEBUG
 #       web.filter.CommonsRequestLoggingFilter: DEBUG
      hibernate: ERROR
           
 server:
-   port: "8080"
-#  port: "8443"
-#  ssl:
-#    key-store-type: "PKCS12"
-#    key-store: "classpath:keystore.p12"
-#    key-store-password: "knofensa"
-#    key-alias: "tomcat"
+#   port: "8080"
+  port: "8443"
+  ssl:
+    key-store-type: "PKCS12"
+    key-store: "classpath:keystore.p12"
+    key-store-password: "knofensa"
+    key-alias: "tomcat"

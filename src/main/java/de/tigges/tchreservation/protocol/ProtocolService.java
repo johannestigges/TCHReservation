@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tigges.tchreservation.protocol.jpa.ProtocolEntity;
+import de.tigges.tchreservation.protocol.jpa.ProtocolRepository;
+
 @RestController
 @RequestMapping("/protocol")
 public class ProtocolService {
@@ -20,12 +23,12 @@ public class ProtocolService {
 	}
 
 	@GetMapping("/get")
-	public Iterable<Protocol> getAll() {
+	public Iterable<ProtocolEntity> getAll() {
 		return protocolRepository.findAll();
 	}
 
 	@GetMapping("/get/{time}")
-	public Iterable<Protocol> getSince(@PathVariable Long time) {
+	public Iterable<ProtocolEntity> getSince(@PathVariable Long time) {
 		LocalDateTime localDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(time),
 				TimeZone.getDefault().toZoneId());
 		return protocolRepository.findByTimeGreaterThan(localDateTime);
