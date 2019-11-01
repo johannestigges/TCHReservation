@@ -34,6 +34,7 @@ public class OccupationMapper {
 		o.setDuration(e.getDuration());
 		o.setCourt(e.getCourt());
 		o.setLastCourt(e.getLastCourt());
+		o.setType(e.getType());
 		o.setSystemConfigId(e.getSystemConfigId());
 		o.setReservation(ReservationMapper.map(e.getReservation()));
 		return o;
