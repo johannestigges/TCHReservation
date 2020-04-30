@@ -2,10 +2,13 @@ package de.tigges.tchreservation.reservation;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAmount;
 import java.util.Locale;
 
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import de.tigges.tchreservation.exception.AuthorizationException;
 import de.tigges.tchreservation.exception.BadRequestException;
@@ -72,7 +75,7 @@ public class ReservationValidator {
 		reservation.setUser(UserMapper.map(user));
 
 		// validate text
-		if (isEmpty(reservation.getText())) {
+		if (StringUtils.isEmpty(reservation.getText())) {
 			addReservationFieldError(errorDetails, "text", msg("error_null_not_allowed"));
 		}
 
@@ -116,7 +119,7 @@ public class ReservationValidator {
 		}
 
 		// validate courts
-		if (isEmpty(reservation.getCourts())) {
+		if (StringUtils.isEmpty(reservation.getCourts())) {
 			addReservationFieldError(errorDetails, "court", msg("error_null_not_allowed"));
 		}
 
@@ -151,7 +154,8 @@ public class ReservationValidator {
 			throw new AuthorizationException(String.format(msg("error_user_not_active"), loggedInUser.getName()));
 		}
 
-		if (UserUtils.hasRole(loggedInUser.getRole(), UserRole.REGISTERED, UserRole.KIOSK)) {
+		// user role checks
+		if (UserUtils.hasRole(loggedInUser.getRole(), UserRole.REGISTERED, UserRole.KIOSK, UserRole.TECHNICAL)) {
 			// only reservation type individual allowed
 			if (!ReservationType.INDIVIDUAL.equals(reservation.getType())) {
 				addReservationFieldError(errorDetails, "type", String.format(msg("error_registered_cannot_add_type"),
@@ -169,8 +173,14 @@ public class ReservationValidator {
 			if (date.isBefore(LocalDate.now())) {
 				addReservationFieldError(errorDetails, "date", msg("error_date_in_the_past"));
 			}
-			if (date.isEqual(LocalDate.now()) && start.isBefore(LocalTime.now())) {
+			if (date.isEqual(LocalDate.now()) 
+					&& start.isBefore(LocalTime.now().minusMinutes(60))) {
 				addReservationFieldError(errorDetails, "time", msg("error_start_time_in_the_past"));
+			}
+			
+			// reservation only this and next day is allowed
+			if (date.isAfter(LocalDate.now().plusDays(1))) {
+				addReservationFieldError(errorDetails, "date", msg("error_date_too_far_in_future"));
 			}
 		}
 
@@ -191,6 +201,7 @@ public class ReservationValidator {
 		}
 		if (!errorDetails.getFieldErrors().isEmpty()) {
 			throw new InvalidDataException(errorDetails);
+
 		}
 
 	}
@@ -238,10 +249,6 @@ public class ReservationValidator {
 		ReservationSystemConfig config = systemConfigRepository.get(o.getSystemConfigId());
 		return LocalTime.of(o.getStart().getHour(), o.getStart().getMinute())
 				.plusMinutes(o.getDuration() * config.getDurationUnitInMinutes());
-	}
-
-	private boolean isEmpty(String s) {
-		return s == null || s.trim().isEmpty();
 	}
 
 	private String msg(String code, Object... args) {

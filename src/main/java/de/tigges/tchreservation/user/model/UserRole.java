@@ -20,5 +20,9 @@ public enum UserRole {
     /**
      * administrator, all rights, usr with care!
      */
-    ADMIN
+    ADMIN,
+    /**
+     * technical user, can use the system, but cannot change user settings or password
+     */
+    TECHNICAL
 }
