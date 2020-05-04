@@ -355,11 +355,20 @@ public class ReservationServiceTest extends ProtocolTest {
 	public void addReservationUnauthorizedTimeInThePast() throws Exception {
 		int hour = LocalTime.now().getHour();
 		ReservationSystemConfig systemConfig = getSystemConfig(1);
-		if (hour > systemConfig.getOpeningHour() + 1 && hour < systemConfig.getClosingHour()) {
-			Reservation reservation = createReservation(1, user, 1, hour - 1, 1);
+		if (hour > systemConfig.getOpeningHour() + 2 && hour < systemConfig.getClosingHour() - 1) {
+			Reservation reservation = createReservation(1, user, 1, hour - 2, 1);
 			reservation.setDate(LocalDate.now());
 			addReservationFieldError(reservation, "time", "Die Startzeit darf nicht in der Vergangenheit liegen.");
 		}
+	}
+	
+	@Test
+	@WithMockUser(username = "REGISTERED")
+	public void addReservationUnauthorizedInTheFarFuture() throws Exception {
+		Reservation reservation = createReservation(1, user, 1, 10, 2);
+		reservation.setDate(LocalDate.now().plusDays(2));
+		addReservationFieldError(reservation, "date", "Das Datum liegt zu weit in der Zukunft.");
+		
 	}
 
 	@Test
