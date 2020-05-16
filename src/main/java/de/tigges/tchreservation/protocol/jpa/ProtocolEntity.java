@@ -61,10 +61,10 @@ public class ProtocolEntity {
 	@Column(nullable = false)
 	private ActionType actionType;
 
-	@Column(length = 20000, nullable = false)
+	@Column(length = 5000, nullable = false)
 	private String value;
 
-	@Column(length = 20000, nullable = true)
+	@Column(length = 5000, nullable = true)
 	private String oldValue;
 
 	@ManyToOne(optional = false)
