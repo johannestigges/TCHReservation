@@ -52,15 +52,17 @@ public class ReservationSystemConfigUtilTest {
 
 	@Test
 	public void testShowTime() {
-		checkShowTime(8,30,0,"08:00");
-		checkShowTime(8,30,1,"08:30");
-		checkShowTime(8,30,11,"13:30");
+		checkShowTime(8, 30, 0, "08:00");
+		checkShowTime(8, 30, 1, "08:30");
+		checkShowTime(8, 30, 11, "13:30");
 		checkShowTime(10, 20, 12, "14:00");
 	}
-	
+
 	private void checkShowTime(int openingHour, int durationUnitInMinutes, int row, String expectedTime) {
-		assertThat(ReservationSystemConfigUtil.showTime(createConfig(openingHour, 22, durationUnitInMinutes), row), is(expectedTime));
+		assertThat(ReservationSystemConfigUtil.showTime(createConfig(openingHour, 22, durationUnitInMinutes), row),
+				is(expectedTime));
 	}
+
 	private void checkGetRows(int openingHour, int closingHour, int durationUnitInMinutes, int expectedRows) {
 		assertThat(ReservationSystemConfigUtil.getRows(createConfig(openingHour, closingHour, durationUnitInMinutes)),
 				is(expectedRows));

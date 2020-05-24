@@ -23,3 +23,12 @@ server:
     key-store: "classpath:keystore.p12"
     key-store-password: "knofensa"
     key-alias: "tomcat"
+    
+reservation:
+  config:
+    id: 1
+    name: "Platzbelegung"
+    courts: 8
+    durationUnitInMinutes: 60
+    openingHour: 8
+    closingHour: 22
