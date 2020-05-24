@@ -94,8 +94,8 @@ public class ReservationServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void addReservationTimes() throws Exception {
-		addReservation(createReservation(1, user, 1, 10, 2));
-		addReservation(createReservation(1, user, 1, 11, 2));
+		addReservation(createReservation(1, user, 1, 10, 1));
+		addReservation(createReservation(1, user, 1, 11, 1));
 	}
 
 	@Test
@@ -191,7 +191,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void addReservationExtendsClosingHour() throws Exception {
-		Reservation reservation = createReservation(1, user, 1, 19, 7);
+		Reservation reservation = createReservation(1, user, 1, 19, 4);
 		addReservationFieldError(reservation, "start", "Startzeit + Dauer zu spät.");
 	}
 
@@ -214,8 +214,8 @@ public class ReservationServiceTest extends ProtocolTest {
 	@WithMockUser(username = "ADMIN")
 	public void addReservationTooManyCourts() throws Exception {
 		Reservation reservation = createReservation(1, user, 0, 8, 2);
-		reservation.setCourtsFromInteger(1, 2, 3, 4, 5, 6, 7);
-		addReservationFieldError(reservation, "court", "Mehr als 6 Plätze gibt es nicht.");
+		reservation.setCourtsFromInteger(1, 2, 3, 4, 5, 6, 7, 8, 9);
+		addReservationFieldError(reservation, "court", "Mehr als 8 Plätze gibt es nicht.");
 	}
 
 	@Test
@@ -228,8 +228,8 @@ public class ReservationServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void addReservationCourtTooBig() throws Exception {
-		Reservation reservation = createReservation(1, user, 7, 8, 2);
-		addReservationFieldError(reservation, "court", "Platz[1]: Platz 7 gibt es nicht");
+		Reservation reservation = createReservation(1, user, 9, 8, 2);
+		addReservationFieldError(reservation, "court", "Platz[1]: Platz 9 gibt es nicht");
 	}
 
 	@Test
@@ -243,7 +243,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	private void checkReservationMultipleCourts(int start, int expectedOccupations, int... courts) throws Exception {
-		Reservation reservation = createReservation(1, user, 1, start, 2);
+		Reservation reservation = createReservation(1, user, 1, start, 1);
 		reservation.setCourtsFromInteger(courts);
 		Reservation savedReservation = getReservation(addReservation(reservation));
 		Iterable<OccupationEntity> occupations = occupationRepository.findByReservationId(savedReservation.getId());
@@ -263,7 +263,7 @@ public class ReservationServiceTest extends ProtocolTest {
 
 	private void checkReservationRepeat(int hour, int repeatDays, int expectedOccupations, int... courts)
 			throws Exception {
-		Reservation reservation = createReservation(1, user, 1, hour, 2);
+		Reservation reservation = createReservation(1, user, 1, hour, 1);
 		reservation.setWeeklyRepeatUntil(reservation.getDate().plusDays(repeatDays));
 		reservation.setCourtsFromInteger(courts);
 		Reservation savedReservation = getReservation(addReservation(reservation));
@@ -361,14 +361,14 @@ public class ReservationServiceTest extends ProtocolTest {
 			addReservationFieldError(reservation, "time", "Die Startzeit darf nicht in der Vergangenheit liegen.");
 		}
 	}
-	
+
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void addReservationUnauthorizedInTheFarFuture() throws Exception {
 		Reservation reservation = createReservation(1, user, 1, 10, 2);
 		reservation.setDate(LocalDate.now().plusDays(2));
 		addReservationFieldError(reservation, "date", "Das Datum liegt zu weit in der Zukunft.");
-		
+
 	}
 
 	@Test
