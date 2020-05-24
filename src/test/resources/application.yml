@@ -12,4 +12,20 @@ logging:
     org.springframework: ERROR
     org.hibernate: ERROR
     com.zaxxer.hikari: ERROR
-  
+
+reservation:
+  config[0]:
+    id: 1
+    name: "Platzbelegung"
+    courts: 6
+    durationUnitInMinutes: 30
+    openingHour: 8
+    closingHour: 22
+  config[1]:
+    id: 2
+    name: "Hallenplätze"
+    courts: 2
+    durationUnitInMinutes: 60
+    openingHour: 8
+    closingHour: 22
+    
