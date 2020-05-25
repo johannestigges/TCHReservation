@@ -25,10 +25,10 @@ server:
     key-alias: "tomcat"
     
 reservation:
-  config:
+  config[0]:
     id: 1
     name: "Platzbelegung"
-    courts: 8
-    durationUnitInMinutes: 60
+    courts: 6
+    durationUnitInMinutes: 30
     openingHour: 8
     closingHour: 22
