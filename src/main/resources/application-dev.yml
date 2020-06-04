@@ -1,0 +1,13 @@
+      
+logging:
+  level:
+    org:
+     springframework: debug
+#        web: DEBUG
+#       web.filter.CommonsRequestLoggingFilter: DEBUG
+     hibernate: ERROR
+          
+server:
+   port: "8080"
+   ssl:
+      enabled: false 

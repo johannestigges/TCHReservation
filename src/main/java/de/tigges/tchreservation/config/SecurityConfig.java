@@ -25,12 +25,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 						"/mvc/**", "/angular/**", //
 						"/reservation/getOccupations/**", "/reservation/systemconfig/**", //
 						"/user/me")
-				.permitAll()
+					.permitAll()
 				// all other rest services need authentication
 				.anyRequest().authenticated()
 				// login and logout
-				.and().formLogin().permitAll().and().logout().logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
-				.logoutSuccessUrl("/angular/table/1").permitAll()
+				.and().formLogin()
+					.permitAll()
+				.and().logout()
+					.logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+					.logoutSuccessUrl("/angular")
+					.permitAll()
 				// use csrf the angular way
 				.and().csrf().csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
 		// @formatter:on
