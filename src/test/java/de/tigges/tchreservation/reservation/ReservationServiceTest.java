@@ -191,7 +191,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void addReservationExtendsClosingHour() throws Exception {
-		Reservation reservation = createReservation(1, user, 1, 19, 4);
+		Reservation reservation = createReservation(1, user, 1, 19, 8);
 		addReservationFieldError(reservation, "start", "Startzeit + Dauer zu spät.");
 	}
 
@@ -214,8 +214,8 @@ public class ReservationServiceTest extends ProtocolTest {
 	@WithMockUser(username = "ADMIN")
 	public void addReservationTooManyCourts() throws Exception {
 		Reservation reservation = createReservation(1, user, 0, 8, 2);
-		reservation.setCourtsFromInteger(1, 2, 3, 4, 5, 6, 7, 8, 9);
-		addReservationFieldError(reservation, "court", "Mehr als 8 Plätze gibt es nicht.");
+		reservation.setCourtsFromInteger(1, 2, 3, 4, 5, 6, 7);
+		addReservationFieldError(reservation, "court", "Mehr als 6 Plätze gibt es nicht.");
 	}
 
 	@Test
