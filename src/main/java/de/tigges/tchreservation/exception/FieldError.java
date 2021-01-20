@@ -17,6 +17,7 @@ public class FieldError {
 		this.entity = entity;
 		this.field = field;
 		this.message = message;
+		System.out.println(String.format("create FieldError(%s,%s,%s)",entity, field, message));
 	}
 
 	public String getEntity() {

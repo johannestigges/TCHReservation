@@ -2,8 +2,6 @@ package de.tigges.tchreservation.reservation;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAmount;
 import java.util.Locale;
 
 import org.springframework.context.MessageSource;
@@ -15,134 +13,103 @@ import de.tigges.tchreservation.exception.BadRequestException;
 import de.tigges.tchreservation.exception.ErrorDetails;
 import de.tigges.tchreservation.exception.FieldError;
 import de.tigges.tchreservation.exception.InvalidDataException;
-import de.tigges.tchreservation.exception.NotFoundException;
-import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.reservation.jpa.OccupationEntity;
 import de.tigges.tchreservation.reservation.jpa.OccupationRepository;
 import de.tigges.tchreservation.reservation.model.Occupation;
 import de.tigges.tchreservation.reservation.model.Reservation;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 import de.tigges.tchreservation.reservation.model.ReservationType;
-import de.tigges.tchreservation.user.UserMapper;
 import de.tigges.tchreservation.user.UserUtils;
 import de.tigges.tchreservation.user.jpa.UserEntity;
-import de.tigges.tchreservation.user.jpa.UserRepository;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.UserRole;
 
 @Component
 public class ReservationValidator {
 
-	private UserRepository userRepository;
-	private OccupationRepository occupationRepository;
-	private ReservationSystemConfigRepository systemConfigRepository;
-	private MessageSource messageSource;
+	private final OccupationRepository occupationRepository;
+	private final ReservationSystemConfigRepository systemConfigRepository;
+	private final MessageSource messageSource;
 
-	public ReservationValidator(UserRepository userRepository, OccupationRepository occupationRepository,
+	public ReservationValidator(OccupationRepository occupationRepository,
 			ReservationSystemConfigRepository reservationSystemConfigRepository, MessageSource messageSource) {
-		this.userRepository = userRepository;
 		this.occupationRepository = occupationRepository;
 		this.systemConfigRepository = reservationSystemConfigRepository;
 		this.messageSource = messageSource;
 	}
 
 	/**
-	 * validate a reservation
+	 * validate an occupation
 	 * <p>
 	 * <li>data consistency checks
 	 * <li>authorization checks
 	 * <li>occupation overlap checks
 	 * 
-	 * @param reservation
+	 * @param occupation
 	 * @param loggedInUser
 	 */
-	public void validateReservation(Reservation reservation, UserEntity loggedInUser) {
+	public void validateOccupation(Occupation occupation, UserEntity loggedInUser) {
 
 		ErrorDetails errorDetails = new ErrorDetails(msg("error_validation_reservation"), null);
 
 		// validate ReservationSystemConfig
-		if (reservation.getSystemConfigId() <= 0) {
+		if (occupation.getSystemConfigId() <= 0) {
 			throw new BadRequestException(msg("error_no_reservation_system"));
 		}
-		ReservationSystemConfig systemConfig = systemConfigRepository.get(reservation.getSystemConfigId());
-
-		// validate user
-		if (reservation.getUser() == null || reservation.getUser().getId() <= 0) {
-			throw new BadRequestException(msg("error_no_user"));
-		}
-		UserEntity user = userRepository.findById(reservation.getUser().getId())
-				.orElseThrow(() -> new NotFoundException(EntityType.USER, reservation.getUser().getId()));
-		reservation.setUser(UserMapper.map(user));
+		ReservationSystemConfig systemConfig = systemConfigRepository.get(occupation.getSystemConfigId());
 
 		// validate text
-		if (StringUtils.isEmpty(reservation.getText())) {
-			addReservationFieldError(errorDetails, "text", msg("error_null_not_allowed"));
+		if (StringUtils.isEmpty(occupation.getText())) {
+			addOccupationFieldError(errorDetails, "text", msg("error_null_not_allowed"));
 		}
 
 		// validate start date and time
-		LocalDate date = reservation.getDate();
+		LocalDate date = occupation.getDate();
 		if (date == null) {
-			addReservationFieldError(errorDetails, "date", msg("error_null_not_allowed"));
+			addOccupationFieldError(errorDetails, "date", msg("error_null_not_allowed"));
 		}
 
-		LocalTime start = reservation.getStart();
+		LocalTime start = occupation.getStart();
 		if (start == null) {
-			addReservationFieldError(errorDetails, "start", msg("error_null_not_allowed"));
+			addOccupationFieldError(errorDetails, "start", msg("error_null_not_allowed"));
 		}
 
 		if (date != null && start != null) {
 			if (start.getHour() < systemConfig.getOpeningHour()) {
-				addReservationFieldError(errorDetails, "start", String.format(msg("error_start_hour_before_opening"),
+				addOccupationFieldError(errorDetails, "start", String.format(msg("error_start_hour_before_opening"),
 						start.getHour(), systemConfig.getOpeningHour()));
 			}
 
 			if (start.getHour() > systemConfig.getClosingHour()) {
-				addReservationFieldError(errorDetails, "start", String.format(msg("error_start_hour_after_closing"),
+				addOccupationFieldError(errorDetails, "start", String.format(msg("error_start_hour_after_closing"),
 						start.getHour(), systemConfig.getClosingHour()));
 			}
 
 			if (start.getMinute() != 0 && start.getMinute() % systemConfig.getDurationUnitInMinutes() != 0) {
-				addReservationFieldError(errorDetails, "start",
+				addOccupationFieldError(errorDetails, "start",
 						String.format(msg("error_start_time_minutes"), start.getMinute()));
 			}
 
 			if (LocalTime.of(start.getHour(), start.getMinute())
-					.plusMinutes(reservation.getDuration() * systemConfig.getDurationUnitInMinutes())
+					.plusMinutes(occupation.getDuration() * systemConfig.getDurationUnitInMinutes())
 					.isAfter(LocalTime.of(systemConfig.getClosingHour(), 0))) {
-				addReservationFieldError(errorDetails, "start", msg("error_start_time_plus_duration"));
+				addOccupationFieldError(errorDetails, "start", msg("error_start_time_plus_duration"));
 			}
 		}
 
 		// validate duration
-		if (reservation.getDuration() < 1) {
-			addReservationFieldError(errorDetails, "duration", msg("error_duration_too_small"));
+		if (occupation.getDuration() < 1) {
+			addOccupationFieldError(errorDetails, "duration", msg("error_duration_too_small"));
 		}
 
-		// validate courts
-		if (StringUtils.isEmpty(reservation.getCourts())) {
-			addReservationFieldError(errorDetails, "court", msg("error_null_not_allowed"));
+		// validate court
+		if (occupation.getCourt() < 1) {
+			addOccupationFieldError(errorDetails, "court",
+					String.format(msg("error_court_too_small"), occupation.getCourt()));
 		}
-
-		int[] courts = reservation.getCourtsAsArray();
-
-		if (courts.length < 1) {
-			addReservationFieldError(errorDetails, "court", msg("error_null_not_allowed"));
-		}
-
-		if (courts.length > systemConfig.getCourts()) {
-			addReservationFieldError(errorDetails, "court",
-					String.format(msg("error_court_too_big"), systemConfig.getCourts()));
-		}
-
-		for (int i = 0; i < courts.length; i++) {
-			if (courts[i] < 1) {
-				addReservationFieldError(errorDetails, "court",
-						String.format(msg("error_court_n_too_small"), i + 1, courts[i]));
-			}
-			if (courts[i] > systemConfig.getCourts()) {
-				addReservationFieldError(errorDetails, "court",
-						String.format(msg("error_court_n_too_big"), i + 1, courts[i], systemConfig.getCourts()));
-			}
+		if (occupation.getCourt() > systemConfig.getCourts()) {
+			addOccupationFieldError(errorDetails, "court",
+					String.format(msg("error_court_too_big"), occupation.getCourt(), systemConfig.getCourts()));
 		}
 
 		// authorization checks
@@ -157,36 +124,72 @@ public class ReservationValidator {
 		// user role checks
 		if (UserUtils.hasRole(loggedInUser.getRole(), UserRole.REGISTERED, UserRole.KIOSK, UserRole.TECHNICAL)) {
 			// only reservation type individual allowed
-			if (!ReservationType.INDIVIDUAL.equals(reservation.getType())) {
-				addReservationFieldError(errorDetails, "type", String.format(msg("error_registered_cannot_add_type"),
-						loggedInUser.getName(), reservation.getType()));
+			if (!ReservationType.INDIVIDUAL.equals(occupation.getType())) {
+				addOccupationFieldError(errorDetails, "type", String.format(msg("error_registered_cannot_add_type"),
+						loggedInUser.getName(), occupation.getType()));
 			}
 
 			// only duration <=3 is allowed
-			if (reservation.getDuration() > 3) {
-				addReservationFieldError(errorDetails, "duration",
-						String.format(msg("error_registered_cannot_add_duration"), loggedInUser.getName(),
-								reservation.getDuration()));
+			if (occupation.getDuration() > 3) {
+				addOccupationFieldError(errorDetails, "duration", String.format(
+						msg("error_registered_cannot_add_duration"), loggedInUser.getName(), occupation.getDuration()));
 			}
 
-			// reservation in the past is not allowed
+			// occupation in the past is not allowed
 			if (date.isBefore(LocalDate.now())) {
-				addReservationFieldError(errorDetails, "date", msg("error_date_in_the_past"));
+				addOccupationFieldError(errorDetails, "date", msg("error_date_in_the_past"));
 			}
-			if (date.isEqual(LocalDate.now()) 
-					&& start.isBefore(LocalTime.now().minusMinutes(60))) {
-				addReservationFieldError(errorDetails, "time", msg("error_start_time_in_the_past"));
+			if (date.isEqual(LocalDate.now()) && start.isBefore(LocalTime.now().minusMinutes(60))) {
+				addOccupationFieldError(errorDetails, "time", msg("error_start_time_in_the_past"));
 			}
-			
+
 			// reservation only this and next day is allowed
 			if (date.isAfter(LocalDate.now().plusDays(1))) {
-				addReservationFieldError(errorDetails, "date", msg("error_date_too_far_in_future"));
+				addOccupationFieldError(errorDetails, "date", msg("error_date_too_far_in_future"));
+			}
+		}
+
+		// check overlap
+		occupationRepository.findBySystemConfigIdAndDate(occupation.getSystemConfigId(), occupation.getDate())
+				.forEach(o -> checkOverlap(occupation, o));
+
+		if (!errorDetails.getFieldErrors().isEmpty()) {
+			throw new InvalidDataException(errorDetails);
+		}
+	}
+
+	public void validateReservation(Reservation reservation, UserEntity loggedInUser) {
+		ErrorDetails errorDetails = new ErrorDetails(msg("error_validation_reservation"), null);
+
+		ReservationSystemConfig systemConfig = systemConfigRepository.get(reservation.getSystemConfigId());
+
+		if (StringUtils.isEmpty(reservation.getCourts())) {
+			addFieldError(errorDetails, "reservation", "court", msg("error_null_not_allowed"));
+		}
+
+		if (StringUtils.isEmpty(reservation.getDate())) {
+			addFieldError(errorDetails, "reservation", "date", msg("error_null_not_allowed"));
+		}
+
+		if (StringUtils.isEmpty(reservation.getStart())) {
+			addFieldError(errorDetails, "reservation", "start", msg("error_null_not_allowed"));
+		}
+
+		for (int court : reservation.getCourtsAsArray()) {
+			if (court < 1) {
+				addFieldError(errorDetails, "reservation", "court", String.format(msg("error_court_too_small"), court));
+			}
+			if (court > systemConfig.getCourts()) {
+				addFieldError(errorDetails, "reservation", "court",
+						String.format(msg("error_court_too_big"), court, systemConfig.getCourts()));
+
 			}
 		}
 
 		if (!errorDetails.getFieldErrors().isEmpty()) {
 			throw new InvalidDataException(errorDetails);
 		}
+
 	}
 
 	public void validateOccupations(Reservation reservation, UserEntity loggedInUser) {
@@ -194,29 +197,28 @@ public class ReservationValidator {
 
 		for (int i = 0; i < reservation.getOccupations().size(); i++) {
 			try {
-				validateOccupation(reservation, reservation.getOccupations().get(i), loggedInUser);
+				validateOccupation(reservation.getOccupations().get(i), loggedInUser);
 			} catch (BadRequestException e) {
-				addReservationFieldError(errorDetails, "occupation[" + i + "]", e.getErrorDetails().getMessage());
+				if (e.getErrorDetails().getFieldErrors().isEmpty()) {
+					addFieldError(errorDetails, "occupation[" + i + "]", "occupation",
+							e.getErrorDetails().getMessage());
+				}
+				for (FieldError fe : e.getErrorDetails().getFieldErrors()) {
+					addFieldError(errorDetails, "occupation[" + i + "]", fe.getField(), fe.getMessage());
+				}
 			}
 		}
 		if (!errorDetails.getFieldErrors().isEmpty()) {
 			throw new InvalidDataException(errorDetails);
-
 		}
+	}
+
+	public void validateOverlap(Occupation occupation, UserEntity loggedInUser) {
 
 	}
 
-	public void validateOccupation(Reservation reservation, Occupation occupation, UserEntity loggedInUser) {
-		if (reservation.getSystemConfigId() != occupation.getSystemConfigId()) {
-			throw new BadRequestException("system config of occupation doesn't match");
-		}
-
-		occupationRepository.findBySystemConfigIdAndDate(occupation.getSystemConfigId(), occupation.getDate())
-				.forEach(o -> checkOverlap(reservation, occupation, o));
-	}
-
-	private void checkOverlap(Reservation r, Occupation o1, OccupationEntity o2) {
-		if (r.getId() == o2.getReservation().getId()) {
+	private void checkOverlap(Occupation o1, OccupationEntity o2) {
+		if (o1.getId() == o2.getId()) {
 			return;
 		}
 		if (o1.getSystemConfigId() != o2.getSystemConfigId()) {
@@ -235,8 +237,12 @@ public class ReservationValidator {
 		}
 	}
 
-	private void addReservationFieldError(ErrorDetails errorDetails, String field, String message) {
-		errorDetails.getFieldErrors().add(new FieldError("reservation", field, message));
+	private void addOccupationFieldError(ErrorDetails errorDetails, String field, String message) {
+		addFieldError(errorDetails, "occupation", field, message);
+	}
+
+	private void addFieldError(ErrorDetails errorDetails, String entity, String field, String message) {
+		errorDetails.getFieldErrors().add(new FieldError(entity, field, message));
 	}
 
 	private LocalTime getEnd(Occupation o) {
