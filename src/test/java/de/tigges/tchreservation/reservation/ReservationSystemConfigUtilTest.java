@@ -1,8 +1,6 @@
 package de.tigges.tchreservation.reservation;
 
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalTime;
 import java.util.Arrays;
@@ -47,7 +45,7 @@ public class ReservationSystemConfigUtilTest {
 		ReservationSystemConfig config = new ReservationSystemConfig(1, "name", 3, 60, 8, 20);
 		int[] courtsAsList = ReservationSystemConfigUtil.getCourtsAsList(config);
 		List<Integer> collect = Arrays.stream(courtsAsList).boxed().collect(Collectors.toList());
-		assertThat(collect, contains(0, 1, 2));
+		assertThat(collect).contains(0, 1, 2);
 	}
 
 	@Test
@@ -59,23 +57,23 @@ public class ReservationSystemConfigUtilTest {
 	}
 
 	private void checkShowTime(int openingHour, int durationUnitInMinutes, int row, String expectedTime) {
-		assertThat(ReservationSystemConfigUtil.showTime(createConfig(openingHour, 22, durationUnitInMinutes), row),
-				is(expectedTime));
+		assertThat(ReservationSystemConfigUtil.showTime(createConfig(openingHour, 22, durationUnitInMinutes), row))
+				.isEqualTo(expectedTime);
 	}
 
 	private void checkGetRows(int openingHour, int closingHour, int durationUnitInMinutes, int expectedRows) {
-		assertThat(ReservationSystemConfigUtil.getRows(createConfig(openingHour, closingHour, durationUnitInMinutes)),
-				is(expectedRows));
+		assertThat(ReservationSystemConfigUtil.getRows(createConfig(openingHour, closingHour, durationUnitInMinutes)))
+				.isEqualTo(expectedRows);
 	}
 
 	private void checkToMinutes(int openingHour, int durationUnitInMinutes, int row, int expectedMinutes) {
-		assertThat(ReservationSystemConfigUtil.toMinutes(createConfig(openingHour, 23, durationUnitInMinutes), row),
-				is(expectedMinutes));
+		assertThat(ReservationSystemConfigUtil.toMinutes(createConfig(openingHour, 23, durationUnitInMinutes), row))
+				.isEqualTo(expectedMinutes);
 	}
 
 	private void checkToRow(int openingHour, int durationUnitInMinutes, String time, int expectedRows) {
 		assertThat(ReservationSystemConfigUtil.toRow(createConfig(openingHour, 23, durationUnitInMinutes),
-				LocalTime.parse(time)), is(expectedRows));
+				LocalTime.parse(time))).isEqualTo(expectedRows);
 	}
 
 	private ReservationSystemConfig createConfig(int openingHour, int closingHour, int durationUnitInMinutesk) {

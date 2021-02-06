@@ -7,8 +7,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -40,18 +38,18 @@ import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 import de.tigges.tchreservation.user.UserAwareService;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.jpa.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/reservation")
+@Slf4j
 public class ReservationService extends UserAwareService {
 
-	public static final Logger logger = LoggerFactory.getLogger(ReservationService.class);
-
-	private ReservationRepository reservationRepository;
-	private OccupationRepository occupationRepository;
-	private ReservationSystemConfigRepository systemConfigRepository;
-	private ProtocolRepository protocolRepository;
-	private ReservationValidator reservationValidator;
+	private final ReservationRepository reservationRepository;
+	private final OccupationRepository occupationRepository;
+	private final ReservationSystemConfigRepository systemConfigRepository;
+	private final ProtocolRepository protocolRepository;
+	private final ReservationValidator reservationValidator;
 
 	public ReservationService(ReservationRepository reservationRepository, OccupationRepository occupationRepository,
 			ReservationSystemConfigRepository systemConfigRepository, UserRepository userRepository,
@@ -77,7 +75,7 @@ public class ReservationService extends UserAwareService {
 	@ResponseStatus(HttpStatus.CREATED)
 	public @ResponseBody Reservation addReservation(@RequestBody Reservation reservation) {
 
-		logger.info("add reservation {}", reservation.getText());
+		log.info("add reservation {}", reservation.getText());
 		UserEntity loggedInUser = getLoggedInUser();
 
 		reservationValidator.validateReservation(reservation, loggedInUser);
@@ -111,7 +109,7 @@ public class ReservationService extends UserAwareService {
 	@GetMapping("/checkOccupations")
 	public @ResponseBody Reservation checkOccupations(@RequestBody Reservation reservation) {
 
-		logger.info("check occupations for reservation {}", reservation.getText());
+		log.info("check occupations for reservation {}", reservation.getText());
 		UserEntity loggedInUser = getLoggedInUser();
 
 		if (reservation.getOccupations().isEmpty()) {
@@ -135,7 +133,7 @@ public class ReservationService extends UserAwareService {
 	@Transactional
 	public @ResponseBody Occupation updateOccupation(@RequestBody Occupation occupation) {
 
-		logger.info("update occupation {}", occupation.getText());
+		log.info("update occupation {}", occupation.getText());
 
 		OccupationEntity dbOccupation = occupationRepository.findById(occupation.getId())
 				.orElseThrow(() -> new NotFoundException(EntityType.OCCUPATION, occupation.getId()));
@@ -161,7 +159,7 @@ public class ReservationService extends UserAwareService {
 	@ResponseStatus(HttpStatus.OK)
 	public void deleteOccupation(@PathVariable long id) {
 
-		logger.info("delete occupation {}", id);
+		log.info("delete occupation {}", id);
 
 		OccupationEntity occupation = occupationRepository.findById(id)
 				.orElseThrow(() -> new NotFoundException(EntityType.OCCUPATION, id));
@@ -179,7 +177,7 @@ public class ReservationService extends UserAwareService {
 	@ResponseStatus(HttpStatus.OK)
 	public void deleteReservation(@PathVariable long id) {
 
-		logger.info("delete reservation {}", id);
+		log.info("delete reservation {}", id);
 
 		UserEntity loggedInUser = getLoggedInUser();
 
@@ -201,7 +199,7 @@ public class ReservationService extends UserAwareService {
 	 */
 	@GetMapping("/get/{id}")
 	public Optional<Reservation> getReservation(@PathVariable long id) {
-		logger.info("get reservation {}", id);
+		log.info("get reservation {}", id);
 		return reservationRepository.findById(id).map(this::map);
 	}
 
@@ -220,7 +218,7 @@ public class ReservationService extends UserAwareService {
 	 */
 	@GetMapping("/get/occupation/{id}")
 	public Optional<Occupation> getOccupation(@PathVariable long id) {
-		logger.info("get occupation {}", id);
+		log.info("get occupation {}", id);
 
 		return occupationRepository.findById(id).map(OccupationMapper::map);
 	}
@@ -240,7 +238,7 @@ public class ReservationService extends UserAwareService {
 			searchDate = Instant.ofEpochMilli(date).atZone(ZoneId.systemDefault()).toLocalDate();
 		}
 
-		logger.info("get occupations for date {} ({})", searchDate.toString(), date);
+		log.info("get occupations for date {} ({})", searchDate.toString(), date);
 
 		Iterable<OccupationEntity> occupations = occupationRepository.findBySystemConfigIdAndDate(systemConfigId,
 				searchDate);

@@ -10,19 +10,17 @@ import org.springframework.stereotype.Component;
 
 import de.tigges.tchreservation.user.jpa.UserRepository;
 import de.tigges.tchreservation.user.model.ActivationStatus;
+import lombok.RequiredArgsConstructor;
 
 @Component
+@RequiredArgsConstructor
 public class SpringUserDetailsService implements UserDetailsService {
 
-	private UserRepository userRepository;
-
-	public SpringUserDetailsService(UserRepository userRepository) {
-		this.userRepository = userRepository;
-	}
+	private final UserRepository userRepository;
 
 	@Override
 	public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
-		return userRepository.findByNameOrEmail(userName,userName)
+		return userRepository.findByNameOrEmail(userName, userName)
 				.map(u -> org.springframework.security.core.userdetails.User//
 						.withUsername(userName) //
 						.password("{bcrypt}" + u.getPassword()) //

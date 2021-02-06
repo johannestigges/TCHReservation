@@ -23,20 +23,15 @@ import de.tigges.tchreservation.user.UserUtils;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.UserRole;
+import lombok.RequiredArgsConstructor;
 
 @Component
+@RequiredArgsConstructor
 public class ReservationValidator {
 
 	private final OccupationRepository occupationRepository;
 	private final ReservationSystemConfigRepository systemConfigRepository;
 	private final MessageSource messageSource;
-
-	public ReservationValidator(OccupationRepository occupationRepository,
-			ReservationSystemConfigRepository reservationSystemConfigRepository, MessageSource messageSource) {
-		this.occupationRepository = occupationRepository;
-		this.systemConfigRepository = reservationSystemConfigRepository;
-		this.messageSource = messageSource;
-	}
 
 	/**
 	 * validate an occupation

@@ -64,6 +64,7 @@ public class ServiceTest {
 	 * @throws IOException
 	 */
 	protected String json(Object o) throws IOException {
+
 		MockHttpOutputMessage mockHttpOutputMessage = new MockHttpOutputMessage();
 		this.mappingJackson2HttpMessageConverter.write(o, MediaType.APPLICATION_JSON, mockHttpOutputMessage);
 		return mockHttpOutputMessage.getBodyAsString();
@@ -144,7 +145,7 @@ public class ServiceTest {
 	public ResultActions performGet(String url) throws Exception {
 		return mockMvc.perform(get(url).with(csrf()));
 	}
-	
+
 	/**
 	 * call a DELETE service
 	 * 

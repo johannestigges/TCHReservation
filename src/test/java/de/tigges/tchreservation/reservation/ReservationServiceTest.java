@@ -1,7 +1,7 @@
 package de.tigges.tchreservation.reservation;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -9,11 +9,9 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.StreamSupport;
 
 import org.hamcrest.Matchers;
-import org.hamcrest.collection.IsEmptyIterable;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -436,8 +434,8 @@ public class ReservationServiceTest extends ProtocolTest {
 				.andExpect(status().isCreated()).andReturn().getResponse().getContentAsString(), Reservation.class);
 		checkReservation(deleteReservation(reservation.getId()), reservation, ActionType.DELETE);
 
-		assertThat(reservationRepository.findById(reservation.getId()), Matchers.equalTo(Optional.empty()));
-		assertThat(occupationRepository.findByReservationId(reservation.getId()), IsEmptyIterable.emptyIterable());
+		assertThat(reservationRepository.findById(reservation.getId())).isEmpty();
+		assertThat(occupationRepository.findByReservationId(reservation.getId())).isEmpty();
 	}
 
 	@Test

@@ -5,6 +5,10 @@ import de.tigges.tchreservation.user.model.User;
 
 public class UserMapper {
 
+	private UserMapper() {
+		// avoid instantiation
+	}
+
 	public static User map(UserEntity e) {
 		if (e == null) {
 			return null;
