@@ -5,6 +5,10 @@ import de.tigges.tchreservation.user.model.UserDevice;
 
 public class UserDeviceMapper {
 
+	private UserDeviceMapper() {
+		// avoid instantiation
+	}
+
 	public static UserDevice map(UserDeviceEntity e) {
 		if (e == null) {
 			return null;

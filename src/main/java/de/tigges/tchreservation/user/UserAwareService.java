@@ -6,14 +6,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.jpa.UserRepository;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 public class UserAwareService {
 
-	protected UserRepository userRepository;
-
-	public UserAwareService(UserRepository userRepository) {
-		this.userRepository = userRepository;
-	}
+	protected final UserRepository userRepository;
 
 	public UserEntity getLoggedInUser() {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

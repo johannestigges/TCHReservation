@@ -1,7 +1,7 @@
 package de.tigges.tchreservation.reservation;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -9,11 +9,9 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.StreamSupport;
 
 import org.hamcrest.Matchers;
-import org.hamcrest.collection.IsEmptyIterable;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,6 +33,7 @@ import de.tigges.tchreservation.reservation.jpa.OccupationRepository;
 import de.tigges.tchreservation.reservation.jpa.ReservationEntity;
 import de.tigges.tchreservation.reservation.jpa.ReservationRepository;
 import de.tigges.tchreservation.reservation.model.Occupation;
+import de.tigges.tchreservation.reservation.model.OccupationMapper;
 import de.tigges.tchreservation.reservation.model.Reservation;
 import de.tigges.tchreservation.reservation.model.ReservationMapper;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
@@ -147,7 +146,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	public void addReservationNoText() throws Exception {
 		Reservation reservation = createReservation(1, user, 1, 8, 2);
 		reservation.setText(null);
-		addReservationFieldError(reservation, "text", "Bitte geben Sie einen Wert an");
+		addReservationWithOccupationFieldError(reservation, "text", "Bitte geben Sie einen Wert an");
 	}
 
 	@Test
@@ -155,7 +154,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	public void addReservationNoDate() throws Exception {
 		Reservation reservation = createReservation(1, user, 1, 8, 2);
 		reservation.setDate(null);
-		addReservationFieldError(reservation, "date", "Bitte geben Sie einen Wert an");
+		addReservationWithFieldError(reservation, "date", "Bitte geben Sie einen Wert an");
 	}
 
 	@Test
@@ -163,21 +162,23 @@ public class ReservationServiceTest extends ProtocolTest {
 	public void addReservationNoStart() throws Exception {
 		Reservation reservation = createReservation(1, user, 1, 8, 2);
 		reservation.setStart(null);
-		addReservationFieldError(reservation, "start", "Bitte geben Sie einen Wert an");
+		addReservationWithFieldError(reservation, "start", "Bitte geben Sie einen Wert an");
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void addReservationBeforeOpeningHour() throws Exception {
 		Reservation reservation = createReservation(1, user, 1, 6, 2);
-		addReservationFieldError(reservation, "start", "Startzeit 06:00 liegt vor der Öffnungszeit 08:00.");
+		addReservationWithOccupationFieldError(reservation, "start",
+				"Startzeit 06:00 liegt vor der Öffnungszeit 08:00.");
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void addReservationAfterClosingHour() throws Exception {
 		Reservation reservation = createReservation(1, user, 1, 23, 2);
-		addReservationFieldError(reservation, "start", "Startzeit 23:00 liegt später als die Endezeit 22:00");
+		addReservationWithOccupationFieldError(reservation, "start",
+				"Startzeit 23:00 liegt später als die Endezeit 22:00");
 	}
 
 	@Test
@@ -185,21 +186,21 @@ public class ReservationServiceTest extends ProtocolTest {
 	public void addReservationInvalidMinutes() throws Exception {
 		Reservation reservation = createReservation(1, user, 1, 0, 2);
 		reservation.setStart(LocalTime.of(9, 25));
-		addReservationFieldError(reservation, "start", "fehlerhafte Startzeit mit 25 Minuten.");
+		addReservationWithOccupationFieldError(reservation, "start", "fehlerhafte Startzeit mit 25 Minuten.");
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void addReservationExtendsClosingHour() throws Exception {
 		Reservation reservation = createReservation(1, user, 1, 19, 7);
-		addReservationFieldError(reservation, "start", "Startzeit + Dauer zu spät.");
+		addReservationWithOccupationFieldError(reservation, "start", "Startzeit + Dauer zu spät.");
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void addReservationDurationTooSmall() throws Exception {
 		Reservation reservation = createReservation(1, user, 1, 8, 0);
-		addReservationFieldError(reservation, "duration", "Dauer zu gering");
+		addReservationWithOccupationFieldError(reservation, "duration", "Dauer zu gering");
 	}
 
 	@Test
@@ -207,7 +208,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	public void addReservationNoCourts() throws Exception {
 		Reservation reservation = createReservation(1, user, 0, 8, 2);
 		reservation.setCourts(null);
-		addReservationFieldError(reservation, "court", "Bitte geben Sie einen Wert an");
+		addReservationWithFieldError(reservation, "court", "Bitte geben Sie einen Wert an");
 	}
 
 	@Test
@@ -215,21 +216,21 @@ public class ReservationServiceTest extends ProtocolTest {
 	public void addReservationTooManyCourts() throws Exception {
 		Reservation reservation = createReservation(1, user, 0, 8, 2);
 		reservation.setCourtsFromInteger(1, 2, 3, 4, 5, 6, 7);
-		addReservationFieldError(reservation, "court", "Mehr als 6 Plätze gibt es nicht.");
+		addReservationWithFieldError(reservation, "court", "Platznummer 7 zu groß. Mehr als 6 Plätze gibt es nicht.");
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void addReservationCourtTooSmall() throws Exception {
 		Reservation reservation = createReservation(1, user, 0, 8, 2);
-		addReservationFieldError(reservation, "court", "Platz[1]: Platz 0 gibt es nicht");
+		addReservationWithFieldError(reservation, "court", "Platznummer 0 zu klein");
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void addReservationCourtTooBig() throws Exception {
 		Reservation reservation = createReservation(1, user, 7, 8, 2);
-		addReservationFieldError(reservation, "court", "Platz[1]: Platz 7 gibt es nicht");
+		addReservationWithFieldError(reservation, "court", "Platznummer 7 zu groß. Mehr als 6 Plätze gibt es nicht.");
 	}
 
 	@Test
@@ -280,8 +281,8 @@ public class ReservationServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void addReservationNoSystemConfig() throws Exception {
-		addReservationError(createReservation(0, admin, 1, 10, 6), HttpStatus.BAD_REQUEST,
-				"Kein Reservierungssystem angegeben");
+		addReservationError(createReservation(0, admin, 1, 10, 6), HttpStatus.NOT_FOUND,
+				"SYSTEM_CONFIGURATION with id 0 not found");
 	}
 
 	@Test
@@ -291,13 +292,13 @@ public class ReservationServiceTest extends ProtocolTest {
 				"SYSTEM_CONFIGURATION with id 10 not found");
 	}
 
-	@Test
-	@WithMockUser(username = "ADMIN")
-	public void addReservationUnknownUser() throws Exception {
-		UserEntity user = new UserEntity();
-		user.setId(100);
-		addReservationError(createReservation(1, user, 1, 8, 2), HttpStatus.NOT_FOUND, "USER with id 100 not found");
-	}
+//	@Test
+//	@WithMockUser(username = "ADMIN")
+//	public void addReservationUnknownUser() throws Exception {
+//		UserEntity user = new UserEntity();
+//		user.setId(100);
+//		addReservationError(createReservation(1, user, 1, 8, 2), HttpStatus.NOT_FOUND, "USER with id 100 not found");
+//	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED.CREATED")
@@ -338,7 +339,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void addReservationUnauthorizedDuration() throws Exception {
-		addReservationFieldError(createReservation(1, user, 1, 8, 4), //
+		addReservationWithOccupationFieldError(createReservation(1, user, 1, 8, 4), //
 				"duration", "Der Benutzer REGISTERED hat nicht die Rechte, eine Reservierung der Dauer 4 anzulegen.");
 	}
 
@@ -347,7 +348,8 @@ public class ReservationServiceTest extends ProtocolTest {
 	public void addReservationUnauthorizedDateInThePast() throws Exception {
 		Reservation reservation = createReservation(1, user, 1, 10, 2);
 		reservation.setDate(LocalDate.now().minusDays(1));
-		addReservationFieldError(reservation, "date", "Das Datum darf nicht in der Vergangenheit liegen.");
+		addReservationWithOccupationFieldError(reservation, "date",
+				"Das Datum darf nicht in der Vergangenheit liegen.");
 	}
 
 	@Test
@@ -358,17 +360,18 @@ public class ReservationServiceTest extends ProtocolTest {
 		if (hour > systemConfig.getOpeningHour() + 2 && hour < systemConfig.getClosingHour() - 1) {
 			Reservation reservation = createReservation(1, user, 1, hour - 2, 1);
 			reservation.setDate(LocalDate.now());
-			addReservationFieldError(reservation, "time", "Die Startzeit darf nicht in der Vergangenheit liegen.");
+			addReservationWithOccupationFieldError(reservation, "time",
+					"Die Startzeit darf nicht in der Vergangenheit liegen.");
 		}
 	}
-	
+
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void addReservationUnauthorizedInTheFarFuture() throws Exception {
 		Reservation reservation = createReservation(1, user, 1, 10, 2);
 		reservation.setDate(LocalDate.now().plusDays(2));
-		addReservationFieldError(reservation, "date", "Das Datum liegt zu weit in der Zukunft.");
-		
+		addReservationWithOccupationFieldError(reservation, "date", "Das Datum liegt zu weit in der Zukunft.");
+
 	}
 
 	@Test
@@ -377,7 +380,7 @@ public class ReservationServiceTest extends ProtocolTest {
 		Reservation reservation = createReservation(1, user, 1, 8, 2);
 		reservation.setType(ReservationType.PREPAID);
 
-		addReservationFieldError(reservation, //
+		addReservationWithOccupationFieldError(reservation, //
 				"type", "Der Benutzer REGISTERED hat nicht die Rechte, eine Reservierung vom Typ PREPAID anzulegen.");
 	}
 
@@ -386,7 +389,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	public void addReservationUnauthorizedTypeTournament() throws Exception {
 		Reservation reservation = createReservation(1, user, 1, 8, 2);
 		reservation.setType(ReservationType.TOURNAMENT);
-		addReservationFieldError(reservation, //
+		addReservationWithOccupationFieldError(reservation, //
 				"type",
 				"Der Benutzer REGISTERED hat nicht die Rechte, eine Reservierung vom Typ TOURNAMENT anzulegen.");
 	}
@@ -396,31 +399,32 @@ public class ReservationServiceTest extends ProtocolTest {
 	public void addReservationUnauthorizedTypeTrainer() throws Exception {
 		Reservation reservation = createReservation(1, user, 1, 8, 2);
 		reservation.setType(ReservationType.TRAINER);
-		addReservationFieldError(reservation, //
+		addReservationWithOccupationFieldError(reservation, //
 				"type", "Der Benutzer REGISTERED hat nicht die Rechte, eine Reservierung vom Typ TRAINER anzulegen.");
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
-	public void updateReservation() throws Exception {
+	public void updateOccupation() throws Exception {
 		Reservation reservation = getResponseJson(addReservation(createReservation(1, user, 1, 12, 2)),
 				Reservation.class);
-		reservation.setDuration(6);
-		checkReservation(updateReservation(reservation), reservation, ActionType.MODIFY);
+		Occupation occupation = reservation.getOccupations().get(0);
+		occupation.setDuration(6);
+		checkOccupation(updateOccupation(occupation), occupation, ActionType.MODIFY);
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
-	public void updateReservationNotFound() throws Exception {
-		Reservation reservation = createReservation(1, user, 1, 12, 2);
-		reservation.setId(657865765659L);
-		updateReservation(reservation).andExpect(status().isNotFound());
+	public void updateOccupationNotFound() throws Exception {
+		Occupation occupation = new Occupation();
+		occupation.setId(0);
+		updateOccupation(occupation).andExpect(status().isNotFound());
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void updateReservationNull() throws Exception {
-		updateReservation(null).andExpect(status().isBadRequest());
+		updateOccupation(null).andExpect(status().isBadRequest());
 	}
 
 	@Test
@@ -430,8 +434,8 @@ public class ReservationServiceTest extends ProtocolTest {
 				.andExpect(status().isCreated()).andReturn().getResponse().getContentAsString(), Reservation.class);
 		checkReservation(deleteReservation(reservation.getId()), reservation, ActionType.DELETE);
 
-		assertThat(reservationRepository.findById(reservation.getId()), Matchers.equalTo(Optional.empty()));
-		assertThat(occupationRepository.findByReservationId(reservation.getId()), IsEmptyIterable.emptyIterable());
+		assertThat(reservationRepository.findById(reservation.getId())).isEmpty();
+		assertThat(occupationRepository.findByReservationId(reservation.getId())).isEmpty();
 	}
 
 	@Test
@@ -478,8 +482,8 @@ public class ReservationServiceTest extends ProtocolTest {
 		return performPost("/reservation/add", reservation);
 	}
 
-	private ResultActions updateReservation(Reservation reservation) throws Exception {
-		return performPut("/reservation/update", reservation);
+	private ResultActions updateOccupation(Occupation occupation) throws Exception {
+		return performPut("/reservation/update/occupation", occupation);
 	}
 
 	private ResultActions deleteReservation(long id) throws Exception {
@@ -502,25 +506,42 @@ public class ReservationServiceTest extends ProtocolTest {
 		return checkError(addReservationNoCheck(reservation), status, message);
 	}
 
-	private ResultActions addReservationFieldError(Reservation reservation, String... fieldErrors) throws Exception {
+	private ResultActions addReservationWithOccupationFieldError(Reservation reservation, String... fieldErrors)
+			throws Exception {
 		ResultActions resultActions = addReservationError(reservation, HttpStatus.BAD_REQUEST,
 				"Fehler beim Prüfen der Reservierung");
 		int i = 0;
 		while (i < fieldErrors.length) {
-			assertFieldError(resultActions, i / 2, fieldErrors[i++], fieldErrors[i++]);
+			assertOccupationFieldError(resultActions, i / 2, fieldErrors[i++], fieldErrors[i++]);
 		}
 		return resultActions;
 	}
 
-	private ResultActions assertFieldError(ResultActions resultActions, int i, String field, String message)
+	private ResultActions addReservationWithFieldError(Reservation reservation, String... fieldErrors)
 			throws Exception {
-		return resultActions.andExpect(jsonPath("$.fieldErrors[" + i + "].entity").value("reservation"))
+		ResultActions resultActions = addReservationError(reservation, HttpStatus.BAD_REQUEST,
+				"Fehler beim Prüfen der Reservierung");
+		int i = 0;
+		while (i < fieldErrors.length) {
+			assertFieldError(resultActions, i / 2, "reservation", fieldErrors[i++], fieldErrors[i++]);
+		}
+		return resultActions;
+	}
+
+	private ResultActions assertOccupationFieldError(ResultActions resultActions, int i, String field, String message)
+			throws Exception {
+		return assertFieldError(resultActions, i, "occupation[0]", field, message);
+	}
+
+	private ResultActions assertFieldError(ResultActions resultActions, int i, String entity, String field,
+			String message) throws Exception {
+		return resultActions.andExpect(jsonPath("$.fieldErrors[" + i + "].entity").value(entity))
 				.andExpect(jsonPath("$.fieldErrors[" + i + "].field").value(field))
 				.andExpect(jsonPath("$.fieldErrors[" + i + "].message").value(message));
 	}
 
 	private ResultActions addReservationOverlap(Reservation reservation, int nrOccupation) throws Exception {
-		return addReservationFieldError(reservation, "occupation[" + nrOccupation + "]",
+		return addReservationWithOccupationFieldError(reservation, "occupation",
 				String.format("Reservierung am %tF %tR nicht möglich, weil Platz %s belegt ist.", reservation.getDate(),
 						reservation.getStart(), reservation.getCourts()));
 	}
@@ -543,6 +564,26 @@ public class ReservationServiceTest extends ProtocolTest {
 		case DELETE:
 			resultActions.andExpect(status().isOk());
 			checkProtocol(ReservationMapper.map(reservation), actionType);
+			break;
+		}
+		return resultActions;
+	}
+
+	private ResultActions checkOccupation(ResultActions resultActions, Occupation occupation, ActionType actionType)
+			throws Exception {
+		switch (actionType) {
+		case CREATE:
+			resultActions.andExpect(status().isCreated()) //
+					.andExpect(jsonPath("$.id").isNotEmpty())
+					.andExpect(jsonPath("$.type").value(occupation.getType().ordinal()));
+			break;
+		case MODIFY:
+			resultActions.andExpect(status().isOk());
+			checkProtocol(OccupationMapper.map(occupation), actionType);
+		case DELETE:
+			resultActions.andExpect(status().isOk());
+			checkProtocol(OccupationMapper.map(occupation), actionType);
+		default:
 			break;
 		}
 		return resultActions;

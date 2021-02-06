@@ -1,10 +1,9 @@
 package de.tigges.tchreservation;
 
-import static org.junit.Assert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Iterator;
 
-import org.hamcrest.Matchers;
 import org.json.JSONException;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +40,7 @@ public class ProtocolTest extends UserTest {
 				checkProtocol(protocol, entity);
 			}
 		}
-		assertThat(found, Matchers.is(1));
+		assertThat(found).isEqualTo(1);
 	}
 
 	/**
@@ -53,8 +52,8 @@ public class ProtocolTest extends UserTest {
 	 * @throws JSONException
 	 */
 	public void checkProtocol(ProtocolEntity p, Protocollable entity) throws JSONException {
-		assertThat(p.getEntityType(), Matchers.is(entity.protocolEntityType()));
-		assertThat(p.getEntityId(), Matchers.is(entity.protocolEntityId()));
+		assertThat(p.getEntityType()).isEqualTo(entity.protocolEntityType());
+		assertThat(p.getEntityId()).isEqualTo(entity.protocolEntityId());
 		JSONAssert.assertEquals(p.getValue(), new org.json.JSONObject(entity.protocolFields()), true);
 	}
 }

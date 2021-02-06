@@ -1,7 +1,6 @@
 package de.tigges.tchreservation.user;
 
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -355,8 +354,8 @@ public class UserServiceTest extends ProtocolTest {
 	public void getUserByName() throws Exception {
 		UserEntity user = userRepository.save(createUserEntity(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
 		Optional<UserEntity> foundUser = userRepository.findByNameOrEmail(user.getName(), "");
-		assertTrue(foundUser.isPresent());
-		assertThat(foundUser.get().getId(), Matchers.is(user.getId()));
+		assertThat(foundUser).isPresent();
+		assertThat(foundUser.get().getId()).isEqualTo(user.getId());
 	}
 
 	@Test
@@ -364,8 +363,8 @@ public class UserServiceTest extends ProtocolTest {
 	public void getUserByEMail() throws Exception {
 		UserEntity user = userRepository.save(createUserEntity(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
 		Optional<UserEntity> foundUser = userRepository.findByNameOrEmail("", user.getEmail());
-		assertTrue(foundUser.isPresent());
-		assertThat(foundUser.get().getId(), Matchers.is(user.getId()));
+		assertThat(foundUser).isPresent();
+		assertThat(foundUser.get().getId()).isEqualTo(user.getId());
 	}
 
 	@Test

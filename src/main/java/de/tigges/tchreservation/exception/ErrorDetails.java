@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import lombok.Data;
+
+@Data
 public class ErrorDetails {
 	private String message;
 	private String details;
@@ -19,18 +22,6 @@ public class ErrorDetails {
 		this.setDetails(details);
 	}
 
-	public String getMessage() {
-		return message;
-	}
-
-	public String getDetails() {
-		return details;
-	}
-
-	public void setDetails(String details) {
-		this.details = details;
-	}
-
 	public List<FieldError> getFieldErrors() {
 		return fieldErrors;
 	}
@@ -40,15 +31,15 @@ public class ErrorDetails {
 		StringBuilder sb = new StringBuilder("ErrorDetails: ");
 		sb.append(message);
 		if (getDetails() != null) {
-			sb.append(" details: ");
-			sb.append(getDetails());
+			sb.append(" details: ").append(getDetails());
 		}
 		if (fieldErrors != null && !fieldErrors.isEmpty()) {
-			sb.append(" [");
-			sb.append(String.join(",", fieldErrors.stream().map(f -> f.toString()).collect(Collectors.toList())));
-			sb.append(" ]");
+			sb.append(" [").append(logFieldErrors()).append(" ]");
 		}
 		return sb.toString();
 	}
 
+	private String logFieldErrors() {
+		return fieldErrors.stream().map(f -> f.toString()).collect(Collectors.joining(","));
+	}
 }
