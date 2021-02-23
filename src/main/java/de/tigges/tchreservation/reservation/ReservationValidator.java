@@ -142,6 +142,9 @@ public class ReservationValidator {
 			if (date.isAfter(LocalDate.now().plusDays(1))) {
 				addOccupationFieldError(errorDetails, "date", msg("error_date_too_far_in_future"));
 			}
+			if (!date.isEqual(LocalDate.now()) && start.getHour() > LocalTime.now().getHour()) {
+				addOccupationFieldError(errorDetails, "start", msg("error_date_too_far_in_future"));
+			}
 		}
 
 		// check overlap
