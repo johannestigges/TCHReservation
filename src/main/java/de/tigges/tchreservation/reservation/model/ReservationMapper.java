@@ -18,7 +18,8 @@ public class ReservationMapper {
 		r.setDuration(e.getDuration());
 		r.setCourts(e.getCourts());
 		r.setType(e.getType());
-		r.setWeeklyRepeatUntil(e.getWeeklyRepeatUntil());
+		r.setRepeatType(e.getRepeatType());
+		r.setRepeatUntil(e.getRepeatUntil());
 		r.setUser(UserMapper.map(e.getUser()));
 		return r;
 	}
@@ -36,7 +37,8 @@ public class ReservationMapper {
 		e.setDuration(r.getDuration());
 		e.setCourts(r.getCourts());
 		e.setType(r.getType());
-		e.setWeeklyRepeatUntil(r.getWeeklyRepeatUntil());
+		e.setRepeatType(r.getRepeatType());
+		e.setRepeatUntil(r.getRepeatUntil());
 		e.setUser(UserMapper.map(r.getUser()));
 		return e;
 	}

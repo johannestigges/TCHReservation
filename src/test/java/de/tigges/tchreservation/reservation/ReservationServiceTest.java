@@ -34,6 +34,7 @@ import de.tigges.tchreservation.reservation.jpa.ReservationEntity;
 import de.tigges.tchreservation.reservation.jpa.ReservationRepository;
 import de.tigges.tchreservation.reservation.model.Occupation;
 import de.tigges.tchreservation.reservation.model.OccupationMapper;
+import de.tigges.tchreservation.reservation.model.RepeatType;
 import de.tigges.tchreservation.reservation.model.Reservation;
 import de.tigges.tchreservation.reservation.model.ReservationMapper;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
@@ -265,7 +266,8 @@ public class ReservationServiceTest extends ProtocolTest {
 	private void checkReservationRepeat(int hour, int repeatDays, int expectedOccupations, int... courts)
 			throws Exception {
 		Reservation reservation = createReservation(1, user, 1, hour, 2);
-		reservation.setWeeklyRepeatUntil(reservation.getDate().plusDays(repeatDays));
+		reservation.setRepeatUntil(reservation.getDate().plusDays(repeatDays));
+		reservation.setRepeatType(RepeatType.weekly);
 		reservation.setCourtsFromInteger(courts);
 		Reservation savedReservation = getReservation(addReservation(reservation));
 		Iterable<OccupationEntity> occupations = occupationRepository.findByReservationId(savedReservation.getId());

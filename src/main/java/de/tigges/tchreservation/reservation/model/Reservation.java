@@ -24,7 +24,8 @@ public class Reservation {
 	private int duration;
 	private String courts;
 	private ReservationType type;
-	private LocalDate weeklyRepeatUntil;
+	private RepeatType repeatType;
+	private LocalDate repeatUntil;
 
 	private User user;
 

@@ -13,6 +13,7 @@ import javax.persistence.Table;
 
 import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.protocol.Protocollable;
+import de.tigges.tchreservation.reservation.model.RepeatType;
 import de.tigges.tchreservation.reservation.model.ReservationType;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import lombok.Data;
@@ -50,7 +51,10 @@ public class ReservationEntity implements Protocollable {
 	private ReservationType type;
 
 	@Column(nullable = true)
-	private LocalDate weeklyRepeatUntil;
+	private RepeatType repeatType;
+
+	@Column(nullable = true)
+	private LocalDate repeatUntil;
 
 	@ManyToOne(optional = false)
 	private UserEntity user;
@@ -77,7 +81,7 @@ public class ReservationEntity implements Protocollable {
 				"duration", Integer.toString(duration), //
 				"courts", courts, //
 				"type", type.name(), //
-				"weekly repeat until", weeklyRepeatUntil == null ? "" : weeklyRepeatUntil.toString() //
+				"weekly repeat until", repeatUntil == null ? "" : repeatUntil.toString() //
 		);
 	}
 
