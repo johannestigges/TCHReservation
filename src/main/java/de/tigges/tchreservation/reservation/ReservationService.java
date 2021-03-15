@@ -279,8 +279,21 @@ public class ReservationService extends UserAwareService {
 
 		LocalDate occupationDate = reservation.getDate();
 		LocalDate repeatUntil = reservation.getDate();
-		if (reservation.getWeeklyRepeatUntil() != null) {
-			repeatUntil = reservation.getWeeklyRepeatUntil();
+		int plusDays = 1;
+		if (reservation.getRepeatType() != null) {
+			switch (reservation.getRepeatType()) {
+			case daily:
+				plusDays = 1;
+				break;
+			case weekly:
+				plusDays = 7;
+				break;
+			default:
+				break;
+			}
+		}
+		if (reservation.getRepeatUntil() != null) {
+			repeatUntil = reservation.getRepeatUntil();
 		}
 		while (!occupationDate.isAfter(repeatUntil)) {
 			Occupation occupation = createOccupation(reservation);
@@ -304,7 +317,7 @@ public class ReservationService extends UserAwareService {
 				reservation.getOccupations().add(occupation);
 			}
 
-			occupationDate = occupationDate.plusDays(7);
+			occupationDate = occupationDate.plusDays(plusDays);
 		}
 	}
 

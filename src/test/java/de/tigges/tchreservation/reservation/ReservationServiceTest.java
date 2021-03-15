@@ -1,7 +1,6 @@
 package de.tigges.tchreservation.reservation;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -12,14 +11,14 @@ import java.util.List;
 import java.util.stream.StreamSupport;
 
 import org.hamcrest.Matchers;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.ResultActions;
 
@@ -34,6 +33,7 @@ import de.tigges.tchreservation.reservation.jpa.ReservationEntity;
 import de.tigges.tchreservation.reservation.jpa.ReservationRepository;
 import de.tigges.tchreservation.reservation.model.Occupation;
 import de.tigges.tchreservation.reservation.model.OccupationMapper;
+import de.tigges.tchreservation.reservation.model.RepeatType;
 import de.tigges.tchreservation.reservation.model.Reservation;
 import de.tigges.tchreservation.reservation.model.ReservationMapper;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
@@ -43,7 +43,7 @@ import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.UserRole;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = TchReservationApplication.class)
 @WebAppConfiguration
 public class ReservationServiceTest extends ProtocolTest {
@@ -59,7 +59,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	private UserEntity user;
 	private UserEntity admin;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 
 		this.protocolRepository.deleteAll();
@@ -248,7 +248,7 @@ public class ReservationServiceTest extends ProtocolTest {
 		reservation.setCourtsFromInteger(courts);
 		Reservation savedReservation = getReservation(addReservation(reservation));
 		Iterable<OccupationEntity> occupations = occupationRepository.findByReservationId(savedReservation.getId());
-		assertEquals(expectedOccupations, StreamSupport.stream(occupations.spliterator(), false).count());
+		assertThat(StreamSupport.stream(occupations.spliterator(), false)).hasSize(expectedOccupations);
 	}
 
 	@Test
@@ -265,11 +265,12 @@ public class ReservationServiceTest extends ProtocolTest {
 	private void checkReservationRepeat(int hour, int repeatDays, int expectedOccupations, int... courts)
 			throws Exception {
 		Reservation reservation = createReservation(1, user, 1, hour, 2);
-		reservation.setWeeklyRepeatUntil(reservation.getDate().plusDays(repeatDays));
+		reservation.setRepeatUntil(reservation.getDate().plusDays(repeatDays));
+		reservation.setRepeatType(RepeatType.weekly);
 		reservation.setCourtsFromInteger(courts);
 		Reservation savedReservation = getReservation(addReservation(reservation));
 		Iterable<OccupationEntity> occupations = occupationRepository.findByReservationId(savedReservation.getId());
-		assertEquals(expectedOccupations, StreamSupport.stream(occupations.spliterator(), false).count());
+		assertThat(StreamSupport.stream(occupations.spliterator(), false)).hasSize(expectedOccupations);
 	}
 
 	@Test
@@ -479,11 +480,11 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	private ResultActions addReservationNoCheck(Reservation reservation) throws Exception {
-		return performPost("/reservation/add", reservation);
+		return performPost("/reservation/add", reservation != null ? reservation : "");
 	}
 
 	private ResultActions updateOccupation(Occupation occupation) throws Exception {
-		return performPut("/reservation/update/occupation", occupation);
+		return performPut("/reservation/update/occupation", occupation != null ? occupation : "");
 	}
 
 	private ResultActions deleteReservation(long id) throws Exception {
