@@ -3,6 +3,11 @@ package de.tigges.tchreservation.mvc.table;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
+
+@Getter
+@Log4j2
 public class TableData {
 	private int tableRows;
 	private int tableColumns;
@@ -18,24 +23,12 @@ public class TableData {
 		table = new ArrayList<>();
 	}
 
-	public int getTableRows() {
-		return tableRows;
-	}
-
-	public int getTableColumns() {
-		return tableColumns;
-	}
-
-	public List<List<TableCell>> getTable() {
-		return table;
-	}
-
 	public void setCell(int row, int column) {
 		setCell(row, column, 1, 1);
 	}
 
 	public void setCell(int row, int column, int rowspan, int colspan) {
-		System.out.println(String.format("setCell(%d,%d) span(%d,%d)", row,column,rowspan,colspan));
+		log.debug("setCell({},{}) span({},{})", row, column, rowspan, colspan);
 		while (row >= tableRows) {
 			newRow();
 		}
@@ -77,7 +70,7 @@ public class TableData {
 	}
 
 	private void newColumn() {
-		System.out.println("new column " + tableColumns);
+		log.debug("new column {}", tableColumns);
 		for (int r = 0; r < tableRows; r++) {
 			table.get(r).add(new TableCell());
 		}
@@ -85,7 +78,7 @@ public class TableData {
 	}
 
 	private void newRow() {
-		System.out.println("new row " + tableRows);
+		log.debug("new row {}", tableRows);
 		List<TableCell> newRow = new ArrayList<>();
 		for (int c = 0; c < tableColumns; c++) {
 			newRow.add(new TableCell());
