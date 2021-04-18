@@ -6,6 +6,7 @@ import java.util.Locale;
 
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import de.tigges.tchreservation.exception.AuthorizationException;
@@ -54,7 +55,7 @@ public class ReservationValidator {
 		ReservationSystemConfig systemConfig = systemConfigRepository.get(occupation.getSystemConfigId());
 
 		// validate text
-		if (StringUtils.isEmpty(occupation.getText())) {
+		if (!StringUtils.hasText(occupation.getText())) {
 			addOccupationFieldError(errorDetails, "text", msg("error_null_not_allowed"));
 		}
 
@@ -161,15 +162,15 @@ public class ReservationValidator {
 
 		ReservationSystemConfig systemConfig = systemConfigRepository.get(reservation.getSystemConfigId());
 
-		if (StringUtils.isEmpty(reservation.getCourts())) {
+		if (!StringUtils.hasText(reservation.getCourts())) {
 			addFieldError(errorDetails, "reservation", "court", msg("error_null_not_allowed"));
 		}
 
-		if (StringUtils.isEmpty(reservation.getDate())) {
+		if (ObjectUtils.isEmpty(reservation.getDate())) {
 			addFieldError(errorDetails, "reservation", "date", msg("error_null_not_allowed"));
 		}
 
-		if (StringUtils.isEmpty(reservation.getStart())) {
+		if (ObjectUtils.isEmpty(reservation.getStart())) {
 			addFieldError(errorDetails, "reservation", "start", msg("error_null_not_allowed"));
 		}
 

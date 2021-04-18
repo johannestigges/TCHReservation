@@ -464,9 +464,9 @@ public class ReservationServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void getOccupationsWithDate() throws Exception {
-		Reservation reservation = getReservation(addReservation(createReservation(2, user, 2, 12, 2)));
+		Reservation reservation = getReservation(addReservation(createReservation(1, user, 2, 12, 2)));
 		long epochMilli = LocalDate.now().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
-		checkOccupations(performGet("/reservation/getOccupations/2/" + epochMilli).andExpect(status().isOk()),
+		checkOccupations(performGet("/reservation/getOccupations/1/" + epochMilli).andExpect(status().isOk()),
 				reservation.getOccupations());
 	}
 

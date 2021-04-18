@@ -22,10 +22,6 @@ public class ErrorDetails {
 		this.setDetails(details);
 	}
 
-	public List<FieldError> getFieldErrors() {
-		return fieldErrors;
-	}
-
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder("ErrorDetails: ");

@@ -5,12 +5,12 @@ spring:
     password: springpassword
   jpa:
     hibernate:
-      ddl-auto: update # validate update create create-drop
+      ddl-auto: validate # validate update create create-drop
       
 logging:
   level:
     org:
-     springframework: info
+     springframework: error
 #        web: DEBUG
 #       web.filter.CommonsRequestLoggingFilter: DEBUG
      hibernate: ERROR

@@ -9,9 +9,12 @@ spring:
       ddl-auto: create
 logging:
   level:
-    org.springframework: ERROR
-    org.hibernate: ERROR
-    com.zaxxer.hikari: ERROR
+    org:
+      springframework: ERROR
+      hibernate: ERROR
+    com:
+      zaxxer:
+        hikari: ERROR
 
 reservation:
   config[0]:

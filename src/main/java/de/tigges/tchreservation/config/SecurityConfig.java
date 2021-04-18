@@ -23,13 +23,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				.antMatchers(
 						"/resources/**", 
 						"/css/**", 
-						"/index", //
+						"/index",
 						"/actuator/**", 
-						"/api-docs/**", //
+						"/api-docs/**",
 						"/mvc/**", 
-						"/angular/**", //
+						"/angular/**",
 						"/reservation/getOccupations/**", 
-						"/reservation/systemconfig/**", //
+						"/reservation/systemconfig/**",
 						"/user/me")
 					.permitAll()
 				// all other rest services need authentication
