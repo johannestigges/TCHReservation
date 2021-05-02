@@ -125,8 +125,9 @@ public class ReservationValidator {
 						loggedInUser.getName(), occupation.getType()));
 			}
 
-			// only duration <=3 is allowed
-			if (occupation.getDuration() > 3) {
+			int maxDuration = systemConfig.getDurationUnitInMinutes() > 30 ? 1 : 3;
+			// only duration <= maxDuration 3 is allowed
+			if (occupation.getDuration() > maxDuration) {
 				addOccupationFieldError(errorDetails, "duration", String.format(
 						msg("error_registered_cannot_add_duration"), loggedInUser.getName(), occupation.getDuration()));
 			}
