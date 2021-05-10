@@ -32,3 +32,11 @@ reservation:
     durationUnitInMinutes: 30
     openingHour: 8
     closingHour: 22
+  config[1]:
+    id: 2
+    name: "Hallenplätze"
+    courts: 2
+    durationUnitInMinutes: 60
+    openingHour: 8
+    closingHour: 22
+    
