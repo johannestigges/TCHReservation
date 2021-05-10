@@ -36,6 +36,7 @@ import de.tigges.tchreservation.reservation.model.Reservation;
 import de.tigges.tchreservation.reservation.model.ReservationMapper;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 import de.tigges.tchreservation.user.UserAwareService;
+import de.tigges.tchreservation.user.UserMapper;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.jpa.UserRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -75,10 +76,11 @@ public class ReservationService extends UserAwareService {
 	@ResponseStatus(HttpStatus.CREATED)
 	public @ResponseBody Reservation addReservation(@RequestBody Reservation reservation) {
 
-		log.info("add reservation {}", reservation.getText());
+		log.info("add reservation {}", reservation);
 		UserEntity loggedInUser = getLoggedInUser();
 
 		reservationValidator.validateReservation(reservation, loggedInUser);
+		reservation.setUser(UserMapper.map(loggedInUser));
 
 		if (reservation.getOccupations().isEmpty()) {
 			createOccupations(reservation);
@@ -295,6 +297,8 @@ public class ReservationService extends UserAwareService {
 		if (reservation.getRepeatUntil() != null) {
 			repeatUntil = reservation.getRepeatUntil();
 		}
+		log.debug("create occupations for {} repeat {} until {}", occupationDate, reservation.getRepeatType(),
+				repeatUntil);
 		while (!occupationDate.isAfter(repeatUntil)) {
 			Occupation occupation = createOccupation(reservation);
 			occupation.setDate(occupationDate);

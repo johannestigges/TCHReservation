@@ -17,12 +17,14 @@ import de.tigges.tchreservation.exception.InvalidDataException;
 import de.tigges.tchreservation.reservation.jpa.OccupationEntity;
 import de.tigges.tchreservation.reservation.jpa.OccupationRepository;
 import de.tigges.tchreservation.reservation.model.Occupation;
+import de.tigges.tchreservation.reservation.model.RepeatType;
 import de.tigges.tchreservation.reservation.model.Reservation;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 import de.tigges.tchreservation.reservation.model.ReservationType;
 import de.tigges.tchreservation.user.UserUtils;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.model.ActivationStatus;
+import de.tigges.tchreservation.user.model.User;
 import de.tigges.tchreservation.user.model.UserRole;
 import lombok.RequiredArgsConstructor;
 
@@ -163,6 +165,9 @@ public class ReservationValidator {
 
 		ReservationSystemConfig systemConfig = systemConfigRepository.get(reservation.getSystemConfigId());
 
+		if (!validateUser(errorDetails, reservation.getUser(), loggedInUser)) {
+			throw new AuthorizationException(msg("error_wrong_user"));
+		}
 		if (!StringUtils.hasText(reservation.getCourts())) {
 			addFieldError(errorDetails, "reservation", "court", msg("error_null_not_allowed"));
 		}
@@ -185,10 +190,33 @@ public class ReservationValidator {
 
 			}
 		}
+		if (RepeatType.daily.equals(reservation.getRepeatType())
+				|| RepeatType.weekly.equals(reservation.getRepeatType())) {
+			if (reservation.getRepeatUntil() == null) {
+				addFieldError(errorDetails, "reservation", "repeatUntil", msg("error_repeatUntil_empty"));
+			} else if (reservation.getRepeatUntil().isBefore(reservation.getDate())) {
+				addFieldError(errorDetails, "reservation", "repeatUntil", msg("error_repeatUntil_before_start"));
+			}
+		}
 
 		if (!errorDetails.getFieldErrors().isEmpty()) {
 			throw new InvalidDataException(errorDetails);
 		}
+
+	}
+
+	private boolean validateUser(ErrorDetails errorDetails, User user, UserEntity loggedInUser) {
+		if (user == null) {
+			return true;
+		}
+		// @formatter:off
+ 		if (!user.getName().equals(loggedInUser.getName()) 
+ 				|| !user.getStatus().equals(loggedInUser.getStatus())
+				|| !user.getRole().equals(loggedInUser.getRole())) {
+ 			return false;
+		}
+ 		return true;
+		// @formatter:on
 
 	}
 
