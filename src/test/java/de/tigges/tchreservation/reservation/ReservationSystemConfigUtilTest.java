@@ -4,8 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalTime;
 import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
@@ -41,14 +39,6 @@ public class ReservationSystemConfigUtilTest {
 	}
 
 	@Test
-	public void testGetCourtsAsList() {
-		ReservationSystemConfig config = new ReservationSystemConfig(1, "name", 3, 60, 8, 20);
-		int[] courtsAsList = ReservationSystemConfigUtil.getCourtsAsList(config);
-		List<Integer> collect = Arrays.stream(courtsAsList).boxed().collect(Collectors.toList());
-		assertThat(collect).contains(0, 1, 2);
-	}
-
-	@Test
 	public void testShowTime() {
 		checkShowTime(8, 30, 0, "08:00");
 		checkShowTime(8, 30, 1, "08:30");
@@ -76,7 +66,8 @@ public class ReservationSystemConfigUtilTest {
 				LocalTime.parse(time))).isEqualTo(expectedRows);
 	}
 
-	private ReservationSystemConfig createConfig(int openingHour, int closingHour, int durationUnitInMinutesk) {
-		return new ReservationSystemConfig(1, "any", 1, durationUnitInMinutesk, openingHour, closingHour);
+	private ReservationSystemConfig createConfig(int openingHour, int closingHour, int durationUnitInMinutes) {
+		return new ReservationSystemConfig(1, "any", Arrays.asList("Platz 1"), durationUnitInMinutes, openingHour,
+				closingHour);
 	}
 }

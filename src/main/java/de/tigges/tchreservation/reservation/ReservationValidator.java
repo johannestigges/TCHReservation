@@ -105,9 +105,9 @@ public class ReservationValidator {
 			addOccupationFieldError(errorDetails, "court",
 					String.format(msg("error_court_too_small"), occupation.getCourt()));
 		}
-		if (occupation.getCourt() > systemConfig.getCourts()) {
+		if (occupation.getCourt() > systemConfig.getCourts().size()) {
 			addOccupationFieldError(errorDetails, "court",
-					String.format(msg("error_court_too_big"), occupation.getCourt(), systemConfig.getCourts()));
+					String.format(msg("error_court_too_big"), occupation.getCourt(), systemConfig.getCourts().size()));
 		}
 
 		// authorization checks
@@ -184,10 +184,9 @@ public class ReservationValidator {
 			if (court < 1) {
 				addFieldError(errorDetails, "reservation", "court", String.format(msg("error_court_too_small"), court));
 			}
-			if (court > systemConfig.getCourts()) {
+			if (court > systemConfig.getCourts().size()) {
 				addFieldError(errorDetails, "reservation", "court",
-						String.format(msg("error_court_too_big"), court, systemConfig.getCourts()));
-
+						String.format(msg("error_court_too_big"), court, systemConfig.getCourts().size()));
 			}
 		}
 		if (RepeatType.daily.equals(reservation.getRepeatType())
