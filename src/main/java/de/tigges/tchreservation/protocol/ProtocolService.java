@@ -29,6 +29,6 @@ public class ProtocolService {
 	public Iterable<ProtocolEntity> getSince(@PathVariable Long time) {
 		LocalDateTime localDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(time),
 				TimeZone.getDefault().toZoneId());
-		return protocolRepository.findByTimeGreaterThan(localDateTime);
+		return protocolRepository.findByTimeGreaterThanOrderByIdDesc(localDateTime);
 	}
 }
