@@ -10,5 +10,5 @@ public interface ProtocolRepository extends CrudRepository<ProtocolEntity, Long>
 
 	Iterable<ProtocolEntity> findByEntityTypeAndEntityId(EntityType entityType, Long id);
 
-	Iterable<ProtocolEntity> findByTimeGreaterThan(LocalDateTime time);
+	Iterable<ProtocolEntity> findByTimeGreaterThanOrderByIdDesc(LocalDateTime time);
 }
