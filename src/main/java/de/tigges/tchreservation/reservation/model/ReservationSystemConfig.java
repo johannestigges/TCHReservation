@@ -19,6 +19,10 @@ public class ReservationSystemConfig {
 
 	private int durationUnitInMinutes;
 
+	private int maxDaysReservationInFuture;
+
+	private int maxDuration;
+
 	private int openingHour;
 
 	private int closingHour;

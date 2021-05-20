@@ -40,6 +40,7 @@ public class ReservationSystemConfigUtilTest {
 
 	@Test
 	public void testShowTime() {
+		// opening hour, durationUnitInMinutes, row, expectedTime
 		checkShowTime(8, 30, 0, "08:00");
 		checkShowTime(8, 30, 1, "08:30");
 		checkShowTime(8, 30, 11, "13:30");
@@ -47,27 +48,30 @@ public class ReservationSystemConfigUtilTest {
 	}
 
 	private void checkShowTime(int openingHour, int durationUnitInMinutes, int row, String expectedTime) {
-		assertThat(ReservationSystemConfigUtil.showTime(createConfig(openingHour, 22, durationUnitInMinutes), row))
-				.isEqualTo(expectedTime);
+		assertThat(
+				ReservationSystemConfigUtil.showTime(createConfig(openingHour, 22, durationUnitInMinutes, 1, 3), row))
+						.isEqualTo(expectedTime);
 	}
 
 	private void checkGetRows(int openingHour, int closingHour, int durationUnitInMinutes, int expectedRows) {
-		assertThat(ReservationSystemConfigUtil.getRows(createConfig(openingHour, closingHour, durationUnitInMinutes)))
-				.isEqualTo(expectedRows);
+		assertThat(ReservationSystemConfigUtil
+				.getRows(createConfig(openingHour, closingHour, durationUnitInMinutes, 1, 2))).isEqualTo(expectedRows);
 	}
 
 	private void checkToMinutes(int openingHour, int durationUnitInMinutes, int row, int expectedMinutes) {
-		assertThat(ReservationSystemConfigUtil.toMinutes(createConfig(openingHour, 23, durationUnitInMinutes), row))
-				.isEqualTo(expectedMinutes);
+		assertThat(
+				ReservationSystemConfigUtil.toMinutes(createConfig(openingHour, 23, durationUnitInMinutes, 1, 3), row))
+						.isEqualTo(expectedMinutes);
 	}
 
 	private void checkToRow(int openingHour, int durationUnitInMinutes, String time, int expectedRows) {
-		assertThat(ReservationSystemConfigUtil.toRow(createConfig(openingHour, 23, durationUnitInMinutes),
+		assertThat(ReservationSystemConfigUtil.toRow(createConfig(openingHour, 23, durationUnitInMinutes, 1, 2),
 				LocalTime.parse(time))).isEqualTo(expectedRows);
 	}
 
-	private ReservationSystemConfig createConfig(int openingHour, int closingHour, int durationUnitInMinutes) {
-		return new ReservationSystemConfig(1, "any", Arrays.asList("Platz 1"), durationUnitInMinutes, openingHour,
-				closingHour);
+	private ReservationSystemConfig createConfig(int openingHour, int closingHour, int durationUnitInMinutes,
+			int maxDaysReservationInFuture, int maxDuration) {
+		return new ReservationSystemConfig(1, "any", Arrays.asList("Platz 1"), durationUnitInMinutes, 1, maxDuration,
+				openingHour, closingHour);
 	}
 }

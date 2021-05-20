@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.ResultActions;
@@ -45,6 +46,7 @@ import de.tigges.tchreservation.user.model.UserRole;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = TchReservationApplication.class)
+@ActiveProfiles("test")
 @WebAppConfiguration
 public class ReservationServiceTest extends ProtocolTest {
 
@@ -210,6 +212,23 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
+	@WithMockUser(username = "REGISTERED")
+	public void addReservationDurationTooBig() throws Exception {
+		Reservation reservation = createReservation(3, 1, 8, 4);
+		reservation.setDate(reservation.getDate().plusDays(1));
+		addReservationWithOccupationFieldError(reservation, "duration",
+				"Der Benutzer REGISTERED hat nicht die Rechte, eine Reservierung der Dauer 4 anzulegen.");
+	}
+
+	@Test
+	@WithMockUser(username = "ADMIN")
+	public void addReservationDurationNotTooBigForAdmin() throws Exception {
+		Reservation reservation = createReservation(3, 1, 8, 4);
+		reservation.setDate(reservation.getDate().plusDays(1));
+		addReservation(reservation);
+	}
+
+	@Test
 	@WithMockUser(username = "ADMIN")
 	public void addReservationNoCourts() throws Exception {
 		Reservation reservation = createReservation(1, 0, 8, 2);
@@ -307,7 +326,7 @@ public class ReservationServiceTest extends ProtocolTest {
 
 	@Test
 	@WithMockUser(username = "ADMIN")
-	public void addReservationRepeatUntilBeforestart() throws Exception {
+	public void addReservationRepeatUntilBeforeStart() throws Exception {
 		Reservation reservation = createReservation(1, 3, 12, 2);
 		reservation.setRepeatType(RepeatType.daily);
 		reservation.setRepeatUntil(reservation.getDate().minusDays(1));
@@ -406,20 +425,6 @@ public class ReservationServiceTest extends ProtocolTest {
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
-	public void addReservationUnauthorizedDuration() throws Exception {
-		addReservationWithOccupationFieldError(createReservation(1, 1, 8, 4), //
-				"duration", "Der Benutzer REGISTERED hat nicht die Rechte, eine Reservierung der Dauer 4 anzulegen.");
-	}
-
-	@Test
-	@WithMockUser(username = "REGISTERED")
-	public void addReservationUnauthorizedDuration2() throws Exception {
-		addReservationWithOccupationFieldError(createReservation(2, 1, 8, 2), //
-				"duration", "Der Benutzer REGISTERED hat nicht die Rechte, eine Reservierung der Dauer 2 anzulegen.");
-	}
-
-	@Test
-	@WithMockUser(username = "REGISTERED")
 	public void addReservationUnauthorizedDateInThePast() throws Exception {
 		Reservation reservation = createReservation(1, 1, 10, 2);
 		reservation.setDate(LocalDate.now().minusDays(1));
@@ -443,8 +448,8 @@ public class ReservationServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void addReservationUnauthorizedInTheFarFuture() throws Exception {
-		Reservation reservation = createReservation(1, 1, 10, 2);
-		reservation.setDate(LocalDate.now().plusDays(2));
+		Reservation reservation = createReservation(3, 1, 8, 2);
+		reservation.setDate(LocalDate.now().plusDays(3));
 		addReservationWithOccupationFieldError(reservation, "date", "Das Datum liegt zu weit in der Zukunft.");
 	}
 
