@@ -1,6 +1,6 @@
 package de.tigges.tchreservation;
 
-import static org.junit.Assert.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -47,10 +47,10 @@ public class ServiceTest {
 		this.mappingJackson2HttpMessageConverter = (HttpMessageConverter<Object>) Arrays.asList(converters).stream()
 				.filter(hmc -> hmc instanceof MappingJackson2HttpMessageConverter).findAny().orElse(null);
 
-		assertNotNull("the JSON message converter must not be null", this.mappingJackson2HttpMessageConverter);
+		assertThat(this.mappingJackson2HttpMessageConverter).isNotNull();
 	}
 
-	@Before
+	@BeforeEach
 	public void setupServiceTest() throws Exception {
 		this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
 				.apply(SecurityMockMvcConfigurers.springSecurity()).build();
@@ -64,9 +64,13 @@ public class ServiceTest {
 	 * @throws IOException
 	 */
 	protected String json(Object o) throws IOException {
-		MockHttpOutputMessage mockHttpOutputMessage = new MockHttpOutputMessage();
-		this.mappingJackson2HttpMessageConverter.write(o, MediaType.APPLICATION_JSON, mockHttpOutputMessage);
-		return mockHttpOutputMessage.getBodyAsString();
+
+		if (o != null) {
+			MockHttpOutputMessage mockHttpOutputMessage = new MockHttpOutputMessage();
+			this.mappingJackson2HttpMessageConverter.write(o, MediaType.APPLICATION_JSON, mockHttpOutputMessage);
+			return mockHttpOutputMessage.getBodyAsString();
+		}
+		return null;
 	}
 
 	/**
@@ -144,7 +148,7 @@ public class ServiceTest {
 	public ResultActions performGet(String url) throws Exception {
 		return mockMvc.perform(get(url).with(csrf()));
 	}
-	
+
 	/**
 	 * call a DELETE service
 	 * 

@@ -11,16 +11,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tigges.tchreservation.protocol.jpa.ProtocolEntity;
 import de.tigges.tchreservation.protocol.jpa.ProtocolRepository;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/protocol")
+@RequiredArgsConstructor
 public class ProtocolService {
 
-	private ProtocolRepository protocolRepository;
-
-	public ProtocolService(ProtocolRepository protocolRepository) {
-		this.protocolRepository = protocolRepository;
-	}
+	private final ProtocolRepository protocolRepository;
 
 	@GetMapping("/get")
 	public Iterable<ProtocolEntity> getAll() {

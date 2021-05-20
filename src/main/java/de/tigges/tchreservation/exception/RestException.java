@@ -1,33 +1,19 @@
 package de.tigges.tchreservation.exception;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+@Getter
+@RequiredArgsConstructor
 public class RestException extends RuntimeException {
 	private static final long serialVersionUID = 1L;
 
-	public static final Logger logger = LoggerFactory.getLogger(RestException.class);
-	
-	private HttpStatus status;
-	private ErrorDetails errorDetails;
+	private final HttpStatus status;
+	private final ErrorDetails errorDetails;
 
 	public RestException(HttpStatus status, String message) {
-		this(status, new ErrorDetails(message,null));
-	}
-
-	public RestException(HttpStatus status, ErrorDetails errorDetails) {
-		super();
-		this.status = status;
-		this.errorDetails = errorDetails;
-		logger.error("{}: Status: {} {}", getClass().getSimpleName(), status, errorDetails);
-	}
-
-	public HttpStatus getStatus() {
-		return status;
-	}
-
-	public ErrorDetails getErrorDetails() {
-		return errorDetails;
+		this(status, new ErrorDetails(message, null));
 	}
 }

@@ -20,10 +20,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		http.authorizeRequests()
 				// allow some static resources, mvc and some rest services without
 				// authentication
-				.antMatchers("/resources/**", "/css/**", "/index", //
-						"/actuator/**", "/api-docs/**", //
-						"/mvc/**", "/angular/**", //
-						"/reservation/getOccupations/**", "/reservation/systemconfig/**", //
+				.antMatchers(
+						"/resources/**", 
+						"/css/**", 
+						"/index",
+						"/actuator/**", 
+						"/api-docs/**",
+						"/mvc/**", 
+						"/angular/**",
+						"/reservation/getOccupations/**", 
+						"/reservation/systemconfig/**",
 						"/user/me")
 					.permitAll()
 				// all other rest services need authentication

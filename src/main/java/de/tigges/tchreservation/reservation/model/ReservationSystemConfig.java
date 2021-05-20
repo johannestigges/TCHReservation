@@ -1,5 +1,7 @@
 package de.tigges.tchreservation.reservation.model;
 
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,7 +15,7 @@ public class ReservationSystemConfig {
 
 	private String name;
 
-	private int courts;
+	private List<String> courts;
 
 	private int durationUnitInMinutes;
 

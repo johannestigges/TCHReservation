@@ -10,17 +10,17 @@ import static de.tigges.tchreservation.user.model.UserRole.ANONYMOUS;
 import static de.tigges.tchreservation.user.model.UserRole.KIOSK;
 import static de.tigges.tchreservation.user.model.UserRole.REGISTERED;
 import static de.tigges.tchreservation.user.model.UserRole.TRAINER;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tigges.tchreservation.TchReservationApplication;
 import de.tigges.tchreservation.user.jpa.UserEntity;
@@ -28,7 +28,7 @@ import de.tigges.tchreservation.user.jpa.UserRepository;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.UserRole;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = TchReservationApplication.class)
 public class SpringUserDetailsServiceTest {
 
@@ -37,7 +37,7 @@ public class SpringUserDetailsServiceTest {
 	@Autowired
 	private SpringUserDetailsService service;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		userRepository.deleteAll();
 	}
@@ -66,9 +66,11 @@ public class SpringUserDetailsServiceTest {
 		service.loadUserByUsername("my@email.de");
 	}
 
-	@Test(expected = UsernameNotFoundException.class)
+	@Test
 	public void unknownUser() {
-		service.loadUserByUsername("unknownuser");
+		Assertions.assertThrows(UsernameNotFoundException.class, () -> {
+			service.loadUserByUsername("unknownuser");
+		});
 	}
 
 	private UserChecker createAndLoadUser(UserRole role, ActivationStatus status) {
@@ -85,22 +87,22 @@ public class SpringUserDetailsServiceTest {
 		}
 
 		public UserChecker assertEnabled() {
-			assertTrue("user " + userDetails.getUsername() + " is not enabled", userDetails.isEnabled());
+			assertThat(userDetails.isEnabled()).isTrue();
 			return this;
 		}
 
 		public UserChecker assertDisabled() {
-			assertFalse("user " + userDetails.getUsername() + " is not disabled", userDetails.isEnabled());
+			assertThat(userDetails.isEnabled()).isFalse();
 			return this;
 		}
 
 		public UserChecker assertNotLocked() {
-			assertTrue("user " + userDetails.getUsername() + " is locked", userDetails.isAccountNonLocked());
+			assertThat(userDetails.isAccountNonLocked()).isTrue();
 			return this;
 		}
 
 		public UserChecker assertLocked() {
-			assertFalse("user " + userDetails.getUsername() + " is not locked", userDetails.isAccountNonLocked());
+			assertThat(userDetails.isAccountNonLocked()).isFalse();
 			return this;
 		}
 	}

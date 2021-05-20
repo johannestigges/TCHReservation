@@ -3,14 +3,10 @@ package de.tigges.tchreservation.reservation;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -24,6 +20,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tigges.tchreservation.exception.BadRequestException;
 import de.tigges.tchreservation.exception.NotFoundException;
 import de.tigges.tchreservation.protocol.ActionType;
 import de.tigges.tchreservation.protocol.EntityType;
@@ -39,20 +36,21 @@ import de.tigges.tchreservation.reservation.model.Reservation;
 import de.tigges.tchreservation.reservation.model.ReservationMapper;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 import de.tigges.tchreservation.user.UserAwareService;
+import de.tigges.tchreservation.user.UserMapper;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.jpa.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/reservation")
+@Slf4j
 public class ReservationService extends UserAwareService {
 
-	public static final Logger logger = LoggerFactory.getLogger(ReservationService.class);
-
-	private ReservationRepository reservationRepository;
-	private OccupationRepository occupationRepository;
-	private ReservationSystemConfigRepository systemConfigRepository;
-	private ProtocolRepository protocolRepository;
-	private ReservationValidator reservationValidator;
+	private final ReservationRepository reservationRepository;
+	private final OccupationRepository occupationRepository;
+	private final ReservationSystemConfigRepository systemConfigRepository;
+	private final ProtocolRepository protocolRepository;
+	private final ReservationValidator reservationValidator;
 
 	public ReservationService(ReservationRepository reservationRepository, OccupationRepository occupationRepository,
 			ReservationSystemConfigRepository systemConfigRepository, UserRepository userRepository,
@@ -65,42 +63,59 @@ public class ReservationService extends UserAwareService {
 		this.reservationValidator = reservationChecker;
 	}
 
+	/**
+	 * add one Reservation to the system
+	 * 
+	 * If the reservation has no Occupations, then all Occupations will be
+	 * generated.
+	 * 
+	 * @param reservation
+	 * @return {@link ResponseBody}
+	 */
 	@PostMapping("/add")
 	@ResponseStatus(HttpStatus.CREATED)
 	public @ResponseBody Reservation addReservation(@RequestBody Reservation reservation) {
 
-		logger.info("add reservation {}", reservation.getText());
+		log.info("add reservation {}", reservation);
 		UserEntity loggedInUser = getLoggedInUser();
 
-		// check reservation data consistency
-		checkOccupations(reservation);
+		reservationValidator.validateReservation(reservation, loggedInUser);
+		reservation.setUser(UserMapper.map(loggedInUser));
 
-		// save occupations and reservation
+		if (reservation.getOccupations().isEmpty()) {
+			createOccupations(reservation);
+		}
+
+		reservationValidator.validateOccupations(reservation, loggedInUser);
+
 		ReservationEntity savedReservation = reservationRepository.save(ReservationMapper.map(reservation));
 		protocolRepository.save(new ProtocolEntity(savedReservation, ActionType.CREATE, loggedInUser));
 
 		reservation.getOccupations().forEach(o -> {
 			OccupationEntity occupationEntity = OccupationMapper.map(o);
 			occupationEntity.setReservation(savedReservation);
-			saveOccupation(occupationEntity, loggedInUser);
+			OccupationEntity saveOccupation = saveOccupation(occupationEntity, loggedInUser);
+			o.setId(saveOccupation.getId());
 		});
 		Reservation r = ReservationMapper.map(savedReservation);
 		r.getOccupations().addAll(reservation.getOccupations());
 		return r;
-
 	}
 
+	/**
+	 * checks all Occupations of one Reservation
+	 * 
+	 * @param reservation
+	 * @return checked Reservation or {@link BadRequestException}
+	 */
 	@GetMapping("/checkOccupations")
 	public @ResponseBody Reservation checkOccupations(@RequestBody Reservation reservation) {
 
-		logger.info("check occupations for reservation {}", reservation.getText());
+		log.info("check occupations for reservation {}", reservation.getText());
 		UserEntity loggedInUser = getLoggedInUser();
 
-		// validate reservation
-		reservationValidator.validateReservation(reservation, loggedInUser);
-
 		if (reservation.getOccupations().isEmpty()) {
-			createOccupations(reservation).forEach(o -> reservation.getOccupations().add(o));
+			createOccupations(reservation);
 		}
 
 		// validate occupations
@@ -109,54 +124,75 @@ public class ReservationService extends UserAwareService {
 		return reservation;
 	}
 
-	@PutMapping("/update")
+	/**
+	 * update one Occupation
+	 * 
+	 * @param occupation
+	 * @return saved occupation or {@link BadRequestException} or
+	 *         {@link NotFoundException}
+	 */
+	@PutMapping("/update/occupation")
 	@Transactional
-	public @ResponseBody Reservation updateReservation(@RequestBody Reservation reservation) {
+	public @ResponseBody Occupation updateOccupation(@RequestBody Occupation occupation) {
 
-		logger.info("update reservation {}", reservation.getText());
+		log.info("update occupation {}", occupation.getText());
 
-		ReservationEntity dbReservation = reservationRepository.findById(reservation.getId())
-				.orElseThrow(() -> new NotFoundException(EntityType.RESERVATION, reservation.getId()));
-
-		UserEntity loggedInUser = getLoggedInUser();
-
-		if (reservation.getOccupations().isEmpty()) {
-			createOccupations(reservation).forEach(o -> reservation.getOccupations().add(o));
-		} else {
-			reservation.getOccupations().forEach(o -> o.setReservation(reservation));
-		}
-
-		// check reservation data consistency
-		reservationValidator.validateReservation(reservation, loggedInUser);
-
-		ReservationEntity savedReservation = reservationRepository.save(ReservationMapper.map(reservation));
-		protocolRepository.save(new ProtocolEntity(savedReservation, dbReservation, loggedInUser));
-
-		occupationRepository.deleteByReservationId(reservation.getId());
-		reservation.getOccupations().forEach(o -> saveOccupation(OccupationMapper.map(o), loggedInUser));
-		Reservation r = ReservationMapper.map(savedReservation);
-		r.getOccupations().addAll(reservation.getOccupations());
-		return r;
-	}
-
-	@DeleteMapping("/delete/{id}")
-	@ResponseStatus(HttpStatus.OK)
-	public void delete(@PathVariable long id) {
-
-		logger.info("delete reservation {}", id);
-
-		ReservationEntity reservation = reservationRepository.findById(id)
-				.orElseThrow(() -> new NotFoundException(EntityType.RESERVATION, id));
+		OccupationEntity dbOccupation = occupationRepository.findById(occupation.getId())
+				.orElseThrow(() -> new NotFoundException(EntityType.OCCUPATION, occupation.getId()));
 
 		UserEntity loggedInUser = getLoggedInUser();
 
-		occupationRepository.findByReservationId(id).forEach(o -> deleteOccupation(o, loggedInUser));
-		reservationRepository.delete(reservation);
-		protocolRepository.save(new ProtocolEntity(reservation, ActionType.DELETE, loggedInUser));
+		reservationValidator.validateOccupation(occupation, loggedInUser);
+
+		OccupationEntity occupationEntity = OccupationMapper.map(occupation);
+		occupationEntity.setReservation(dbOccupation.getReservation());
+		OccupationEntity savedOccupation = occupationRepository.save(occupationEntity);
+		protocolRepository.save(new ProtocolEntity(savedOccupation, dbOccupation, loggedInUser));
+
+		return OccupationMapper.map(savedOccupation);
 	}
 
 	/**
-	 * get one reservation by key
+	 * remove one Occupation
+	 * 
+	 * @param id
+	 */
+	@DeleteMapping("/delete/occupation/{id}")
+	@ResponseStatus(HttpStatus.OK)
+	public void deleteOccupation(@PathVariable long id) {
+
+		log.info("delete occupation {}", id);
+
+		OccupationEntity occupation = occupationRepository.findById(id)
+				.orElseThrow(() -> new NotFoundException(EntityType.OCCUPATION, id));
+
+		protocolRepository.save(new ProtocolEntity(occupation, ActionType.DELETE, getLoggedInUser()));
+		occupationRepository.delete(occupation);
+	}
+
+	/**
+	 * delete one Reservation with all Occupations
+	 * 
+	 * @param id
+	 */
+	@DeleteMapping("/delete/{id}")
+	@ResponseStatus(HttpStatus.OK)
+	public void deleteReservation(@PathVariable long id) {
+
+		log.info("delete reservation {}", id);
+
+		UserEntity loggedInUser = getLoggedInUser();
+
+		occupationRepository.findByReservationId(id).forEach(o -> this.deleteOccupation(o, loggedInUser));
+
+		ReservationEntity reservation = reservationRepository.findById(id)
+				.orElseThrow(() -> new NotFoundException(EntityType.RESERVATION, id));
+		protocolRepository.save(new ProtocolEntity(reservation, ActionType.DELETE, loggedInUser));
+		reservationRepository.delete(reservation);
+	}
+
+	/**
+	 * get one reservation by id
 	 * <p>
 	 * All occupations of the reservation are included
 	 * 
@@ -165,19 +201,32 @@ public class ReservationService extends UserAwareService {
 	 */
 	@GetMapping("/get/{id}")
 	public Optional<Reservation> getReservation(@PathVariable long id) {
+		log.info("get reservation {}", id);
+		return reservationRepository.findById(id).map(this::map);
+	}
 
-		logger.info("get reservation {}", id);
-
-		Optional<Reservation> reservation = reservationRepository.findById(id).map(ReservationMapper::map);
-
-		reservation.ifPresent(r -> occupationRepository.findByReservationId(r.getId())
-				.forEach(o -> r.getOccupations().add(OccupationMapper.map(o))));
-
+	private Reservation map(ReservationEntity reservationEntity) {
+		Reservation reservation = ReservationMapper.map(reservationEntity);
+		occupationRepository.findByReservationId(reservationEntity.getId())
+				.forEach(o -> reservation.getOccupations().add(OccupationMapper.map(o)));
 		return reservation;
 	}
 
 	/**
-	 * get all occupations for one day
+	 * get one occupation by id
+	 * 
+	 * @param id
+	 * @return {@link Occupation}
+	 */
+	@GetMapping("/get/occupation/{id}")
+	public Optional<Occupation> getOccupation(@PathVariable long id) {
+		log.info("get occupation {}", id);
+
+		return occupationRepository.findById(id).map(OccupationMapper::map);
+	}
+
+	/**
+	 * get all occupations of one day
 	 * 
 	 * @return list of all occupations for one day
 	 */
@@ -191,7 +240,7 @@ public class ReservationService extends UserAwareService {
 			searchDate = Instant.ofEpochMilli(date).atZone(ZoneId.systemDefault()).toLocalDate();
 		}
 
-		logger.info("get occupations for date {} ({})", searchDate.toString(), date);
+		log.info("get occupations for date {} ({})", searchDate.toString(), date);
 
 		Iterable<OccupationEntity> occupations = occupationRepository.findBySystemConfigIdAndDate(systemConfigId,
 				searchDate);
@@ -228,14 +277,28 @@ public class ReservationService extends UserAwareService {
 	 * @param reservation
 	 * @return list of created occupations
 	 */
-	private List<Occupation> createOccupations(Reservation reservation) {
-		List<Occupation> occupations = new ArrayList<>();
+	private void createOccupations(Reservation reservation) {
 
 		LocalDate occupationDate = reservation.getDate();
 		LocalDate repeatUntil = reservation.getDate();
-		if (reservation.getWeeklyRepeatUntil() != null) {
-			repeatUntil = reservation.getWeeklyRepeatUntil();
+		int plusDays = 1;
+		if (reservation.getRepeatType() != null) {
+			switch (reservation.getRepeatType()) {
+			case daily:
+				plusDays = 1;
+				break;
+			case weekly:
+				plusDays = 7;
+				break;
+			default:
+				break;
+			}
 		}
+		if (reservation.getRepeatUntil() != null) {
+			repeatUntil = reservation.getRepeatUntil();
+		}
+		log.debug("create occupations for {} repeat {} until {}", occupationDate, reservation.getRepeatType(),
+				repeatUntil);
 		while (!occupationDate.isAfter(repeatUntil)) {
 			Occupation occupation = createOccupation(reservation);
 			occupation.setDate(occupationDate);
@@ -247,7 +310,7 @@ public class ReservationService extends UserAwareService {
 				} else if (court == occupation.getLastCourt() + 1) {
 					occupation.setLastCourt(court);
 				} else {
-					occupations.add(occupation);
+					reservation.getOccupations().add(occupation);
 					occupation = createOccupation(reservation);
 					occupation.setDate(occupationDate);
 					occupation.setCourt(court);
@@ -255,12 +318,11 @@ public class ReservationService extends UserAwareService {
 				}
 			}
 			if (occupation.getCourt() > 0) {
-				occupations.add(occupation);
+				reservation.getOccupations().add(occupation);
 			}
 
-			occupationDate = occupationDate.plusDays(7);
+			occupationDate = occupationDate.plusDays(plusDays);
 		}
-		return occupations;
 	}
 
 	private Occupation createOccupation(Reservation reservation) {

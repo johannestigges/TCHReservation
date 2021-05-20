@@ -10,13 +10,12 @@ spring:
 logging:
   level:
     org:
-     springframework: info
-#        web: DEBUG
+     springframework: error
+#       web: DEBUG
 #       web.filter.CommonsRequestLoggingFilter: DEBUG
      hibernate: ERROR
           
 server:
-#   port: "8080"
   port: "8443"
   ssl:
     key-store-type: "PKCS12"
@@ -28,7 +27,15 @@ reservation:
   config[0]:
     id: 1
     name: "Platzbelegung"
-    courts: 6
+    courts: [ "Platz 1", "Platz 2", "Platz 3", "Platz 4", "Platz 5", "Platz 6" ]
     durationUnitInMinutes: 30
     openingHour: 8
     closingHour: 22
+  config[1]:
+    id: 2
+    name: "Hallenplätze"
+    courts: [ "Center Court", "Nebenplatz" ]
+    durationUnitInMinutes: 60
+    openingHour: 8
+    closingHour: 22
+    

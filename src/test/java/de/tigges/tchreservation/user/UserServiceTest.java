@@ -1,7 +1,6 @@
 package de.tigges.tchreservation.user;
 
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -11,13 +10,13 @@ import java.util.Optional;
 import java.util.Random;
 
 import org.hamcrest.Matchers;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.ResultActions;
 
@@ -32,7 +31,7 @@ import de.tigges.tchreservation.user.model.User;
 import de.tigges.tchreservation.user.model.UserDevice;
 import de.tigges.tchreservation.user.model.UserRole;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = TchReservationApplication.class)
 @WebAppConfiguration
 public class UserServiceTest extends ProtocolTest {
@@ -42,7 +41,7 @@ public class UserServiceTest extends ProtocolTest {
 	private UserEntity adminUser;
 	private UserEntity registeredUser;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		this.protocolRepository.deleteAll();
 		this.userDeviceRepository.deleteAll();
@@ -61,7 +60,7 @@ public class UserServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void addUserNull() throws Exception {
-		performPost("/user/", null).andExpect(status().isBadRequest());
+		performPost("/user/", "").andExpect(status().isBadRequest());
 	}
 
 	@Test
@@ -355,8 +354,8 @@ public class UserServiceTest extends ProtocolTest {
 	public void getUserByName() throws Exception {
 		UserEntity user = userRepository.save(createUserEntity(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
 		Optional<UserEntity> foundUser = userRepository.findByNameOrEmail(user.getName(), "");
-		assertTrue(foundUser.isPresent());
-		assertThat(foundUser.get().getId(), Matchers.is(user.getId()));
+		assertThat(foundUser).isPresent();
+		assertThat(foundUser.get().getId()).isEqualTo(user.getId());
 	}
 
 	@Test
@@ -364,8 +363,8 @@ public class UserServiceTest extends ProtocolTest {
 	public void getUserByEMail() throws Exception {
 		UserEntity user = userRepository.save(createUserEntity(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
 		Optional<UserEntity> foundUser = userRepository.findByNameOrEmail("", user.getEmail());
-		assertTrue(foundUser.isPresent());
-		assertThat(foundUser.get().getId(), Matchers.is(user.getId()));
+		assertThat(foundUser).isPresent();
+		assertThat(foundUser.get().getId()).isEqualTo(user.getId());
 	}
 
 	@Test

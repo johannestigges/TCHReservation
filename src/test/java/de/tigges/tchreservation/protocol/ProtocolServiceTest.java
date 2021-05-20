@@ -10,12 +10,12 @@ import java.util.Date;
 import java.util.Random;
 
 import org.hamcrest.Matchers;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.web.WebAppConfiguration;
 
 import de.tigges.tchreservation.ProtocolTest;
@@ -26,14 +26,14 @@ import de.tigges.tchreservation.reservation.model.ReservationType;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.model.UserRole;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = TchReservationApplication.class)
 @WebAppConfiguration
 public class ProtocolServiceTest extends ProtocolTest {
 
 	private UserEntity user;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 
 		this.protocolRepository.deleteAll();

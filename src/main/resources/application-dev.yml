@@ -1,8 +1,7 @@
-      
 logging:
   level:
     org:
-     springframework: debug
+     springframework: info
 #        web: DEBUG
 #       web.filter.CommonsRequestLoggingFilter: DEBUG
      hibernate: ERROR

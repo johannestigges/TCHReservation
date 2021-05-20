@@ -1,12 +1,11 @@
 package de.tigges.tchreservation.user.model;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 public class UserDevice {
-
-	public UserDevice() {
-	}
 
 	public UserDevice(User user, String deviceId, ActivationStatus status, String publicKey) {
 		setUser(user);

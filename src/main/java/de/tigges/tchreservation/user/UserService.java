@@ -36,9 +36,9 @@ import de.tigges.tchreservation.user.model.UserRole;
 @RequestMapping("/user")
 public class UserService extends UserAwareService {
 
-	private UserDeviceRepository userDeviceRepository;
-	private ProtocolRepository protocolRepository;
-	private PasswordEncoder encoder;
+	private final UserDeviceRepository userDeviceRepository;
+	private final ProtocolRepository protocolRepository;
+	private final PasswordEncoder encoder;
 
 	public UserService(UserRepository userRepository, UserDeviceRepository userDeviceRepository,
 			ProtocolRepository protocolRepository) {

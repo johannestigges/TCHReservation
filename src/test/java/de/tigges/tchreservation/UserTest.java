@@ -15,7 +15,6 @@ public class UserTest extends ServiceTest {
 
 	@Autowired
 	protected UserService userService;
-
 	@Autowired
 	protected UserRepository userRepository;
 
@@ -27,7 +26,13 @@ public class UserTest extends ServiceTest {
 	 * @return inserted user
 	 */
 	public UserEntity addUser(UserRole role) {
-		return userRepository.save(
-				new UserEntity("myemail@mydomain.de", role.name(), "mySecretPassword", role, ActivationStatus.ACTIVE));
+		// @formatter:off
+		return userRepository.save(new UserEntity(
+				"myemail@mydomain.de", 
+				role.name(), 
+				"mySecretPassword", 
+				role, 
+				ActivationStatus.ACTIVE));
+		// @formatter:on
 	}
 }
