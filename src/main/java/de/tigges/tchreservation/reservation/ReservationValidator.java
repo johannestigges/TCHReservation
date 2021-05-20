@@ -127,9 +127,7 @@ public class ReservationValidator {
 						loggedInUser.getName(), occupation.getType()));
 			}
 
-			int maxDuration = systemConfig.getDurationUnitInMinutes() > 30 ? 1 : 3;
-			// only duration <= maxDuration 3 is allowed
-			if (occupation.getDuration() > maxDuration) {
+			if (occupation.getDuration() > systemConfig.getMaxDuration()) {
 				addOccupationFieldError(errorDetails, "duration", String.format(
 						msg("error_registered_cannot_add_duration"), loggedInUser.getName(), occupation.getDuration()));
 			}
@@ -143,7 +141,7 @@ public class ReservationValidator {
 			}
 
 			// reservation only this and next day is allowed
-			if (date.isAfter(LocalDate.now().plusDays(1))) {
+			if (date.isAfter(LocalDate.now().plusDays(systemConfig.getMaxDaysReservationInFuture()))) {
 				addOccupationFieldError(errorDetails, "date", msg("error_date_too_far_in_future"));
 			}
 			if (!date.isEqual(LocalDate.now()) && start.getHour() > LocalTime.now().getHour()) {
