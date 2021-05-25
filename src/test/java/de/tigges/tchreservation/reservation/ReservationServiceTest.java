@@ -73,34 +73,34 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "REGISTERED")
+	@WithMockUser(username = "ADMIN")
 	public void addReservation() throws Exception {
 		addReservation(createReservation(1, 1, 10, 2));
 	}
 
 	@Test
-	@WithMockUser(username = "REGISTERED")
+	@WithMockUser(username = "ADMIN")
 	public void addReservationWithUser() throws Exception {
-		addReservation(createReservation(1, user, 1, 10, 2));
+		addReservation(createReservation(1, admin, 1, 10, 2));
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
-	public void addReservationSystems() throws Exception {
+	public void addReservationInDifferentSystemConfigs() throws Exception {
 		addReservation(createReservation(1, 1, 10, 2));
 		addReservation(createReservation(2, 1, 10, 2));
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
-	public void addReservationCourts() throws Exception {
+	public void addReservationWithDifferentCourts() throws Exception {
 		addReservation(createReservation(1, 1, 10, 2));
 		addReservation(createReservation(1, 2, 10, 2));
 	}
 
 	@Test
-	@WithMockUser(username = "REGISTERED")
-	public void addReservationTimes() throws Exception {
+	@WithMockUser(username = "ADMIN")
+	public void addReservationWithDifferentTimes() throws Exception {
 		addReservation(createReservation(1, 1, 10, 2));
 		addReservation(createReservation(1, 1, 11, 2));
 	}
@@ -191,7 +191,7 @@ public class ReservationServiceTest extends ProtocolTest {
 
 	@Test
 	@WithMockUser(username = "ADMIN")
-	public void addReservationInvalidMinutes() throws Exception {
+	public void addReservationInvalidDurationUnits() throws Exception {
 		Reservation reservation = createReservation(1, 1, 0, 2);
 		reservation.setStart(LocalTime.of(9, 25));
 		addReservationWithOccupationFieldError(reservation, "start", "fehlerhafte Startzeit mit 25 Minuten.");
@@ -539,7 +539,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "REGISTERED")
+	@WithMockUser(username = "ADMIN")
 	public void getOccupationsWithDate() throws Exception {
 		Reservation reservation = getReservation(addReservation(createReservation(1, 2, 12, 2)));
 		long epochMilli = LocalDate.now().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();

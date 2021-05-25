@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tigges.tchreservation.TchReservationApplication;
@@ -30,6 +31,7 @@ import de.tigges.tchreservation.user.model.UserRole;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = TchReservationApplication.class)
+@ActiveProfiles("test")
 public class SpringUserDetailsServiceTest {
 
 	@Autowired
