@@ -13,7 +13,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "config")
+@Table(name = "systemconfig")
 @Data
 @NoArgsConstructor
 public class SystemConfigEntity implements Protocollable {
