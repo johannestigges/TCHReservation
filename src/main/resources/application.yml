@@ -12,8 +12,8 @@ logging:
     org:
      springframework: error
 #       web: DEBUG
-#       web.filter.CommonsRequestLoggingFilter: DEBUG
-     hibernate: ERROR
+#       web.filter.CommonsRequestLoggingFilter: error
+     hibernate: error
           
 server:
   port: "8443"
