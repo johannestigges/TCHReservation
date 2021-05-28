@@ -10,9 +10,9 @@ spring:
 logging:
   level:
     org:
-     springframework: debug
+     springframework: error
 #       web: DEBUG
-     web.filter.CommonsRequestLoggingFilter: debug
+#       web.filter.CommonsRequestLoggingFilter: error
      hibernate: error
           
 server:
