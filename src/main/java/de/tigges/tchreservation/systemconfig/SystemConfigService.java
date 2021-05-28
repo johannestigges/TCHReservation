@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,7 +35,7 @@ import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.UserRole;
 
 @RestController
-@RequestMapping("/systemconfig")
+@RequestMapping("/rest/systemconfig")
 public class SystemConfigService extends UserAwareService {
 
 	public final SystemConfigRepository repository;
@@ -61,7 +62,7 @@ public class SystemConfigService extends UserAwareService {
 				.collect(Collectors.toList());
 	}
 
-	@PostMapping("")
+	@PostMapping("add")
 	@ResponseStatus(HttpStatus.CREATED)
 	public @ResponseBody ReservationSystemConfig add(@RequestBody ReservationSystemConfig config) {
 		UserEntity loggedInUser = checkIsAdmin();
@@ -74,15 +75,26 @@ public class SystemConfigService extends UserAwareService {
 		return SystemConfigMapper.map(entity);
 	}
 
-	@PutMapping("")
+	@PutMapping("update")
 	public @ResponseBody ReservationSystemConfig update(@RequestBody ReservationSystemConfig config) {
 		UserEntity loggedInUser = checkIsAdmin();
-		repository.findById(config.getId()).orElseThrow(() -> new NotFoundException(null, config.getId()));
+		repository.findById(config.getId())
+				.orElseThrow(() -> new NotFoundException(EntityType.SYSTEM_CONFIGURATION, config.getId()));
 		validator.validate(config, loggedInUser);
 		SystemConfigEntity entity = SystemConfigMapper.map(config);
 		SystemConfigEntity savedEntity = repository.save(SystemConfigMapper.map(config));
 		protocolRepository.save(new ProtocolEntity(savedEntity, entity, loggedInUser));
 		return SystemConfigMapper.map(savedEntity);
+	}
+
+	@DeleteMapping("delete/{id}")
+	public @ResponseBody ReservationSystemConfig delete(@PathVariable long id) {
+		UserEntity loggedInUser = checkIsAdmin();
+		SystemConfigEntity entity = repository.findById(id)
+				.orElseThrow(() -> new NotFoundException(EntityType.SYSTEM_CONFIGURATION, id));
+		protocolRepository.save(new ProtocolEntity(entity, ActionType.DELETE, loggedInUser));
+		repository.delete(entity);
+		return SystemConfigMapper.map(entity);
 	}
 
 	private UserEntity checkIsAdmin() {
