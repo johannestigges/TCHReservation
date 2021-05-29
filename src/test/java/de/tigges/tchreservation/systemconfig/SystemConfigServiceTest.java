@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -69,19 +70,25 @@ class SystemConfigServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	void testGetAllNotAllowed() throws Exception {
-		performGet("/systemconfig").andExpect(status().isUnauthorized());
+		performGet("/rest/systemconfig").andExpect(status().isUnauthorized());
 	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	void testAddNotAllowed() throws Exception {
-		performPost("/systemconfig", new ReservationSystemConfig()).andExpect(status().isUnauthorized());
+		performPost("/rest/systemconfig/add", new ReservationSystemConfig()).andExpect(status().isUnauthorized());
 	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	void testUpdateNotAllowed() throws Exception {
-		performPut("/systemconfig", new ReservationSystemConfig()).andExpect(status().isUnauthorized());
+		performPut("/rest/systemconfig/update", new ReservationSystemConfig()).andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	@WithMockUser(username = "REGISTERED")
+	void testDeleteNotAllowed() throws Exception {
+		performDelete("/rest/systemconfig/delete/1").andExpect(status().isUnauthorized());
 	}
 
 	@Test
@@ -89,7 +96,7 @@ class SystemConfigServiceTest extends ProtocolTest {
 	void testAdd() throws Exception {
 		ReservationSystemConfig config = new ReservationSystemConfig(1, "unit test 1",
 				Arrays.asList("Platz 1", "Platz 2", "Platz 3", "Platz 4", "Platz 5", "Platz 6"), 30, 2, 3, 8, 22);
-		performPost("/systemconfig", config).andExpect(status().isCreated());
+		performPost("/rest/systemconfig/add", config).andExpect(status().isCreated());
 		verify(config);
 	}
 
@@ -108,18 +115,29 @@ class SystemConfigServiceTest extends ProtocolTest {
 		config.setMaxDuration(10);
 		config.setOpeningHour(10);
 		config.setClosingHour(20);
-		performPut("/systemconfig", config).andExpect(status().is2xxSuccessful());
+		performPut("/rest/systemconfig/update", config).andExpect(status().is2xxSuccessful());
 		verifyEquals(get(1L), config);
 	}
 
+	@Test
+	@WithMockUser(username = "ADMIN")
+	void testDelete() throws Exception {
+		createSystemConfig(1L, "Platz 1");
+		createSystemConfig(2L, "Center Court,Roland Garros,Nebenplatz");
+
+		performDelete("/rest/systemconfig/delete/1").andExpect(status().is2xxSuccessful());
+		String content = getAll().andReturn().getResponse().getContentAsString();
+		assertThat(new ObjectMapper().readValue(content, List.class).size()).isEqualTo(1);
+	}
+
 	private ReservationSystemConfig get(long id) throws Exception {
-		String content = performGet("/systemconfig/" + String.valueOf(id)).andExpect(status().is2xxSuccessful())
+		String content = performGet("/rest/systemconfig/" + String.valueOf(id)).andExpect(status().is2xxSuccessful())
 				.andReturn().getResponse().getContentAsString();
 		return objectMapper.readValue(content, ReservationSystemConfig.class);
 	}
 
 	private ResultActions getAll() throws Exception {
-		return performGet("/systemconfig").andExpect(status().is2xxSuccessful());
+		return performGet("/rest/systemconfig").andExpect(status().is2xxSuccessful());
 	}
 
 	private void verify(ReservationSystemConfig config) throws Exception {
