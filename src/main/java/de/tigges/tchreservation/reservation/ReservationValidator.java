@@ -89,11 +89,9 @@ public class ReservationValidator {
 						String.format(msg("error_start_time_minutes"), start.getMinute()));
 			}
 
-			if (LocalDateTime
-					.of(date.getYear(), date.getMonth(), date.getDayOfMonth(), start.getHour(), start.getMinute())
+			if (of(date, start.getHour(), start.getMinute())
 					.plusMinutes(occupation.getDuration() * systemConfig.getDurationUnitInMinutes())
-					.isAfter(LocalDateTime.of(date.getYear(), date.getMonth(), date.getDayOfMonth(),
-							systemConfig.getClosingHour(), 0))) {
+					.isAfter(of(date, systemConfig.getClosingHour(), 0))) {
 				addOccupationFieldError(errorDetails, "start", msg("error_start_time_plus_duration"));
 			}
 		}
