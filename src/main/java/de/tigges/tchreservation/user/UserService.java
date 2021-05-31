@@ -30,10 +30,9 @@ import de.tigges.tchreservation.user.jpa.UserRepository;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.User;
 import de.tigges.tchreservation.user.model.UserDevice;
-import de.tigges.tchreservation.user.model.UserRole;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/rest/user")
 public class UserService extends UserAwareService {
 
 	private final UserDeviceRepository userDeviceRepository;
@@ -55,22 +54,22 @@ public class UserService extends UserAwareService {
 
 	@GetMapping("/all")
 	public @ResponseBody Iterable<User> getAll() {
-		if (!isAdmin(getLoggedInUser()))
-			throw new AuthorizationException("not authorized");
-
+		verifyIsAdmin();
 		Iterable<UserEntity> allUsers = userRepository.findAll();
 		return StreamSupport.stream(allUsers.spliterator(), false).map(UserMapper::map).collect(Collectors.toList());
 	}
 
 	@GetMapping("/{userId}")
 	public @ResponseBody Optional<User> get(@PathVariable Long userId) {
-		return find(userId, getLoggedInUser()).map(UserMapper::map).map(this::addDevices);
+		verifyIsAdminOrSelf(userId);
+		return userRepository.findById(userId).map(UserMapper::map).map(this::addDevices);
 	}
 
 	@GetMapping("/getByDevice/{deviceId}")
 	public @ResponseBody User getByDevice(@PathVariable Long deviceId) {
 		UserDevice device = getDevice(deviceId);
 		long userId = device.getUser().getId();
+		verifyIsAdminOrSelf(userId);
 		User user = userRepository.findById(userId).map(UserMapper::map)
 				.orElseThrow(() -> new NotFoundException(EntityType.USER, userId));
 		return addDevices(user);
@@ -78,17 +77,14 @@ public class UserService extends UserAwareService {
 
 	@GetMapping("/device/{deviceId}")
 	public @ResponseBody UserDevice getDevice(@PathVariable Long deviceId) {
-		if (!isAdmin(getLoggedInUser()))
-			throw new AuthorizationException("not authorized");
+		verifyIsAdmin();
 		return userDeviceRepository.findById(deviceId).map(UserDeviceMapper::map)
 				.orElseThrow(() -> new NotFoundException(EntityType.USER_DEVICE, deviceId));
 	}
 
-	@PostMapping("/")
+	@PostMapping("")
 	public @ResponseBody User add(@RequestBody User user) {
-		UserEntity loggedInUser = getLoggedInUser();
-		if (!isAdmin(loggedInUser))
-			throw new AuthorizationException("not authorized");
+		UserEntity loggedInUser = verifyIsAdmin();
 		checkUser(user);
 		String cryptedPassword = encoder.encode(user.getPassword());
 		user.setPassword(cryptedPassword);
@@ -106,9 +102,7 @@ public class UserService extends UserAwareService {
 
 	@PostMapping("/device")
 	public @ResponseBody UserDevice add(@RequestBody UserDevice userDevice) {
-		UserEntity loggedInUser = getLoggedInUser();
-		if (!isAdmin(loggedInUser) && !is(loggedInUser, userDevice.getUser().getId()))
-			throw new AuthorizationException("not authorized");
+		UserEntity loggedInUser = verifyIsAdminOrSelf(userDevice.getUser().getId());
 		UserDeviceEntity savedDevice = userDeviceRepository.save(UserDeviceMapper.map(userDevice));
 		protocolRepository.save(new ProtocolEntity(savedDevice, ActionType.CREATE, loggedInUser));
 		return UserDeviceMapper.map(savedDevice);
@@ -116,10 +110,8 @@ public class UserService extends UserAwareService {
 
 	@PutMapping("/setStatus/{userId}/{status}")
 	public @ResponseBody void setStatus(@PathVariable long userId, @PathVariable ActivationStatus status) {
-		UserEntity loggedInUser = getLoggedInUser();
-		if (!isAdmin(loggedInUser))
-			throw new AuthorizationException("not authorized");
-		UserEntity dbUser = find(userId, getLoggedInUser())
+		UserEntity loggedInUser = verifyIsAdmin();
+		UserEntity dbUser = userRepository.findById(userId)
 				.orElseThrow(() -> new NotFoundException(EntityType.USER, userId));
 		UserEntity saveUser = new UserEntity(dbUser);
 		saveUser.setStatus(status);
@@ -129,10 +121,7 @@ public class UserService extends UserAwareService {
 
 	@PutMapping("/device/setStatus/{deviceId}/{status}")
 	public @ResponseBody void setDeviceStatus(@PathVariable long deviceId, @PathVariable ActivationStatus status) {
-		UserEntity loggedInUser = getLoggedInUser();
-		if (!isAdmin(loggedInUser))
-			throw new AuthorizationException("not authorized");
-
+		UserEntity loggedInUser = verifyIsAdmin();
 		UserDeviceEntity device = userDeviceRepository.findById(deviceId)
 				.orElseThrow(() -> new NotFoundException(EntityType.USER_DEVICE, deviceId));
 		device.setStatus(status);
@@ -140,12 +129,9 @@ public class UserService extends UserAwareService {
 		protocolRepository.save(new ProtocolEntity(device, ActionType.MODIFY, loggedInUser));
 	}
 
-	@PutMapping("/")
+	@PutMapping("")
 	public @ResponseBody void update(@RequestBody User user) {
-		UserEntity loggedInUser = getLoggedInUser();
-		if (!isAdmin(loggedInUser) && !is(loggedInUser, user.getId()))
-			throw new AuthorizationException("not authorized");
-
+		UserEntity loggedInUser = verifyIsAdminOrSelf(user.getId());
 		UserEntity dbUser = userRepository.findById(user.getId())
 				.orElseThrow(() -> new NotFoundException(EntityType.USER, user.getId()));
 
@@ -179,13 +165,6 @@ public class UserService extends UserAwareService {
 		setDeviceStatus(deviceId, ActivationStatus.REMOVED);
 	}
 
-	private Optional<UserEntity> find(Long userId, UserEntity loggedInUser) {
-		if (!isAdmin(loggedInUser) && !is(loggedInUser, userId))
-			throw new AuthorizationException("not authorized");
-		return userRepository.findById(userId);
-
-	}
-
 	private User addDevices(User user) {
 		userDeviceRepository.findByUserId(user.getId()).forEach(d -> user.getDevices().add(UserDeviceMapper.map(d)));
 		return user;
@@ -200,13 +179,5 @@ public class UserService extends UserAwareService {
 			throw new BadRequestException(String.format("user with name '%s' and/or email '%s' already exists.",
 					user.getName(), user.getEmail()));
 		}
-	}
-
-	private boolean isAdmin(UserEntity user) {
-		return UserUtils.hasRole(user.getRole(), UserRole.ADMIN) && ActivationStatus.ACTIVE.equals(user.getStatus());
-	}
-
-	private boolean is(UserEntity user, long userId) {
-		return user.getId() == userId;
 	}
 }

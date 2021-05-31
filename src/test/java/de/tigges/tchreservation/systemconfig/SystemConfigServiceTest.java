@@ -61,10 +61,13 @@ class SystemConfigServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "ADMIN")
 	void testGetAll() throws Exception {
-		createSystemConfig(1L, "Platz 1");
-		createSystemConfig(2L, "Center Court,Roland Garros,Nebenplatz");
-		assertThat(getAll().andReturn().getResponse().getContentAsString()).isEqualTo(
-				"[{\"id\":1,\"name\":\"unit test 1\",\"courts\":[\"Platz 1\"],\"durationUnitInMinutes\":30,\"maxDaysReservationInFuture\":2,\"maxDuration\":3,\"openingHour\":8,\"closingHour\":22},{\"id\":2,\"name\":\"unit test 2\",\"courts\":[\"Center Court,Roland Garros,Nebenplatz\"],\"durationUnitInMinutes\":30,\"maxDaysReservationInFuture\":2,\"maxDuration\":3,\"openingHour\":8,\"closingHour\":22}]");
+		// @formatter:off
+		List<ReservationSystemConfig> configs = Arrays.asList(
+				SystemConfigMapper.map(createSystemConfig(1L, "Platz 1")),
+				SystemConfigMapper.map(createSystemConfig(2L, "Center Court,Roland Garros,Nebenplatz"))
+				);
+		// @formatter:on
+		assertThat(responseAll(getAll().andExpect(status().is2xxSuccessful()))).containsAll(configs);
 	}
 
 	@Test
@@ -76,19 +79,19 @@ class SystemConfigServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	void testAddNotAllowed() throws Exception {
-		performPost("/rest/systemconfig/add", new ReservationSystemConfig()).andExpect(status().isUnauthorized());
+		performPost("/rest/systemconfig", new ReservationSystemConfig()).andExpect(status().isUnauthorized());
 	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	void testUpdateNotAllowed() throws Exception {
-		performPut("/rest/systemconfig/update", new ReservationSystemConfig()).andExpect(status().isUnauthorized());
+		performPut("/rest/systemconfig", new ReservationSystemConfig()).andExpect(status().isUnauthorized());
 	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	void testDeleteNotAllowed() throws Exception {
-		performDelete("/rest/systemconfig/delete/1").andExpect(status().isUnauthorized());
+		performDelete("/rest/systemconfig/1").andExpect(status().isUnauthorized());
 	}
 
 	@Test
@@ -96,8 +99,8 @@ class SystemConfigServiceTest extends ProtocolTest {
 	void testAdd() throws Exception {
 		ReservationSystemConfig config = new ReservationSystemConfig(1, "unit test 1",
 				Arrays.asList("Platz 1", "Platz 2", "Platz 3", "Platz 4", "Platz 5", "Platz 6"), 30, 2, 3, 8, 22);
-		performPost("/rest/systemconfig/add", config).andExpect(status().isCreated());
-		verify(config);
+		verifyEquals(config, performPost("/rest/systemconfig", config).andExpect(status().isCreated()));
+		verifyEquals(config, get(1L));
 	}
 
 	@Test
@@ -115,33 +118,45 @@ class SystemConfigServiceTest extends ProtocolTest {
 		config.setMaxDuration(10);
 		config.setOpeningHour(10);
 		config.setClosingHour(20);
-		performPut("/rest/systemconfig/update", config).andExpect(status().is2xxSuccessful());
-		verifyEquals(get(1L), config);
+		verifyEquals(config, performPut("/rest/systemconfig", config).andExpect(status().is2xxSuccessful()));
+		verifyEquals(config, get(1L));
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
 	void testDelete() throws Exception {
-		createSystemConfig(1L, "Platz 1");
-		createSystemConfig(2L, "Center Court,Roland Garros,Nebenplatz");
+		ReservationSystemConfig config1 = SystemConfigMapper.map(createSystemConfig(1L, "Platz 1"));
+		ReservationSystemConfig config2 = SystemConfigMapper
+				.map(createSystemConfig(2L, "Center Court,Roland Garros,Nebenplatz"));
 
-		performDelete("/rest/systemconfig/delete/1").andExpect(status().is2xxSuccessful());
-		String content = getAll().andReturn().getResponse().getContentAsString();
-		assertThat(new ObjectMapper().readValue(content, List.class).size()).isEqualTo(1);
+		verifyEquals(config2, performDelete("/rest/systemconfig/2").andExpect(status().is2xxSuccessful()));
+		List<ReservationSystemConfig> configs = responseAll(getAll().andExpect(status().is2xxSuccessful()));
+		assertThat(configs).hasSize(1);
+		ReservationSystemConfig config3 = configs.get(0);
+		verifyEquals(config1, config3);
 	}
 
 	private ReservationSystemConfig get(long id) throws Exception {
-		String content = performGet("/rest/systemconfig/" + String.valueOf(id)).andExpect(status().is2xxSuccessful())
-				.andReturn().getResponse().getContentAsString();
-		return objectMapper.readValue(content, ReservationSystemConfig.class);
+		return response(
+				performGet("/rest/systemconfig/getone/" + String.valueOf(id)).andExpect(status().is2xxSuccessful()));
 	}
 
 	private ResultActions getAll() throws Exception {
 		return performGet("/rest/systemconfig").andExpect(status().is2xxSuccessful());
 	}
 
-	private void verify(ReservationSystemConfig config) throws Exception {
-		verifyEquals(config, get(config.getId()));
+	private ReservationSystemConfig response(ResultActions resultActions) throws Exception {
+		String contentAsString = resultActions.andReturn().getResponse().getContentAsString();
+		return new ObjectMapper().readValue(contentAsString, ReservationSystemConfig.class);
+	}
+
+	private List<ReservationSystemConfig> responseAll(ResultActions resultActions) throws Exception {
+		String contentAsString = resultActions.andReturn().getResponse().getContentAsString();
+		return Arrays.asList(new ObjectMapper().readValue(contentAsString, ReservationSystemConfig[].class));
+	}
+
+	private void verifyEquals(ReservationSystemConfig config, ResultActions resultActions) throws Exception {
+		verifyEquals(config, response(resultActions));
 	}
 
 	private void verifyEquals(ReservationSystemConfig c1, ReservationSystemConfig c2) {

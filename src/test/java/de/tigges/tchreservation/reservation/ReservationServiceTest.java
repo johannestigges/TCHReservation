@@ -534,7 +534,7 @@ public class ReservationServiceTest extends ProtocolTest {
 		Reservation reservation = createReservation(1, 1, 10, 2);
 		reservation.setDate(LocalDate.now());
 		reservation = getReservation(addReservation(reservation));
-		checkOccupations(performGet("/reservation/getOccupations/1/0").andExpect(status().isOk()),
+		checkOccupations(performGet("/rest/reservation/getOccupations/1/0").andExpect(status().isOk()),
 				reservation.getOccupations());
 	}
 
@@ -543,7 +543,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	public void getOccupationsWithDate() throws Exception {
 		Reservation reservation = getReservation(addReservation(createReservation(1, 2, 12, 2)));
 		long epochMilli = LocalDate.now().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
-		checkOccupations(performGet("/reservation/getOccupations/1/" + epochMilli).andExpect(status().isOk()),
+		checkOccupations(performGet("/rest/reservation/getOccupations/1/" + epochMilli).andExpect(status().isOk()),
 				reservation.getOccupations());
 	}
 
@@ -553,23 +553,23 @@ public class ReservationServiceTest extends ProtocolTest {
 		ReservationEntity reservation = reservationRepository
 				.save(ReservationMapper.map(createReservation(1, user, 1, 10, 2)));
 
-		performGet("/reservation/get/" + reservation.getId()).andExpect(status().isOk());
+		performGet("/rest/reservation/" + reservation.getId()).andExpect(status().isOk());
 	}
 
 	private ResultActions addReservationNoCheck(Reservation reservation) throws Exception {
-		return performPost("/reservation/add", reservation != null ? reservation : "");
+		return performPost("/rest/reservation", reservation != null ? reservation : "");
 	}
 
 	private ResultActions updateOccupation(Occupation occupation) throws Exception {
-		return performPut("/reservation/update/occupation", occupation != null ? occupation : "");
+		return performPut("/rest/reservation/occupation", occupation != null ? occupation : "");
 	}
 
 	private ResultActions deleteReservation(long id) throws Exception {
-		return performDelete("/reservation/delete/" + id);
+		return performDelete("/rest/reservation/" + id);
 	}
 
 	private ReservationSystemConfig getSystemConfig(long id) throws Exception {
-		String content = performGet("/reservation/systemconfig/" + id).andExpect(status().isOk()) //
+		String content = performGet("/rest/reservation/systemconfig/" + id).andExpect(status().isOk()) //
 				.andReturn().getResponse().getContentAsString();
 		return objectMapper.readValue(content, ReservationSystemConfig.class);
 	}
