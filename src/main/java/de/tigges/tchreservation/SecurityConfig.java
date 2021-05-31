@@ -26,11 +26,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 						"/index",
 						"/actuator/**", 
 						"/api-docs/**",
-						"/mvc/**", 
 						"/angular/**",
-						"/reservation/getOccupations/**", 
-						"/reservation/systemconfig/**",
-						"/user/me")
+						"/rest/reservation/getOccupations/**", 
+						"/rest/reservation/systemconfig/**",
+						"/rest/systemconfig/getone",
+						"/rest/user/me")
 					.permitAll()
 				// all other rest services need authentication
 				.anyRequest().authenticated()

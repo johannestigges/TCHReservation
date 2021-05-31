@@ -11,22 +11,23 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tigges.tchreservation.protocol.jpa.ProtocolEntity;
 import de.tigges.tchreservation.protocol.jpa.ProtocolRepository;
-import lombok.RequiredArgsConstructor;
+import de.tigges.tchreservation.user.UserAwareService;
+import de.tigges.tchreservation.user.jpa.UserRepository;
 
 @RestController
-@RequestMapping("/protocol")
-@RequiredArgsConstructor
-public class ProtocolService {
+@RequestMapping("/rest/protocol")
+public class ProtocolService extends UserAwareService {
 
 	private final ProtocolRepository protocolRepository;
 
-	@GetMapping("/get")
-	public Iterable<ProtocolEntity> getAll() {
-		return protocolRepository.findAll();
+	public ProtocolService(ProtocolRepository protocolRepository, UserRepository userService) {
+		super(userService);
+		this.protocolRepository = protocolRepository;
 	}
 
-	@GetMapping("/get/{time}")
+	@GetMapping("/{time}")
 	public Iterable<ProtocolEntity> getSince(@PathVariable Long time) {
+		verifyIsAdmin();
 		LocalDateTime localDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(time),
 				TimeZone.getDefault().toZoneId());
 		return protocolRepository.findByTimeGreaterThanOrderByIdDesc(localDateTime);

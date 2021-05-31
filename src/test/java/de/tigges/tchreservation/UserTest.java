@@ -2,7 +2,7 @@ package de.tigges.tchreservation;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tigges.tchreservation.user.UserService;
+import de.tigges.tchreservation.user.UserAwareService;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.jpa.UserRepository;
 import de.tigges.tchreservation.user.model.ActivationStatus;
@@ -14,7 +14,7 @@ import de.tigges.tchreservation.user.model.UserRole;
 public class UserTest extends ServiceTest {
 
 	@Autowired
-	protected UserService userService;
+	protected UserAwareService userService;
 	@Autowired
 	protected UserRepository userRepository;
 

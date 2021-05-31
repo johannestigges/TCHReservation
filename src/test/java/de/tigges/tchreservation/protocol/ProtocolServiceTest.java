@@ -34,6 +34,7 @@ import de.tigges.tchreservation.user.model.UserRole;
 public class ProtocolServiceTest extends ProtocolTest {
 
 	private UserEntity user;
+	private UserEntity admin;
 
 	@BeforeEach
 	public void setup() throws Exception {
@@ -41,6 +42,7 @@ public class ProtocolServiceTest extends ProtocolTest {
 		this.protocolRepository.deleteAll();
 		this.userRepository.deleteAll();
 		user = addUser(UserRole.REGISTERED);
+		admin = addUser(UserRole.ADMIN);
 	}
 
 	@Test
@@ -53,32 +55,19 @@ public class ProtocolServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	public void getAllWithoutAuthentication() throws Exception {
-		performGet("/protocol/get").andExpect(status().is3xxRedirection());
-	}
-
-	@Test
-	@WithMockUser(username = "REGISTERED")
-	public void getAllWithoutData() throws Exception {
-		performGet("/protocol/get").andExpect(status().isOk()).andExpect(jsonPath("$.*", Matchers.hasSize(0)));
-	}
-
-	@Test
-	@WithMockUser(username = "REGISTERED")
-	public void getAll() throws Exception {
-		protocolRepository.save(new ProtocolEntity(createOccupation(), ActionType.CREATE, user));
-		performGet("/protocol/get").andExpect(status().isOk()).andExpect(jsonPath("$.*", Matchers.hasSize(1)));
-	}
-
-	@Test
-	@WithMockUser(username = "REGISTERED")
-	public void getAllSince() throws Exception {
+	@WithMockUser(username = "ADMIN")
+	public void getSince() throws Exception {
 		long now = new Date().getTime() - 1000;
 		protocolRepository.save(new ProtocolEntity(createOccupation(), ActionType.CREATE, user));
-		performGet("/protocol/get/" + now).andExpect(status().isOk()).andExpect(jsonPath("$.*", Matchers.hasSize(1)));
+		performGet("/rest/protocol/" + now).andExpect(status().isOk()).andExpect(jsonPath("$.*", Matchers.hasSize(1)));
 		now += 5000;
-		performGet("/protocol/get/" + now).andExpect(status().isOk()).andExpect(jsonPath("$.*", Matchers.hasSize(0)));
+		performGet("/rest/protocol/" + now).andExpect(status().isOk()).andExpect(jsonPath("$.*", Matchers.hasSize(0)));
+	}
 
+	@Test
+	@WithMockUser(username = "REGISTERED")
+	public void getSinceNotAdmin() throws Exception {
+		performGet("/rest/protocol/1").andExpect(status().isUnauthorized());
 	}
 
 	private OccupationEntity createOccupation() {

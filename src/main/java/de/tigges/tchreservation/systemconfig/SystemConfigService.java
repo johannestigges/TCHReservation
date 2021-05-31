@@ -50,7 +50,7 @@ public class SystemConfigService extends UserAwareService {
 		this.protocolRepository = protocolRepository;
 	}
 
-	@GetMapping("{id}")
+	@GetMapping("/getone/{id}")
 	Optional<ReservationSystemConfig> getOne(@PathVariable Long id) {
 		return repository.findById(id).map(SystemConfigMapper::map);
 	}
@@ -62,7 +62,7 @@ public class SystemConfigService extends UserAwareService {
 				.collect(Collectors.toList());
 	}
 
-	@PostMapping("add")
+	@PostMapping("")
 	@ResponseStatus(HttpStatus.CREATED)
 	public @ResponseBody ReservationSystemConfig add(@RequestBody ReservationSystemConfig config) {
 		UserEntity loggedInUser = checkIsAdmin();
@@ -75,7 +75,7 @@ public class SystemConfigService extends UserAwareService {
 		return SystemConfigMapper.map(entity);
 	}
 
-	@PutMapping("update")
+	@PutMapping("")
 	public @ResponseBody ReservationSystemConfig update(@RequestBody ReservationSystemConfig config) {
 		UserEntity loggedInUser = checkIsAdmin();
 		repository.findById(config.getId())
@@ -87,7 +87,7 @@ public class SystemConfigService extends UserAwareService {
 		return SystemConfigMapper.map(savedEntity);
 	}
 
-	@DeleteMapping("delete/{id}")
+	@DeleteMapping("/{id}")
 	public @ResponseBody ReservationSystemConfig delete(@PathVariable long id) {
 		UserEntity loggedInUser = checkIsAdmin();
 		SystemConfigEntity entity = repository.findById(id)

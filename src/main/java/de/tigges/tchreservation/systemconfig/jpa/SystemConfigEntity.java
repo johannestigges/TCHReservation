@@ -48,11 +48,11 @@ public class SystemConfigEntity implements Protocollable {
 				"id", Long.toString(id), //
 				"name", name, //
 				"courts", courts, //
-				"durationUnitInminutes", Integer.toString(durationUnitInMinutes), //
-				"maxDaysReservationInfuture", Integer.toString(maxDaysReservationInFuture), //
+				"durationUnitInMinutes", Integer.toString(durationUnitInMinutes), //
+				"maxDaysReservationInFuture", Integer.toString(maxDaysReservationInFuture), //
 				"maxDuration", Integer.toString(maxDuration), //
-				"opening hour", Integer.toString(openingHour), //
-				"closing hour", Integer.toString(closingHour) //
+				"openingHour", Integer.toString(openingHour), //
+				"closingHour", Integer.toString(closingHour) //
 		);
 	}
 

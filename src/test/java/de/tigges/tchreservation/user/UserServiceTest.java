@@ -56,13 +56,13 @@ public class UserServiceTest extends ProtocolTest {
 	@WithMockUser(username = "ADMIN")
 	public void addUser() throws Exception {
 		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE);
-		checkUser(performPost("/user/", user).andExpect(status().isOk()), user, false, ActionType.CREATE);
+		checkUser(performPost("/rest/user/", user).andExpect(status().isOk()), user, false, ActionType.CREATE);
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void addUserNull() throws Exception {
-		performPost("/user/", "").andExpect(status().isBadRequest());
+		performPost("/rest/user/", "").andExpect(status().isBadRequest());
 	}
 
 	@Test
@@ -70,7 +70,7 @@ public class UserServiceTest extends ProtocolTest {
 	public void addUserWithoutEmail() throws Exception {
 		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE);
 		user.setEmail(null);
-		performPost("/user/", user).andExpect(status().isBadRequest());
+		performPost("/rest/user/", user).andExpect(status().isBadRequest());
 	}
 
 	@Test
@@ -81,7 +81,7 @@ public class UserServiceTest extends ProtocolTest {
 			user.getDevices().add(createDevice(UserMapper.map(user), i, ActivationStatus.CREATED));
 		}
 
-		checkUser(performPost("/user/", user).andExpect(status().isOk()), user, false, ActionType.CREATE);
+		checkUser(performPost("/rest/user/", user).andExpect(status().isOk()), user, false, ActionType.CREATE);
 	}
 
 	@Test
@@ -89,14 +89,14 @@ public class UserServiceTest extends ProtocolTest {
 	public void addDevice() throws Exception {
 		UserEntity user = userRepository.save(createUserEntity(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
 
-		performPost("/user/device", createDevice(user, 0, ActivationStatus.CREATED)).andExpect(status().isOk());
+		performPost("/rest/user/device", createDevice(user, 0, ActivationStatus.CREATED)).andExpect(status().isOk());
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void setStatus() throws Exception {
 		UserEntity user = userRepository.save(createUserEntity(0, UserRole.REGISTERED, ActivationStatus.CREATED));
-		performPut("/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER.toString())
+		performPut("/rest/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER.toString())
 				.andExpect(status().isOk());
 		user.setStatus(ActivationStatus.VERIFIED_BY_USER);
 		user.setPassword(null); // don't check password
@@ -142,7 +142,7 @@ public class UserServiceTest extends ProtocolTest {
 	}
 
 	private void changeStatus(UserEntity user, ActivationStatus status, boolean expectOk) throws Exception {
-		ResultActions actions = performPut("/user/setStatus/" + user.getId() + "/" + status.toString());
+		ResultActions actions = performPut("/rest/user/setStatus/" + user.getId() + "/" + status.toString());
 		if (expectOk) {
 			actions.andExpect(status().isOk());
 		} else {
@@ -154,15 +154,15 @@ public class UserServiceTest extends ProtocolTest {
 	@WithMockUser(username = "REGISTERED")
 	public void addUserWithoutAuthorization() throws Exception {
 		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE);
-		performPost("/user/", user).andExpect(status().isUnauthorized());
+		performPost("/rest/user/", user).andExpect(status().isUnauthorized());
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void addUserDuplicate() throws Exception {
 		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE);
-		performPost("/user/", user).andExpect(status().isOk());
-		performPost("/user/", user).andExpect(status().isBadRequest());
+		performPost("/rest/user/", user).andExpect(status().isOk());
+		performPost("/rest/user/", user).andExpect(status().isBadRequest());
 	}
 
 	@Test
@@ -172,7 +172,7 @@ public class UserServiceTest extends ProtocolTest {
 				.map(userDeviceRepository.save(createDeviceEntity(adminUser, 0, ActivationStatus.CREATED)));
 		device.setUser(UserMapper.map(adminUser));
 		System.out.println(device.getUser());
-		performPost("/user/device", device).andExpect(status().isUnauthorized());
+		performPost("/rest/user/device", device).andExpect(status().isUnauthorized());
 	}
 
 	@Test
@@ -180,13 +180,13 @@ public class UserServiceTest extends ProtocolTest {
 	public void addUserOwnDevice() throws Exception {
 		UserDevice device = UserDeviceMapper
 				.map(userDeviceRepository.save(createDeviceEntity(registeredUser, 0, ActivationStatus.CREATED)));
-		performPost("/user/device", device).andExpect(status().isOk());
+		performPost("/rest/user/device", device).andExpect(status().isOk());
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void setStatusWithUserNotFound() throws Exception {
-		performPut("/user/setStatus/666/" + ActivationStatus.VERIFIED_BY_USER.toString())
+		performPut("/rest/user/setStatus/666/" + ActivationStatus.VERIFIED_BY_USER.toString())
 				.andExpect(status().isNotFound());
 	}
 
@@ -194,7 +194,7 @@ public class UserServiceTest extends ProtocolTest {
 	@WithMockUser(username = "REGISTERED")
 	public void setStatusWithoutAuthorization() throws Exception {
 		UserEntity user = userRepository.save(createUserEntity(0, UserRole.REGISTERED, ActivationStatus.CREATED));
-		performPut("/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER.toString())
+		performPut("/rest/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER.toString())
 				.andExpect(status().isUnauthorized());
 	}
 
@@ -207,7 +207,7 @@ public class UserServiceTest extends ProtocolTest {
 				ActivationStatus.VERIFIED_BY_USER);
 		modifiedUser.setId(user.getId());
 
-		performPut("/user/", modifiedUser).andExpect(status().isOk());
+		performPut("/rest/user/", modifiedUser).andExpect(status().isOk());
 	}
 
 	@Test
@@ -219,48 +219,48 @@ public class UserServiceTest extends ProtocolTest {
 				ActivationStatus.VERIFIED_BY_USER);
 		modifiedUser.setId(user.getId());
 
-		performPut("/user/", modifiedUser).andExpect(status().isOk());
+		performPut("/rest/user/", modifiedUser).andExpect(status().isOk());
 	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void updateNotMe() throws Exception {
-		performPut("/user/", adminUser).andExpect(status().isUnauthorized());
+		performPut("/rest/user/", adminUser).andExpect(status().isUnauthorized());
 	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void updateMe() throws Exception {
 		registeredUser.setName("new name");
-		performPut("/user/", registeredUser).andExpect(status().isOk());
+		performPut("/rest/user/", registeredUser).andExpect(status().isOk());
 	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void updateMyRoleNotAuthorized() throws Exception {
 		registeredUser.setRole(UserRole.ADMIN);
-		performPut("/user/", registeredUser).andExpect(status().isUnauthorized());
+		performPut("/rest/user/", registeredUser).andExpect(status().isUnauthorized());
 	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void updateMyStatusNotAuthorized() throws Exception {
 		registeredUser.setStatus(ActivationStatus.LOCKED);
-		performPut("/user/", registeredUser).andExpect(status().isUnauthorized());
+		performPut("/rest/user/", registeredUser).andExpect(status().isUnauthorized());
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void updateUserNotFound() throws Exception {
 		registeredUser.setId(666);
-		performPut("/user", registeredUser).andExpect(status().isNotFound());
+		performPut("/rest/user", registeredUser).andExpect(status().isNotFound());
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void deleteUser() throws Exception {
-		performDelete("/user/" + registeredUser.getId()).andExpect(status().isOk());
-		performGet("/user/" + registeredUser.getId()).andExpect(status().isOk())
+		performDelete("/rest/user/" + registeredUser.getId()).andExpect(status().isOk());
+		performGet("/rest/user/" + registeredUser.getId()).andExpect(status().isOk())
 				.andExpect(jsonPath("$.status").value(ActivationStatus.REMOVED.toString()));
 	}
 
@@ -273,25 +273,25 @@ public class UserServiceTest extends ProtocolTest {
 					ActivationStatus.ACTIVE)));
 		}
 		for (int i = 0; i < userList.size(); i++) {
-			checkUser(performGet("/user/" + userList.get(i).getId()).andExpect(status().isOk()), userList.get(i));
+			checkUser(performGet("/rest/user/" + userList.get(i).getId()).andExpect(status().isOk()), userList.get(i));
 		}
 	}
 
 	@Test
 	public void getUserWithoutAuthorization() throws Exception {
-		performGet("/user/" + adminUser.getId()).andExpect(status().is3xxRedirection());
+		performGet("/rest/user/" + adminUser.getId()).andExpect(status().is3xxRedirection());
 	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void getUserMe() throws Exception {
-		performGet("/user/" + registeredUser.getId()).andExpect(status().isOk());
+		performGet("/rest/user/" + registeredUser.getId()).andExpect(status().isOk());
 	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void getUserNotMe() throws Exception {
-		performGet("/user/" + adminUser.getId()).andExpect(status().isUnauthorized());
+		performGet("/rest/user/" + adminUser.getId()).andExpect(status().isUnauthorized());
 	}
 
 	@Test
@@ -314,13 +314,13 @@ public class UserServiceTest extends ProtocolTest {
 
 	@Test
 	public void getLoggedInUserAnonymous() throws Exception {
-		checkUser(performGet("/user/me").andExpect(status().isOk()), UserUtils.anonymous());
+		checkUser(performGet("/rest/user/me").andExpect(status().isOk()), UserUtils.anonymous());
 	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void getLoggedInUserRegistered() throws Exception {
-		checkUser(performGet("/user/me").andExpect(status().isOk()), registeredUser);
+		checkUser(performGet("/rest/user/me").andExpect(status().isOk()), registeredUser);
 	}
 
 	@Test
@@ -334,21 +334,21 @@ public class UserServiceTest extends ProtocolTest {
 		u.getDevices().add(UserDeviceMapper.map(device0));
 		u.getDevices().add(UserDeviceMapper.map(device1));
 
-		checkUser(performGet("/user/getByDevice/" + device0.getId()).andExpect(status().isOk()), u, false, null);
+		checkUser(performGet("/rest/user/getByDevice/" + device0.getId()).andExpect(status().isOk()), u, false, null);
 
-		checkUser(performGet("/user/getByDevice/" + device1.getId()).andExpect(status().isOk()), u, false, null);
+		checkUser(performGet("/rest/user/getByDevice/" + device1.getId()).andExpect(status().isOk()), u, false, null);
 	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void getUserByDeviceNotAuthorized() throws Exception {
-		performGet("/user/getByDevice/1").andExpect(status().isUnauthorized());
+		performGet("/rest/user/getByDevice/1").andExpect(status().isUnauthorized());
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void getUserByDeviceNotFound() throws Exception {
-		performGet("/user/getByDevice/666").andExpect(status().isNotFound());
+		performGet("/rest/user/getByDevice/666").andExpect(status().isNotFound());
 	}
 
 	@Test
@@ -376,13 +376,13 @@ public class UserServiceTest extends ProtocolTest {
 		for (int i = 0; i < users; i++) {
 			userRepository.save(createRandomUser());
 		}
-		performGet("/user/all").andExpect(status().isOk()).andExpect(jsonPath("$.*", Matchers.hasSize(users + 2)));
+		performGet("/rest/user/all").andExpect(status().isOk()).andExpect(jsonPath("$.*", Matchers.hasSize(users + 2)));
 	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void getAllUserWithoutAuthentication() throws Exception {
-		performGet("/user/all").andExpect(status().isUnauthorized());
+		performGet("/rest/user/all").andExpect(status().isUnauthorized());
 	}
 
 	@Test
@@ -395,7 +395,7 @@ public class UserServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void getDeviceNotAuthorized() throws Exception {
-		performGet("/user/device/0").andExpect(status().isUnauthorized());
+		performGet("/rest/user/device/0").andExpect(status().isUnauthorized());
 	}
 
 	@Test
@@ -403,8 +403,8 @@ public class UserServiceTest extends ProtocolTest {
 	public void deleteDevice() throws Exception {
 		UserDeviceEntity device = userDeviceRepository
 				.save(createDeviceEntity(registeredUser, 0, ActivationStatus.CREATED));
-		performDelete("/user/device/" + device.getId()).andExpect(status().isOk());
-		performGet("/user/device/" + device.getId()).andExpect(status().isOk())
+		performDelete("/rest/user/device/" + device.getId()).andExpect(status().isOk());
+		performGet("/rest/user/device/" + device.getId()).andExpect(status().isOk())
 				.andExpect(jsonPath("$.status").value(ActivationStatus.REMOVED.toString()));
 	}
 
@@ -412,17 +412,17 @@ public class UserServiceTest extends ProtocolTest {
 	@WithMockUser(username = "ADMIN")
 	public void deleteDeviceUnknown() throws Exception {
 		UserDevice device = createDevice(registeredUser, 0, ActivationStatus.CREATED);
-		performDelete("/user/device/" + device.getId()).andExpect(status().isNotFound());
+		performDelete("/rest/user/device/" + device.getId()).andExpect(status().isNotFound());
 	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void deleteDeviceNotAuthorized() throws Exception {
-		performDelete("/user/device/0").andExpect(status().isUnauthorized());
+		performDelete("/rest/user/device/0").andExpect(status().isUnauthorized());
 	}
 
 	private void checkDevice(UserDevice device) throws Exception {
-		performGet("/user/device/" + device.getId()) //
+		performGet("/rest/user/device/" + device.getId()) //
 				.andExpect(status().isOk()) //
 				.andExpect(jsonPath("$.deviceId").value(device.getDeviceId()))
 				.andExpect(jsonPath("$.publicKey").value(device.getPublicKey())).andExpect(jsonPath("$.user").exists())
