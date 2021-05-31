@@ -1,6 +1,7 @@
 package de.tigges.tchreservation.reservation;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Locale;
 
@@ -88,9 +89,9 @@ public class ReservationValidator {
 						String.format(msg("error_start_time_minutes"), start.getMinute()));
 			}
 
-			if (LocalTime.of(start.getHour(), start.getMinute())
+			if (of(date, start.getHour(), start.getMinute())
 					.plusMinutes(occupation.getDuration() * systemConfig.getDurationUnitInMinutes())
-					.isAfter(LocalTime.of(systemConfig.getClosingHour(), 0))) {
+					.isAfter(of(date, systemConfig.getClosingHour(), 0))) {
 				addOccupationFieldError(errorDetails, "start", msg("error_start_time_plus_duration"));
 			}
 		}
@@ -256,7 +257,7 @@ public class ReservationValidator {
 			return;
 		}
 		// check time overlap
-		if (o1.getStart().isBefore(getEnd(o2)) && getEnd(o1).isAfter(o2.getStart())) {
+		if (getStart(o1).isBefore(getEnd(o2)) && getEnd(o1).isAfter(getStart(o2))) {
 			throw new BadRequestException(
 					String.format(msg("error_occupied"), o1.getDate(), o1.getStart(), o1.getCourt()));
 		}
@@ -270,16 +271,28 @@ public class ReservationValidator {
 		errorDetails.getFieldErrors().add(new FieldError(entity, field, message));
 	}
 
-	private LocalTime getEnd(Occupation o) {
+	private LocalDateTime getEnd(Occupation o) {
 		ReservationSystemConfig config = systemConfigRepository.get(o.getSystemConfigId());
-		return LocalTime.of(o.getStart().getHour(), o.getStart().getMinute())
+		return of(o.getDate(), o.getStart().getHour(), o.getStart().getMinute())
 				.plusMinutes(o.getDuration() * config.getDurationUnitInMinutes());
 	}
 
-	private LocalTime getEnd(OccupationEntity o) {
+	private LocalDateTime getEnd(OccupationEntity o) {
 		ReservationSystemConfig config = systemConfigRepository.get(o.getSystemConfigId());
-		return LocalTime.of(o.getStart().getHour(), o.getStart().getMinute())
+		return of(o.getDate(), o.getStart().getHour(), o.getStart().getMinute())
 				.plusMinutes(o.getDuration() * config.getDurationUnitInMinutes());
+	}
+
+	private LocalDateTime of(LocalDate date, int hour, int minute) {
+		return LocalDateTime.of(date.getYear(), date.getMonth(), date.getDayOfMonth(), hour, minute);
+	}
+
+	private LocalDateTime getStart(Occupation o) {
+		return of(o.getDate(), o.getStart().getHour(), o.getStart().getMinute());
+	}
+
+	private LocalDateTime getStart(OccupationEntity o) {
+		return of(o.getDate(), o.getStart().getHour(), o.getStart().getMinute());
 	}
 
 	private String msg(String code, Object... args) {
