@@ -152,7 +152,7 @@ public class ReservationService extends UserAwareService {
 	public void deleteOccupation(@PathVariable long id) {
 		OccupationEntity occupation = occupationRepository.findById(id)
 				.orElseThrow(() -> new NotFoundException(EntityType.OCCUPATION, id));
-		UserEntity loggedInUser = verifyIsAdminOrSelf(occupation.getReservation().getUser().getId());
+		UserEntity loggedInUser = verifyIsAdminOrTrainerOrSelf(occupation.getReservation().getUser().getId());
 
 		protocolRepository.save(new ProtocolEntity(occupation, ActionType.DELETE, loggedInUser));
 		occupationRepository.delete(occupation);
