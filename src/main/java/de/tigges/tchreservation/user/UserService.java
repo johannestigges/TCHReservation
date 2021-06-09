@@ -30,6 +30,7 @@ import de.tigges.tchreservation.user.jpa.UserRepository;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.User;
 import de.tigges.tchreservation.user.model.UserDevice;
+import de.tigges.tchreservation.user.model.UserRole;
 
 @RestController
 @RequestMapping("/rest/user")
@@ -141,7 +142,7 @@ public class UserService extends UserAwareService {
 			user.setPassword(encoder.encode(user.getPassword()));
 		}
 
-		if (!isAdmin(loggedInUser)) {
+		if (!UserUtils.hasRole(loggedInUser, UserRole.ADMIN)) {
 			if (user.getRole() != dbUser.getRole()) {
 				throw new AuthorizationException("user cannot modify role.");
 			}
