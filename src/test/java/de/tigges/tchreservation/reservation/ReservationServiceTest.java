@@ -59,7 +59,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	ObjectMapper objectMapper;
 
 	private UserEntity user;
-	private UserEntity admin;
+	private UserEntity trainer;
 
 	@BeforeEach
 	public void setup() throws Exception {
@@ -69,79 +69,86 @@ public class ReservationServiceTest extends ProtocolTest {
 		this.reservationRepository.deleteAll();
 		this.userRepository.deleteAll();
 		user = addUser(UserRole.REGISTERED);
-		admin = addUser(UserRole.ADMIN);
+		trainer = addUser(UserRole.TRAINER);
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservation() throws Exception {
 		addReservation(createReservation(1, 1, 10, 2));
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationWithUser() throws Exception {
-		addReservation(createReservation(1, admin, 1, 10, 2));
+		addReservation(createReservation(1, trainer, 1, 10, 2));
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
+	public void addReservationWithWrongUser() throws Exception {
+		addReservationError(createReservation(1, user, 1, 10, 2), HttpStatus.UNAUTHORIZED,
+				"Der an der Reservierung angegebene Benutzer ist nicht der angemeldete Benutzer.");
+	}
+
+	@Test
+	@WithMockUser(username = "TRAINER")
 	public void addReservationInDifferentSystemConfigs() throws Exception {
 		addReservation(createReservation(1, 1, 10, 2));
 		addReservation(createReservation(2, 1, 10, 2));
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationWithDifferentCourts() throws Exception {
 		addReservation(createReservation(1, 1, 10, 2));
 		addReservation(createReservation(1, 2, 10, 2));
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationWithDifferentTimes() throws Exception {
 		addReservation(createReservation(1, 1, 10, 2));
 		addReservation(createReservation(1, 1, 11, 2));
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationOverlap() throws Exception {
 		addReservation(createReservation(1, 1, 10, 3));
 		addReservationOverlap(createReservation(1, 1, 11, 2), 0);
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationDuplicate() throws Exception {
 		addReservation(createReservation(1, 1, 10, 3));
 		addReservationOverlap(createReservation(1, 1, 10, 3), 0);
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationOverlap2() throws Exception {
 		addReservation(createReservation(1, 1, 10, 6));
 		addReservationOverlap(createReservation(1, 1, 11, 2), 0);
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationOverlap3() throws Exception {
 		addReservation(createReservation(1, 1, 11, 2));
 		addReservationOverlap(createReservation(1, 1, 10, 6), 0);
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationNotOverlapDifferentSystemConfig() throws Exception {
 		addReservation(createReservation(1, 1, 11, 2));
 		addReservation(createReservation(2, 1, 11, 2));
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationNotOverlapDifferentDays() throws Exception {
 		Reservation reservation = createReservation(1, 1, 11, 2);
 		reservation.setDate(reservation.getDate().plusDays(1));
@@ -150,7 +157,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationNoText() throws Exception {
 		Reservation reservation = createReservation(1, 1, 8, 2);
 		reservation.setText(null);
@@ -158,7 +165,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationNoDate() throws Exception {
 		Reservation reservation = createReservation(1, 1, 8, 2);
 		reservation.setDate(null);
@@ -166,7 +173,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationNoStart() throws Exception {
 		Reservation reservation = createReservation(1, 1, 8, 2);
 		reservation.setStart(null);
@@ -174,7 +181,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationBeforeOpeningHour() throws Exception {
 		Reservation reservation = createReservation(1, 1, 6, 2);
 		addReservationWithOccupationFieldError(reservation, "start",
@@ -182,7 +189,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationAfterClosingHour() throws Exception {
 		Reservation reservation = createReservation(1, 1, 23, 2);
 		addReservationWithOccupationFieldError(reservation, "start",
@@ -190,7 +197,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationInvalidDurationUnits() throws Exception {
 		Reservation reservation = createReservation(1, 1, 0, 2);
 		reservation.setStart(LocalTime.of(9, 25));
@@ -198,14 +205,14 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationExtendsClosingHour() throws Exception {
 		Reservation reservation = createReservation(1, 1, 19, 7);
 		addReservationWithOccupationFieldError(reservation, "start", "Startzeit + Dauer zu spät.");
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationDurationTooSmall() throws Exception {
 		Reservation reservation = createReservation(1, 1, 8, 0);
 		addReservationWithOccupationFieldError(reservation, "duration", "Dauer zu gering");
@@ -221,7 +228,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationDurationNotTooBigForAdmin() throws Exception {
 		Reservation reservation = createReservation(3, 1, 8, 4);
 		reservation.setDate(reservation.getDate().plusDays(1));
@@ -229,7 +236,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationNoCourts() throws Exception {
 		Reservation reservation = createReservation(1, 0, 8, 2);
 		reservation.setCourts(null);
@@ -237,7 +244,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationTooManyCourts() throws Exception {
 		Reservation reservation = createReservation(1, 0, 8, 2);
 		reservation.setCourtsFromInteger(1, 2, 3, 4, 5, 6, 7);
@@ -245,21 +252,21 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationCourtTooSmall() throws Exception {
 		Reservation reservation = createReservation(1, 0, 8, 2);
 		addReservationWithFieldError(reservation, "court", "Platznummer 0 zu klein");
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationCourtTooBig() throws Exception {
 		Reservation reservation = createReservation(1, 7, 8, 2);
 		addReservationWithFieldError(reservation, "court", "Platznummer 7 zu groß. Mehr als 6 Plätze gibt es nicht.");
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationMultipleCourts() throws Exception {
 		checkReservationMultipleCourts(8, 1, 1, 2);
 		checkReservationMultipleCourts(9, 1, 1, 2, 3, 4, 5, 6);
@@ -277,7 +284,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationDailyRepeat() throws Exception {
 		checkReservationRepeatDaily(8, 3, 4, 2);
 		checkReservationRepeatDaily(8, 1, 2, 3);
@@ -295,7 +302,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationWeeklyRepeat() throws Exception {
 		checkReservationRepeatWeekly(8, 2, 1, 1);
 		checkReservationRepeatWeekly(8, 7, 2, 2);
@@ -317,7 +324,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationNoRepeatUntil() throws Exception {
 		Reservation reservation = createReservation(1, 3, 12, 2);
 		reservation.setRepeatType(RepeatType.daily);
@@ -325,7 +332,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationRepeatUntilBeforeStart() throws Exception {
 		Reservation reservation = createReservation(1, 3, 12, 2);
 		reservation.setRepeatType(RepeatType.daily);
@@ -335,27 +342,27 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationNull() throws Exception {
 		addReservationNoCheck(null).andExpect(status().isBadRequest());
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationNoSystemConfig() throws Exception {
 		addReservationError(createReservation(0, 1, 10, 6), HttpStatus.NOT_FOUND,
 				"SYSTEM_CONFIGURATION with id 0 not found");
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationUnknownSystemConfig() throws Exception {
 		addReservationError(createReservation(10, 1, 10, 6), HttpStatus.NOT_FOUND,
 				"SYSTEM_CONFIGURATION with id 10 not found");
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void addReservationUnknownUserName() throws Exception {
 		UserEntity unknownUser = new UserEntity();
 		unknownUser.setName("the unknown user");
@@ -483,7 +490,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void updateOccupation() throws Exception {
 		Reservation reservation = getResponseJson(addReservation(createReservation(1, 1, 12, 2)), Reservation.class);
 		Occupation occupation = reservation.getOccupations().get(0);
@@ -492,7 +499,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void updateOccupationNotFound() throws Exception {
 		Occupation occupation = new Occupation();
 		occupation.setId(0);
@@ -500,13 +507,13 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void updateReservationNull() throws Exception {
 		updateOccupation(null).andExpect(status().isBadRequest());
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void deleteReservation() throws Exception {
 		Reservation reservation = objectMapper.readValue(addReservation(createReservation(1, 1, 10, 2))
 				.andExpect(status().isCreated()).andReturn().getResponse().getContentAsString(), Reservation.class);
@@ -517,7 +524,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void deleteReservationNotFound() throws Exception {
 		deleteReservation(543636262L).andExpect(status().isNotFound());
 	}
@@ -528,7 +535,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void getOccupations() throws Exception {
 
 		Reservation reservation = createReservation(1, 1, 10, 2);
@@ -539,7 +546,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void getOccupationsWithDate() throws Exception {
 		Reservation reservation = getReservation(addReservation(createReservation(1, 2, 12, 2)));
 		long epochMilli = LocalDate.now().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
@@ -548,7 +555,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "TRAINER")
 	public void getReservation() throws Exception {
 		ReservationEntity reservation = reservationRepository
 				.save(ReservationMapper.map(createReservation(1, user, 1, 10, 2)));

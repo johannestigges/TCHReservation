@@ -7,7 +7,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import de.tigges.tchreservation.exception.AuthorizationException;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.jpa.UserRepository;
-import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.UserRole;
 import lombok.RequiredArgsConstructor;
 
@@ -27,24 +26,17 @@ public class UserAwareService {
 
 	protected UserEntity verifyIsAdminOrSelf(Long userId) {
 		UserEntity loggedInUser = getLoggedInUser();
-		if (!isAdmin(loggedInUser) && !is(loggedInUser, userId))
+		if (!UserUtils.hasRoleOrSelf(loggedInUser, userId, UserRole.ADMIN)) {
 			throw new AuthorizationException("not authorized");
+		}
 		return loggedInUser;
 	}
 
 	protected UserEntity verifyIsAdmin() {
 		UserEntity loggedInUser = getLoggedInUser();
-		if (!isAdmin(loggedInUser)) {
+		if (!UserUtils.hasRole(loggedInUser, UserRole.ADMIN)) {
 			throw new AuthorizationException("error_user_is_not_admin");
 		}
 		return loggedInUser;
-	}
-
-	protected boolean isAdmin(UserEntity user) {
-		return UserUtils.hasRole(user.getRole(), UserRole.ADMIN) && ActivationStatus.ACTIVE.equals(user.getStatus());
-	}
-
-	boolean is(UserEntity user, long userId) {
-		return user.getId() == userId;
 	}
 }

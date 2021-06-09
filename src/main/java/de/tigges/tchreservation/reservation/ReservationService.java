@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tigges.tchreservation.exception.AuthorizationException;
 import de.tigges.tchreservation.exception.BadRequestException;
 import de.tigges.tchreservation.exception.NotFoundException;
 import de.tigges.tchreservation.protocol.ActionType;
@@ -37,8 +38,10 @@ import de.tigges.tchreservation.reservation.model.ReservationMapper;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 import de.tigges.tchreservation.user.UserAwareService;
 import de.tigges.tchreservation.user.UserMapper;
+import de.tigges.tchreservation.user.UserUtils;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.jpa.UserRepository;
+import de.tigges.tchreservation.user.model.UserRole;
 
 @RestController
 @RequestMapping("/rest/reservation")
@@ -165,7 +168,7 @@ public class ReservationService extends UserAwareService {
 	public void deleteReservation(@PathVariable long id) {
 		ReservationEntity reservation = reservationRepository.findById(id)
 				.orElseThrow(() -> new NotFoundException(EntityType.RESERVATION, id));
-		UserEntity loggedInUser = verifyIsAdminOrSelf(reservation.getUser().getId());
+		UserEntity loggedInUser = verifyIsAdminOrTrainerOrSelf(reservation.getUser().getId());
 
 		occupationRepository.findByReservationId(id).forEach(o -> this.deleteOccupation(o, loggedInUser));
 
@@ -310,4 +313,13 @@ public class ReservationService extends UserAwareService {
 		occupation.setDuration(reservation.getDuration());
 		return occupation;
 	}
+
+	private UserEntity verifyIsAdminOrTrainerOrSelf(long userId) {
+		UserEntity loggedInUser = getLoggedInUser();
+		if (!UserUtils.hasRoleOrSelf(loggedInUser, userId, UserRole.ADMIN, UserRole.TRAINER)) {
+			throw new AuthorizationException("not authorized");
+		}
+		return loggedInUser;
+	}
+
 }
