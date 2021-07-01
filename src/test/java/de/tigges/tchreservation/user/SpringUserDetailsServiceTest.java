@@ -24,6 +24,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tigges.tchreservation.TchReservationApplication;
+import de.tigges.tchreservation.user.jpa.UserDeviceRepository;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.jpa.UserRepository;
 import de.tigges.tchreservation.user.model.ActivationStatus;
@@ -35,12 +36,15 @@ import de.tigges.tchreservation.user.model.UserRole;
 public class SpringUserDetailsServiceTest {
 
 	@Autowired
+	private UserDeviceRepository userDeviceRepository;
+	@Autowired
 	private UserRepository userRepository;
 	@Autowired
 	private SpringUserDetailsService service;
 
 	@BeforeEach
 	public void setup() throws Exception {
+		userDeviceRepository.deleteAll();
 		userRepository.deleteAll();
 	}
 
