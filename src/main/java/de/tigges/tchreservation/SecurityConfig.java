@@ -18,7 +18,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	protected void configure(HttpSecurity http) throws Exception {
 		// @formatter:off
 		http.authorizeRequests()
-				// allow some static resources, mvc and some rest services without
+				// allow some static resources, and some rest services without
 				// authentication
 				.antMatchers(
 						"/resources/**", 
