@@ -484,9 +484,9 @@ public class ReservationServiceTest extends ProtocolTest {
 	@WithMockUser(username = "REGISTERED")
 	public void addReservationUnauthorizedTypeTrainer() throws Exception {
 		Reservation reservation = createReservation(1, 1, 8, 2);
-		reservation.setType(ReservationType.TRAINER);
+		reservation.setType(ReservationType.TRAINING);
 		addReservationWithOccupationFieldError(reservation, //
-				"type", "Der Benutzer REGISTERED hat nicht die Rechte, eine Reservierung vom Typ TRAINER anzulegen.");
+				"type", "Der Benutzer REGISTERED hat nicht die Rechte, eine Reservierung vom Typ TRAINING anzulegen.");
 	}
 
 	@Test

@@ -13,6 +13,7 @@ import de.tigges.tchreservation.protocol.jpa.ProtocolEntity;
 import de.tigges.tchreservation.protocol.jpa.ProtocolRepository;
 import de.tigges.tchreservation.user.UserAwareService;
 import de.tigges.tchreservation.user.jpa.UserRepository;
+import de.tigges.tchreservation.user.model.UserRole;
 
 @RestController
 @RequestMapping("/rest/protocol")
@@ -27,7 +28,7 @@ public class ProtocolService extends UserAwareService {
 
 	@GetMapping("/{time}")
 	public Iterable<ProtocolEntity> getSince(@PathVariable Long time) {
-		verifyIsAdmin();
+		verifyHasRole(UserRole.ADMIN);
 		LocalDateTime localDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(time),
 				TimeZone.getDefault().toZoneId());
 		return protocolRepository.findByTimeGreaterThanOrderByIdDesc(localDateTime);

@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-TchReservationApplication<TCHReservation>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "mainClass": "de.tigges.tchreservation.TchReservationApplication",
+            "projectName": "TCHReservation",
+            "args": ""
+        }
+    ]
+}

@@ -7,6 +7,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import de.tigges.tchreservation.exception.AuthorizationException;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.jpa.UserRepository;
+import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.UserRole;
 import lombok.RequiredArgsConstructor;
 
@@ -15,7 +16,7 @@ public class UserAwareService {
 
 	protected final UserRepository userRepository;
 
-	public UserEntity getLoggedInUser() {
+	protected UserEntity getLoggedInUser() {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		if (authentication instanceof AnonymousAuthenticationToken || authentication == null) {
 			return UserUtils.anonymous();
@@ -24,19 +25,27 @@ public class UserAwareService {
 		return userRepository.findByNameOrEmail(name, name).orElse(UserUtils.anonymous());
 	}
 
-	protected UserEntity verifyIsAdminOrSelf(Long userId) {
+	protected UserEntity verifyHasRole(UserRole... roles) {
 		UserEntity loggedInUser = getLoggedInUser();
-		if (!UserUtils.hasRoleOrSelf(loggedInUser, userId, UserRole.ADMIN)) {
-			throw new AuthorizationException("not authorized");
+		if (!hasRole(loggedInUser, roles)) {
+			throw new AuthorizationException("error_user_is_not_admin");
 		}
 		return loggedInUser;
 	}
 
-	protected UserEntity verifyIsAdmin() {
+	protected UserEntity verifyHasRoleOrSelf(Long userId, UserRole... roles) {
 		UserEntity loggedInUser = getLoggedInUser();
-		if (!UserUtils.hasRole(loggedInUser, UserRole.ADMIN)) {
-			throw new AuthorizationException("error_user_is_not_admin");
+		if (is(loggedInUser, userId) || hasRole(loggedInUser, roles)) {
+			return loggedInUser;
 		}
-		return loggedInUser;
+		throw new AuthorizationException("error_user_is_not_admin");
+	}
+
+	protected boolean hasRole(UserEntity user, UserRole... roles) {
+		return UserUtils.hasRole(user.getRole(), roles) && ActivationStatus.ACTIVE.equals(user.getStatus());
+	}
+
+	protected boolean is(UserEntity user, long userId) {
+		return user.getId() == userId;
 	}
 }

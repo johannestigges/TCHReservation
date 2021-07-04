@@ -23,7 +23,7 @@ public class SpringUserDetailsService implements UserDetailsService {
 		return userRepository.findByNameOrEmail(userName, userName)
 				.map(u -> org.springframework.security.core.userdetails.User//
 						.withUsername(userName) //
-						.password("{bcrypt}" + u.getPassword()) //
+						.password(u.getPassword()) //
 						.authorities(Arrays.asList(new SimpleGrantedAuthority(u.getRole().name()))) //
 						.accountExpired(false) //
 						.accountLocked(ActivationStatus.LOCKED.equals(u.getStatus())) //

@@ -7,7 +7,7 @@ public enum ReservationType {
 	INDIVIDUAL, 
 	
 	@JsonProperty("1")
-	TRAINER, 
+	TRAINING, 
 	
 	@JsonProperty("2")
 	TOURNAMENT, 

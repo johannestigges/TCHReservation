@@ -150,6 +150,51 @@ public class ReservationValidator {
 			}
 		}
 
+		switch (loggedInUser.getRole()) {
+		case ANONYMOUS:
+			throw new AuthorizationException(msg("error_anonymous_cannot_add"));
+		case KIOSK:
+		case REGISTERED:
+		case TECHNICAL:
+			// only reservation type individual allowed
+			if (!ReservationType.INDIVIDUAL.equals(occupation.getType())) {
+				addOccupationFieldError(errorDetails, "type", String.format(msg("error_registered_cannot_add_type"),
+						loggedInUser.getName(), occupation.getType()));
+			}
+
+			if (occupation.getDuration() > systemConfig.getMaxDuration()) {
+				addOccupationFieldError(errorDetails, "duration", String.format(
+						msg("error_registered_cannot_add_duration"), loggedInUser.getName(), occupation.getDuration()));
+			}
+
+			// occupation in the past is not allowed
+			if (date.isBefore(LocalDate.now())) {
+				addOccupationFieldError(errorDetails, "date", msg("error_date_in_the_past"));
+			}
+			if (date.isEqual(LocalDate.now()) && start.isBefore(LocalTime.now().minusMinutes(60))) {
+				addOccupationFieldError(errorDetails, "time", msg("error_start_time_in_the_past"));
+			}
+
+			// reservation only this and next day is allowed
+			if (date.isAfter(LocalDate.now().plusDays(systemConfig.getMaxDaysReservationInFuture()))) {
+				addOccupationFieldError(errorDetails, "date", msg("error_date_too_far_in_future"));
+			}
+			if (!date.isEqual(LocalDate.now()) && start.getHour() > LocalTime.now().getHour()) {
+				addOccupationFieldError(errorDetails, "start", msg("error_date_too_far_in_future"));
+			}
+		case TEAMSTER:
+			if (!ReservationType.INDIVIDUAL.equals(occupation.getType())
+					&& !ReservationType.TRAINING.equals(occupation.getType())) {
+				addOccupationFieldError(errorDetails, "type", String.format(msg("error_registered_cannot_add_type"),
+						loggedInUser.getName(), occupation.getType()));
+
+			}
+			break;
+		case TRAINER:
+		case ADMIN:
+		default:
+			break;
+		}
 		// check overlap
 		occupationRepository.findBySystemConfigIdAndDate(occupation.getSystemConfigId(), occupation.getDate())
 				.forEach(o -> checkOverlap(occupation, o));
@@ -237,10 +282,6 @@ public class ReservationValidator {
 		if (!errorDetails.getFieldErrors().isEmpty()) {
 			throw new InvalidDataException(errorDetails);
 		}
-	}
-
-	public void validateOverlap(Occupation occupation, UserEntity loggedInUser) {
-
 	}
 
 	private void checkOverlap(Occupation o1, OccupationEntity o2) {

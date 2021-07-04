@@ -38,7 +38,6 @@ import de.tigges.tchreservation.reservation.model.ReservationMapper;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 import de.tigges.tchreservation.user.UserAwareService;
 import de.tigges.tchreservation.user.UserMapper;
-import de.tigges.tchreservation.user.UserUtils;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.jpa.UserRepository;
 import de.tigges.tchreservation.user.model.UserRole;
@@ -135,6 +134,7 @@ public class ReservationService extends UserAwareService {
 		reservationValidator.validateOccupation(occupation, loggedInUser);
 
 		OccupationEntity occupationEntity = OccupationMapper.map(occupation);
+
 		occupationEntity.setReservation(dbOccupation.getReservation());
 		OccupationEntity savedOccupation = occupationRepository.save(occupationEntity);
 		protocolRepository.save(new ProtocolEntity(savedOccupation, dbOccupation, loggedInUser));
@@ -152,7 +152,7 @@ public class ReservationService extends UserAwareService {
 	public void deleteOccupation(@PathVariable long id) {
 		OccupationEntity occupation = occupationRepository.findById(id)
 				.orElseThrow(() -> new NotFoundException(EntityType.OCCUPATION, id));
-		UserEntity loggedInUser = verifyIsAdminOrTrainerOrSelf(occupation.getReservation().getUser().getId());
+		UserEntity loggedInUser = verifyCanDelete(occupation.getReservation().getUser().getId());
 
 		protocolRepository.save(new ProtocolEntity(occupation, ActionType.DELETE, loggedInUser));
 		occupationRepository.delete(occupation);
@@ -168,7 +168,7 @@ public class ReservationService extends UserAwareService {
 	public void deleteReservation(@PathVariable long id) {
 		ReservationEntity reservation = reservationRepository.findById(id)
 				.orElseThrow(() -> new NotFoundException(EntityType.RESERVATION, id));
-		UserEntity loggedInUser = verifyIsAdminOrTrainerOrSelf(reservation.getUser().getId());
+		UserEntity loggedInUser = verifyCanDelete(reservation.getUser().getId());
 
 		occupationRepository.findByReservationId(id).forEach(o -> this.deleteOccupation(o, loggedInUser));
 
@@ -314,12 +314,12 @@ public class ReservationService extends UserAwareService {
 		return occupation;
 	}
 
-	private UserEntity verifyIsAdminOrTrainerOrSelf(long userId) {
+	private UserEntity verifyCanDelete(long userId) {
 		UserEntity loggedInUser = getLoggedInUser();
-		if (!UserUtils.hasRoleOrSelf(loggedInUser, userId, UserRole.ADMIN, UserRole.TRAINER)) {
-			throw new AuthorizationException("not authorized");
+		if (is(loggedInUser, userId) || hasRole(loggedInUser, UserRole.ADMIN, UserRole.TRAINER)) {
+			return loggedInUser;
 		}
-		return loggedInUser;
-	}
+		throw new AuthorizationException("error_user_is_not_admin");
 
+	}
 }
