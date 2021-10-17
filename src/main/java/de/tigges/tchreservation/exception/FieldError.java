@@ -4,11 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * data describing an error concerning a field
- * 
- * @author johannes
- */
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor

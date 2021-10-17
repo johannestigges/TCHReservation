@@ -16,33 +16,29 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
-		// @formatter:off
 		http.authorizeRequests()
 				// allow some static resources, and some rest services without
 				// authentication
-				.antMatchers(
-						"/resources/**", 
-						"/css/**", 
-						"/index",
-						"/actuator/**", 
-						"/api-docs/**",
-						"/angular/**",
-						"/rest/reservation/getOccupations/**", 
-						"/rest/reservation/systemconfig/**",
-						"/rest/systemconfig/getone",
+				.antMatchers( //
+						"/resources/**", //
+						"/css/**", //
+						"/index", //
+						"/actuator/**", //
+						"/api-docs/**", //
+						"/angular/**", //
+						"/rest/reservation/getOccupations/**", //
+						"/rest/reservation/systemconfig/**", //
+						"/rest/systemconfig/getone", //
 						"/rest/user/me")
-					.permitAll()
+				.permitAll()
 				// all other rest services need authentication
 				.anyRequest().authenticated()
 				// login and logout
-				.and().formLogin()
-					.permitAll()
-				.and().logout()
-					.logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
-					.logoutSuccessUrl("/angular")
-					.permitAll()
+				.and().formLogin().permitAll() //
+				.and().logout() //
+				.logoutRequestMatcher(new AntPathRequestMatcher("/logout")) //
+				.logoutSuccessUrl("/angular").permitAll()
 				// use csrf the angular way
 				.and().csrf().csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
-		// @formatter:on
 	}
 }

@@ -36,6 +36,9 @@ public class ErrorDetails {
 	}
 
 	private String logFieldErrors() {
-		return fieldErrors.stream().map(f -> f.toString()).collect(Collectors.joining(","));
+		return fieldErrors //
+				.stream() //
+				.map(FieldError::toString) //
+				.collect(Collectors.joining(","));
 	}
 }

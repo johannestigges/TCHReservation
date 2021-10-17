@@ -5,16 +5,14 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 
-public class LocalDateJsonDeserializer extends JsonDeserializer<LocalDate> {
+import lombok.extern.log4j.Log4j2;
 
-	public static final Logger logger = LoggerFactory.getLogger(LocalDateJsonDeserializer.class);
+@Log4j2
+public class LocalDateJsonDeserializer extends JsonDeserializer<LocalDate> {
 
 	@Override
 	public LocalDate deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
@@ -28,7 +26,7 @@ public class LocalDateJsonDeserializer extends JsonDeserializer<LocalDate> {
 			return toLocalDate(Long.valueOf(stringValue));
 		}
 
-		logger.error("cannot deserialize local date " + p.getCurrentToken());
+		log.error("cannot deserialize local date {}", p.getCurrentToken());
 		throw new IllegalArgumentException("cannot deserialize token to Local Date " + p.getCurrentToken());
 	}
 
