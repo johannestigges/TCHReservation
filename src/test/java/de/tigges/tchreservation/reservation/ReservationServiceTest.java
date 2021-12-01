@@ -290,7 +290,7 @@ public class ReservationServiceTest extends ProtocolTest {
 		checkReservationRepeatDaily(8, 1, 2, 3);
 	}
 
-	private void checkReservationRepeatDaily(int hour, int repeatDays, int expectedOccupations, int... courts)
+	private Reservation checkReservationRepeatDaily(int hour, int repeatDays, int expectedOccupations, int... courts)
 			throws Exception {
 		Reservation reservation = createReservation(1, 1, hour, 2);
 		reservation.setRepeatUntil(reservation.getDate().plusDays(repeatDays));
@@ -299,6 +299,8 @@ public class ReservationServiceTest extends ProtocolTest {
 		Reservation savedReservation = getReservation(addReservation(reservation));
 		Iterable<OccupationEntity> occupations = occupationRepository.findByReservationId(savedReservation.getId());
 		assertThat(StreamSupport.stream(occupations.spliterator(), false)).hasSize(expectedOccupations);
+
+		return savedReservation;
 	}
 
 	@Test
@@ -500,6 +502,15 @@ public class ReservationServiceTest extends ProtocolTest {
 
 	@Test
 	@WithMockUser(username = "TRAINER")
+	public void updateOccupations() throws Exception {
+		Reservation reservation = checkReservationRepeatDaily(8, 3, 4, 2);
+		reservation.setCourts("3");
+		reservation.getOccupations().forEach(o -> o.setCourt(3));
+		checkReservation(updateReservation(reservation), reservation, ActionType.MODIFY);
+	}
+
+	@Test
+	@WithMockUser(username = "TRAINER")
 	public void updateOccupationNotFound() throws Exception {
 		Occupation occupation = new Occupation();
 		occupation.setId(0);
@@ -569,6 +580,10 @@ public class ReservationServiceTest extends ProtocolTest {
 
 	private ResultActions updateOccupation(Occupation occupation) throws Exception {
 		return performPut("/rest/reservation/occupation", occupation != null ? occupation : "");
+	}
+
+	private ResultActions updateReservation(Reservation reservation) throws Exception {
+		return performPut("/rest/reservation", reservation != null ? reservation : "");
 	}
 
 	private ResultActions deleteReservation(long id) throws Exception {

@@ -34,35 +34,38 @@ import de.tigges.tchreservation.user.model.UserRole;
 
 @RestController
 @RequestMapping("/rest/user")
-public class UserService extends UserAwareService {
+public class UserService {
 
+	private final UserRepository userRepository;
 	private final UserDeviceRepository userDeviceRepository;
 	private final ProtocolRepository protocolRepository;
 	private final PasswordEncoder encoder;
+	private final UserUtils userUtils;
 
 	public UserService(UserRepository userRepository, UserDeviceRepository userDeviceRepository,
-			ProtocolRepository protocolRepository) {
-		super(userRepository);
+			ProtocolRepository protocolRepository, UserUtils userUtils) {
+		this.userRepository = userRepository;
 		this.userDeviceRepository = userDeviceRepository;
 		this.protocolRepository = protocolRepository;
+		this.userUtils = userUtils;
 		encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
 	}
 
 	@GetMapping("/me")
 	public User getMyUser() {
-		return UserMapper.map(getLoggedInUser());
+		return UserMapper.map(userUtils.getLoggedInUser());
 	}
 
 	@GetMapping("/all")
 	public @ResponseBody Iterable<User> getAll() {
-		verifyHasRole(UserRole.ADMIN);
+		userUtils.verifyHasRole(UserRole.ADMIN);
 		Iterable<UserEntity> allUsers = userRepository.findAll();
 		return StreamSupport.stream(allUsers.spliterator(), false).map(UserMapper::map).collect(Collectors.toList());
 	}
 
 	@GetMapping("/{userId}")
 	public @ResponseBody Optional<User> get(@PathVariable Long userId) {
-		verifyHasRoleOrSelf(userId, UserRole.ADMIN);
+		userUtils.verifyHasRoleOrSelf(userId, UserRole.ADMIN);
 		return userRepository.findById(userId).map(UserMapper::map).map(this::addDevices);
 	}
 
@@ -70,7 +73,7 @@ public class UserService extends UserAwareService {
 	public @ResponseBody User getByDevice(@PathVariable Long deviceId) {
 		UserDevice device = getDevice(deviceId);
 		long userId = device.getUser().getId();
-		verifyHasRoleOrSelf(userId, UserRole.ADMIN);
+		userUtils.verifyHasRoleOrSelf(userId, UserRole.ADMIN);
 		User user = userRepository.findById(userId).map(UserMapper::map)
 				.orElseThrow(() -> new NotFoundException(EntityType.USER, userId));
 		return addDevices(user);
@@ -78,14 +81,14 @@ public class UserService extends UserAwareService {
 
 	@GetMapping("/device/{deviceId}")
 	public @ResponseBody UserDevice getDevice(@PathVariable Long deviceId) {
-		verifyHasRole(UserRole.ADMIN);
+		userUtils.verifyHasRole(UserRole.ADMIN);
 		return userDeviceRepository.findById(deviceId).map(UserDeviceMapper::map)
 				.orElseThrow(() -> new NotFoundException(EntityType.USER_DEVICE, deviceId));
 	}
 
 	@PostMapping("")
 	public @ResponseBody User add(@RequestBody User user) {
-		UserEntity loggedInUser = verifyHasRole(UserRole.ADMIN);
+		UserEntity loggedInUser = userUtils.verifyHasRole(UserRole.ADMIN);
 		checkUser(user);
 		String cryptedPassword = encoder.encode(user.getPassword());
 		user.setPassword(cryptedPassword);
@@ -103,7 +106,7 @@ public class UserService extends UserAwareService {
 
 	@PostMapping("/device")
 	public @ResponseBody UserDevice add(@RequestBody UserDevice userDevice) {
-		UserEntity loggedInUser = verifyHasRoleOrSelf(userDevice.getUser().getId(), UserRole.ADMIN);
+		UserEntity loggedInUser = userUtils.verifyHasRoleOrSelf(userDevice.getUser().getId(), UserRole.ADMIN);
 		UserDeviceEntity savedDevice = userDeviceRepository.save(UserDeviceMapper.map(userDevice));
 		protocolRepository.save(new ProtocolEntity(savedDevice, ActionType.CREATE, loggedInUser));
 		return UserDeviceMapper.map(savedDevice);
@@ -111,7 +114,7 @@ public class UserService extends UserAwareService {
 
 	@PutMapping("/setStatus/{userId}/{status}")
 	public @ResponseBody void setStatus(@PathVariable long userId, @PathVariable ActivationStatus status) {
-		UserEntity loggedInUser = verifyHasRole(UserRole.ADMIN);
+		UserEntity loggedInUser = userUtils.verifyHasRole(UserRole.ADMIN);
 		UserEntity dbUser = userRepository.findById(userId)
 				.orElseThrow(() -> new NotFoundException(EntityType.USER, userId));
 		UserEntity saveUser = new UserEntity(dbUser);
@@ -122,7 +125,7 @@ public class UserService extends UserAwareService {
 
 	@PutMapping("/device/setStatus/{deviceId}/{status}")
 	public @ResponseBody void setDeviceStatus(@PathVariable long deviceId, @PathVariable ActivationStatus status) {
-		UserEntity loggedInUser = verifyHasRole(UserRole.ADMIN);
+		UserEntity loggedInUser = userUtils.verifyHasRole(UserRole.ADMIN);
 		UserDeviceEntity device = userDeviceRepository.findById(deviceId)
 				.orElseThrow(() -> new NotFoundException(EntityType.USER_DEVICE, deviceId));
 		device.setStatus(status);
@@ -132,7 +135,7 @@ public class UserService extends UserAwareService {
 
 	@PutMapping("")
 	public @ResponseBody void update(@RequestBody User user) {
-		UserEntity loggedInUser = verifyHasRoleOrSelf(user.getId(), UserRole.ADMIN);
+		UserEntity loggedInUser = userUtils.verifyHasRoleOrSelf(user.getId(), UserRole.ADMIN);
 		UserEntity dbUser = userRepository.findById(user.getId())
 				.orElseThrow(() -> new NotFoundException(EntityType.USER, user.getId()));
 
@@ -142,7 +145,7 @@ public class UserService extends UserAwareService {
 			user.setPassword(encoder.encode(user.getPassword()));
 		}
 
-		if (!hasRole(loggedInUser, UserRole.ADMIN)) {
+		if (!UserUtils.hasRole(loggedInUser, UserRole.ADMIN)) {
 			if (user.getRole() != dbUser.getRole()) {
 				throw new AuthorizationException("user cannot modify role.");
 			}

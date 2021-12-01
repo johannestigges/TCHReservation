@@ -36,32 +36,23 @@ import de.tigges.tchreservation.reservation.model.OccupationMapper;
 import de.tigges.tchreservation.reservation.model.Reservation;
 import de.tigges.tchreservation.reservation.model.ReservationMapper;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
-import de.tigges.tchreservation.user.UserAwareService;
 import de.tigges.tchreservation.user.UserMapper;
+import de.tigges.tchreservation.user.UserUtils;
 import de.tigges.tchreservation.user.jpa.UserEntity;
-import de.tigges.tchreservation.user.jpa.UserRepository;
 import de.tigges.tchreservation.user.model.UserRole;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/rest/reservation")
-public class ReservationService extends UserAwareService {
+@RequiredArgsConstructor
+public class ReservationService {
 
 	private final ReservationRepository reservationRepository;
 	private final OccupationRepository occupationRepository;
 	private final ReservationSystemConfigRepository systemConfigRepository;
 	private final ProtocolRepository protocolRepository;
 	private final ReservationValidator reservationValidator;
-
-	public ReservationService(ReservationRepository reservationRepository, OccupationRepository occupationRepository,
-			ReservationSystemConfigRepository systemConfigRepository, UserRepository userRepository,
-			ProtocolRepository protocolRepository, ReservationValidator reservationChecker) {
-		super(userRepository);
-		this.reservationRepository = reservationRepository;
-		this.occupationRepository = occupationRepository;
-		this.systemConfigRepository = systemConfigRepository;
-		this.protocolRepository = protocolRepository;
-		this.reservationValidator = reservationChecker;
-	}
+	private final UserUtils userUtils;
 
 	/**
 	 * add one Reservation to the system
@@ -75,7 +66,7 @@ public class ReservationService extends UserAwareService {
 	@PostMapping("")
 	@ResponseStatus(HttpStatus.CREATED)
 	public @ResponseBody Reservation addReservation(@RequestBody Reservation reservation) {
-		UserEntity loggedInUser = getLoggedInUser();
+		UserEntity loggedInUser = userUtils.getLoggedInUser();
 
 		reservationValidator.validateReservation(reservation, loggedInUser);
 		reservation.setUser(UserMapper.map(loggedInUser));
@@ -111,7 +102,7 @@ public class ReservationService extends UserAwareService {
 		if (reservation.getOccupations().isEmpty()) {
 			createOccupations(reservation);
 		}
-		reservationValidator.validateOccupations(reservation, getLoggedInUser());
+		reservationValidator.validateOccupations(reservation, userUtils.getLoggedInUser());
 		return reservation;
 	}
 
@@ -129,7 +120,7 @@ public class ReservationService extends UserAwareService {
 		OccupationEntity dbOccupation = occupationRepository.findById(occupation.getId())
 				.orElseThrow(() -> new NotFoundException(EntityType.OCCUPATION, occupation.getId()));
 
-		UserEntity loggedInUser = getLoggedInUser();
+		UserEntity loggedInUser = userUtils.getLoggedInUser();
 
 		reservationValidator.validateOccupation(occupation, loggedInUser);
 
@@ -140,6 +131,45 @@ public class ReservationService extends UserAwareService {
 		protocolRepository.save(new ProtocolEntity(savedOccupation, dbOccupation, loggedInUser));
 
 		return OccupationMapper.map(savedOccupation);
+	}
+
+	/**
+	 * update one reservation with all included occupations
+	 * <p>
+	 * Occupations with belong to this reservation but are not included in this call
+	 * are not updated
+	 * 
+	 * @param reservation
+	 * @return saved reservation
+	 */
+	@PutMapping("")
+	@Transactional
+	public @ResponseBody Reservation updateReservation(@RequestBody Reservation reservation) {
+
+		ReservationEntity dbReservation = reservationRepository.findById(reservation.getId())
+				.orElseThrow(() -> new NotFoundException(EntityType.RESERVATION, reservation.getId()));
+
+		UserEntity loggedInUser = userUtils.getLoggedInUser();
+
+		reservationValidator.validateReservation(reservation, loggedInUser);
+
+		ReservationEntity savedReservation = reservationRepository.save(ReservationMapper.map(reservation));
+		protocolRepository.save(new ProtocolEntity(savedReservation, dbReservation, loggedInUser));
+		Reservation response = ReservationMapper.map(savedReservation);
+
+		Iterable<OccupationEntity> dbOccupations = occupationRepository.findByReservationId(reservation.getId());
+
+		reservation.getOccupations().forEach(occupation -> {
+			OccupationEntity dbOccupation = StreamSupport.stream(dbOccupations.spliterator(), false) //
+					.filter(o -> occupation.getId() == o.getId()).findAny() //
+					.orElseThrow(() -> new NotFoundException(EntityType.OCCUPATION, occupation.getId()));
+			occupation.setReservation(response);
+			OccupationEntity savedOccupation = occupationRepository.save(OccupationMapper.map(occupation));
+			protocolRepository.save(new ProtocolEntity(savedOccupation, dbOccupation, loggedInUser));
+			response.getOccupations().add(OccupationMapper.map(savedOccupation));
+		});
+
+		return response;
 	}
 
 	/**
@@ -156,6 +186,19 @@ public class ReservationService extends UserAwareService {
 
 		protocolRepository.save(new ProtocolEntity(occupation, ActionType.DELETE, loggedInUser));
 		occupationRepository.delete(occupation);
+	}
+
+	/**
+	 * remove multiple occupations
+	 * 
+	 * @param ids comma separated list of occupation ids
+	 */
+	@DeleteMapping("/occupations/{ids}")
+	@ResponseStatus(HttpStatus.OK)
+	public void deleteOccupations(@PathVariable String ids) {
+		for (String id : ids.split(",")) {
+			deleteOccupation(Long.valueOf(id.trim()));
+		}
 	}
 
 	/**
@@ -315,8 +358,10 @@ public class ReservationService extends UserAwareService {
 	}
 
 	private UserEntity verifyCanDelete(long userId) {
-		UserEntity loggedInUser = getLoggedInUser();
-		if (is(loggedInUser, userId) || hasRole(loggedInUser, UserRole.ADMIN, UserRole.TRAINER)) {
+		UserEntity loggedInUser = userUtils.getLoggedInUser();
+		if (userUtils.isActive(loggedInUser) //
+				&& (userUtils.is(loggedInUser, userId)
+						|| userUtils.hasRole(loggedInUser, UserRole.ADMIN, UserRole.TRAINER))) {
 			return loggedInUser;
 		}
 		throw new AuthorizationException("error_user_is_not_admin");
