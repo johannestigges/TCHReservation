@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tigges.tchreservation.exception.AuthorizationException;
 import de.tigges.tchreservation.exception.FoundException;
 import de.tigges.tchreservation.exception.NotFoundException;
 import de.tigges.tchreservation.protocol.ActionType;
@@ -27,28 +26,20 @@ import de.tigges.tchreservation.protocol.jpa.ProtocolRepository;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 import de.tigges.tchreservation.systemconfig.jpa.SystemConfigEntity;
 import de.tigges.tchreservation.systemconfig.jpa.SystemConfigRepository;
-import de.tigges.tchreservation.user.UserAwareService;
 import de.tigges.tchreservation.user.UserUtils;
 import de.tigges.tchreservation.user.jpa.UserEntity;
-import de.tigges.tchreservation.user.jpa.UserRepository;
-import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.UserRole;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/rest/systemconfig")
-public class SystemConfigService extends UserAwareService {
+@RequiredArgsConstructor
+public class SystemConfigService {
 
-	public final SystemConfigRepository repository;
-	public final SystemConfigValidator validator;
+	private final SystemConfigRepository repository;
+	private final SystemConfigValidator validator;
 	private final ProtocolRepository protocolRepository;
-
-	public SystemConfigService(SystemConfigRepository configRepository, SystemConfigValidator configValidator,
-			ProtocolRepository protocolRepository, UserRepository userResposRepository) {
-		super(userResposRepository);
-		this.repository = configRepository;
-		this.validator = configValidator;
-		this.protocolRepository = protocolRepository;
-	}
+	private final UserUtils userUtils;
 
 	@GetMapping("/getone/{id}")
 	Optional<ReservationSystemConfig> getOne(@PathVariable Long id) {
@@ -57,7 +48,7 @@ public class SystemConfigService extends UserAwareService {
 
 	@GetMapping("")
 	public List<ReservationSystemConfig> getAll() {
-		checkIsAdmin();
+		userUtils.verifyHasRole(UserRole.ADMIN);
 		return StreamSupport.stream(repository.findAll().spliterator(), false).map(SystemConfigMapper::map)
 				.collect(Collectors.toList());
 	}
@@ -65,7 +56,7 @@ public class SystemConfigService extends UserAwareService {
 	@PostMapping("")
 	@ResponseStatus(HttpStatus.CREATED)
 	public @ResponseBody ReservationSystemConfig add(@RequestBody ReservationSystemConfig config) {
-		UserEntity loggedInUser = checkIsAdmin();
+		UserEntity loggedInUser = userUtils.verifyHasRole(UserRole.ADMIN);
 		repository.findById(config.getId()).ifPresent(e -> {
 			throw new FoundException(EntityType.SYSTEM_CONFIGURATION, config.getId());
 		});
@@ -77,7 +68,7 @@ public class SystemConfigService extends UserAwareService {
 
 	@PutMapping("")
 	public @ResponseBody ReservationSystemConfig update(@RequestBody ReservationSystemConfig config) {
-		UserEntity loggedInUser = checkIsAdmin();
+		UserEntity loggedInUser = userUtils.verifyHasRole(UserRole.ADMIN);
 		repository.findById(config.getId())
 				.orElseThrow(() -> new NotFoundException(EntityType.SYSTEM_CONFIGURATION, config.getId()));
 		validator.validate(config, loggedInUser);
@@ -89,20 +80,11 @@ public class SystemConfigService extends UserAwareService {
 
 	@DeleteMapping("/{id}")
 	public @ResponseBody ReservationSystemConfig delete(@PathVariable long id) {
-		UserEntity loggedInUser = checkIsAdmin();
+		UserEntity loggedInUser = userUtils.verifyHasRole(UserRole.ADMIN);
 		SystemConfigEntity entity = repository.findById(id)
 				.orElseThrow(() -> new NotFoundException(EntityType.SYSTEM_CONFIGURATION, id));
 		protocolRepository.save(new ProtocolEntity(entity, ActionType.DELETE, loggedInUser));
 		repository.delete(entity);
 		return SystemConfigMapper.map(entity);
-	}
-
-	private UserEntity checkIsAdmin() {
-		UserEntity loggedInUser = getLoggedInUser();
-		if (!UserUtils.hasRole(loggedInUser.getRole(), UserRole.ADMIN)
-				|| !ActivationStatus.ACTIVE.equals(loggedInUser.getStatus())) {
-			throw new AuthorizationException("user not authorized");
-		}
-		return loggedInUser;
 	}
 }
