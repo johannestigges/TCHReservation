@@ -41,10 +41,12 @@ import de.tigges.tchreservation.user.UserUtils;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.model.UserRole;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 
 @RestController
 @RequestMapping("/rest/reservation")
 @RequiredArgsConstructor
+@Log4j2
 public class ReservationService {
 
 	private final ReservationRepository reservationRepository;
@@ -97,7 +99,7 @@ public class ReservationService {
 	 * @param reservation
 	 * @return checked Reservation or {@link BadRequestException}
 	 */
-	@GetMapping("/checkOccupations")
+	@PostMapping("/check")
 	public @ResponseBody Reservation checkOccupations(@RequestBody Reservation reservation) {
 		if (reservation.getOccupations().isEmpty()) {
 			createOccupations(reservation);
@@ -321,6 +323,7 @@ public class ReservationService {
 			repeatUntil = reservation.getRepeatUntil();
 		}
 		while (!occupationDate.isAfter(repeatUntil)) {
+			log.info("create occupation for {} until {} plus days {}", occupationDate, repeatUntil, plusDays);
 			Occupation occupation = createOccupation(reservation);
 			occupation.setDate(occupationDate);
 
