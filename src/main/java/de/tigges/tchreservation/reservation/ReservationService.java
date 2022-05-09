@@ -309,14 +309,14 @@ public class ReservationService {
 		int plusDays = 1;
 		if (reservation.getRepeatType() != null) {
 			switch (reservation.getRepeatType()) {
-			case daily:
-				plusDays = 1;
-				break;
-			case weekly:
-				plusDays = 7;
-				break;
-			default:
-				break;
+				case daily:
+					plusDays = 1;
+					break;
+				case weekly:
+					plusDays = 7;
+					break;
+				default:
+					break;
 			}
 		}
 		if (reservation.getRepeatUntil() != null) {
@@ -362,9 +362,9 @@ public class ReservationService {
 
 	private UserEntity verifyCanDelete(long userId) {
 		UserEntity loggedInUser = userUtils.getLoggedInUser();
-		if (userUtils.isActive(loggedInUser) //
-				&& (userUtils.is(loggedInUser, userId)
-						|| userUtils.hasRole(loggedInUser, UserRole.ADMIN, UserRole.TRAINER))) {
+		if (UserUtils.isActive(loggedInUser) //
+				&& (UserUtils.is(loggedInUser, userId)
+						|| UserUtils.hasRole(loggedInUser, UserRole.ADMIN, UserRole.TRAINER))) {
 			return loggedInUser;
 		}
 		throw new AuthorizationException("error_user_is_not_admin");
