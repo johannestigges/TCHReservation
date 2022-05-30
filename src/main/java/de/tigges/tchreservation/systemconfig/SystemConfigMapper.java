@@ -17,7 +17,8 @@ public class SystemConfigMapper {
 				entity.getMaxDaysReservationInFuture(), 
 				entity.getMaxDuration(),
 				entity.getOpeningHour(), 
-				entity.getClosingHour());
+				entity.getClosingHour(),
+				entity.getTitle());
 		// @formatter:on
 	}
 
@@ -31,6 +32,7 @@ public class SystemConfigMapper {
 		entity.setMaxDuration(c.getMaxDuration());
 		entity.setOpeningHour(c.getOpeningHour());
 		entity.setClosingHour(c.getClosingHour());
+		entity.setTitle(c.getTitle());
 		return entity;
 	}
 }

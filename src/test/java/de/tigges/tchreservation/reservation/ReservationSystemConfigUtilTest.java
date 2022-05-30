@@ -50,7 +50,7 @@ public class ReservationSystemConfigUtilTest {
 	private void checkShowTime(int openingHour, int durationUnitInMinutes, int row, String expectedTime) {
 		assertThat(
 				ReservationSystemConfigUtil.showTime(createConfig(openingHour, 22, durationUnitInMinutes, 1, 3), row))
-						.isEqualTo(expectedTime);
+				.isEqualTo(expectedTime);
 	}
 
 	private void checkGetRows(int openingHour, int closingHour, int durationUnitInMinutes, int expectedRows) {
@@ -61,7 +61,7 @@ public class ReservationSystemConfigUtilTest {
 	private void checkToMinutes(int openingHour, int durationUnitInMinutes, int row, int expectedMinutes) {
 		assertThat(
 				ReservationSystemConfigUtil.toMinutes(createConfig(openingHour, 23, durationUnitInMinutes, 1, 3), row))
-						.isEqualTo(expectedMinutes);
+				.isEqualTo(expectedMinutes);
 	}
 
 	private void checkToRow(int openingHour, int durationUnitInMinutes, String time, int expectedRows) {
@@ -72,6 +72,6 @@ public class ReservationSystemConfigUtilTest {
 	private ReservationSystemConfig createConfig(int openingHour, int closingHour, int durationUnitInMinutes,
 			int maxDaysReservationInFuture, int maxDuration) {
 		return new ReservationSystemConfig(1, "any", Arrays.asList("Platz 1"), durationUnitInMinutes, 1, maxDuration,
-				openingHour, closingHour);
+				openingHour, closingHour, "title");
 	}
 }

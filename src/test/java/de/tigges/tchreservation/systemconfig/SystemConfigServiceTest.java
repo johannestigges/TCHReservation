@@ -98,7 +98,7 @@ class SystemConfigServiceTest extends ProtocolTest {
 	@WithMockUser(username = "ADMIN")
 	void testAdd() throws Exception {
 		ReservationSystemConfig config = new ReservationSystemConfig(1, "unit test 1",
-				Arrays.asList("Platz 1", "Platz 2", "Platz 3", "Platz 4", "Platz 5", "Platz 6"), 30, 2, 3, 8, 22);
+				Arrays.asList("Platz 1", "Platz 2", "Platz 3", "Platz 4", "Platz 5", "Platz 6"), 30, 2, 3, 8, 22, null);
 		verifyEquals(config, performPost("/rest/systemconfig", config).andExpect(status().isCreated()));
 		verifyEquals(config, get(1L));
 	}
@@ -180,6 +180,7 @@ class SystemConfigServiceTest extends ProtocolTest {
 		e.setMaxDuration(3);
 		e.setOpeningHour(8);
 		e.setClosingHour(22);
+		e.setTitle("unit title " + id);
 		systemConfigRepository.save(e);
 		return e;
 	}
