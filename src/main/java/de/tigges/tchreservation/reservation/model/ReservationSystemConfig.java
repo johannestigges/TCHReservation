@@ -26,6 +26,4 @@ public class ReservationSystemConfig {
 	private int openingHour;
 
 	private int closingHour;
-
-	private String title;
 }

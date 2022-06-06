@@ -171,7 +171,6 @@ public class UserServiceTest extends ProtocolTest {
 		UserDevice device = UserDeviceMapper
 				.map(userDeviceRepository.save(createDeviceEntity(adminUser, 0, ActivationStatus.CREATED)));
 		device.setUser(UserMapper.map(adminUser));
-		System.out.println(device.getUser());
 		performPost("/rest/user/device", device).andExpect(status().isUnauthorized());
 	}
 

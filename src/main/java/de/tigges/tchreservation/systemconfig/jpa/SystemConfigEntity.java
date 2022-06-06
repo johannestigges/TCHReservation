@@ -42,9 +42,6 @@ public class SystemConfigEntity implements Protocollable {
 	@Column(nullable = false)
 	private int closingHour;
 
-	@Column(nullable = true)
-	private String title;
-
 	@Override
 	public Map<String, String> protocolFields() {
 		return protocolFields( //
@@ -55,8 +52,7 @@ public class SystemConfigEntity implements Protocollable {
 				"maxDaysReservationInFuture", Integer.toString(maxDaysReservationInFuture), //
 				"maxDuration", Integer.toString(maxDuration), //
 				"openingHour", Integer.toString(openingHour), //
-				"closingHour", Integer.toString(closingHour), //
-				"title", title);
+				"closingHour", Integer.toString(closingHour));
 	}
 
 	@Override

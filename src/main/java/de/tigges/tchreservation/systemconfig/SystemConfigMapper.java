@@ -1,6 +1,7 @@
 package de.tigges.tchreservation.systemconfig;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
@@ -12,13 +13,13 @@ public class SystemConfigMapper {
  		return new ReservationSystemConfig(
  				entity.getId(), 
  				entity.getName(), 
- 				Arrays.asList(entity.getCourts().split("\t")),
+ 				splitCourts(entity.getCourts()),
 				entity.getDurationUnitInMinutes(), 
 				entity.getMaxDaysReservationInFuture(), 
 				entity.getMaxDuration(),
 				entity.getOpeningHour(), 
-				entity.getClosingHour(),
-				entity.getTitle());
+				entity.getClosingHour()
+				);
 		// @formatter:on
 	}
 
@@ -32,7 +33,10 @@ public class SystemConfigMapper {
 		entity.setMaxDuration(c.getMaxDuration());
 		entity.setOpeningHour(c.getOpeningHour());
 		entity.setClosingHour(c.getClosingHour());
-		entity.setTitle(c.getTitle());
 		return entity;
+	}
+
+	private static List<String> splitCourts(String courts) {
+		return Arrays.asList(courts.split("[,\t][\t ]*"));
 	}
 }

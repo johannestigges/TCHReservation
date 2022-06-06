@@ -39,6 +39,8 @@ import de.tigges.tchreservation.reservation.model.Reservation;
 import de.tigges.tchreservation.reservation.model.ReservationMapper;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 import de.tigges.tchreservation.reservation.model.ReservationType;
+import de.tigges.tchreservation.systemconfig.jpa.SystemConfigEntity;
+import de.tigges.tchreservation.systemconfig.jpa.SystemConfigRepository;
 import de.tigges.tchreservation.user.UserMapper;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.model.ActivationStatus;
@@ -54,6 +56,8 @@ public class ReservationServiceTest extends ProtocolTest {
 	private ReservationRepository reservationRepository;
 	@Autowired
 	private OccupationRepository occupationRepository;
+	@Autowired
+	private SystemConfigRepository systemConfigRepository;
 
 	@Autowired
 	ObjectMapper objectMapper;
@@ -70,6 +74,42 @@ public class ReservationServiceTest extends ProtocolTest {
 		this.userRepository.deleteAll();
 		user = addUser(UserRole.REGISTERED);
 		trainer = addUser(UserRole.TRAINER);
+	}
+
+	@BeforeEach
+	public void initSystemConfig() throws Exception {
+		SystemConfigEntity system1 = new SystemConfigEntity();
+		system1.setId(1L);
+		system1.setName("Platzbelegung");
+		system1.setCourts("Platz 1, Platz 2\tPlatz 3,Platz 4,Platz 5, Platz 6");
+		system1.setDurationUnitInMinutes(30);
+		system1.setMaxDuration(3);
+		system1.setMaxDaysReservationInFuture(1);
+		system1.setOpeningHour(8);
+		system1.setClosingHour(22);
+		systemConfigRepository.save(system1);
+
+		SystemConfigEntity system2 = new SystemConfigEntity();
+		system2.setId(2L);
+		system2.setName("Hallenplätze");
+		system2.setCourts("Center Court\tNebenplatz");
+		system2.setDurationUnitInMinutes(60);
+		system2.setMaxDuration(2);
+		system2.setMaxDaysReservationInFuture(14);
+		system2.setOpeningHour(8);
+		system2.setClosingHour(22);
+		systemConfigRepository.save(system2);
+
+		SystemConfigEntity system3 = new SystemConfigEntity();
+		system3.setId(3L);
+		system3.setName("Testsystem für Unittests");
+		system3.setCourts("Denter Court");
+		system3.setDurationUnitInMinutes(30);
+		system3.setMaxDuration(3);
+		system3.setMaxDaysReservationInFuture(2);
+		system3.setOpeningHour(8);
+		system3.setClosingHour(10);
+		systemConfigRepository.save(system3);
 	}
 
 	@Test
