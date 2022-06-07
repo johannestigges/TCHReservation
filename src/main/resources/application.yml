@@ -24,22 +24,5 @@ server:
     key-alias: "tomcat"
     
 reservation:
-  config[0]:
-    id: 1
-    name: "Platzbelegung"
-    courts: [ "Platz 1", "Platz 2", "Platz 3", "Platz 4", "Platz 5", "Platz 6" ]
-    durationUnitInMinutes: 30
-    maxDaysReservationInFuture: 1
-    maxDuration: 3
-    openingHour: 8
-    closingHour: 22
-  config[1]:
-    id: 2
-    name: "Hallenplätze"
-    courts: [ "Center Court", "Nebenplatz" ]
-    durationUnitInMinutes: 60
-    maxDaysReservationInFuture: 14
-    maxDuration: 1
-    openingHour: 8
-    closingHour: 22
+  title: "Tennisclub Havixbeck e.V."
     
