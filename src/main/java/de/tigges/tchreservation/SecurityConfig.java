@@ -29,6 +29,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 						"/rest/reservation/getOccupations/**", //
 						"/rest/reservation/systemconfig/**", //
 						"/rest/systemconfig/getone", //
+						"/rest/application/properties", //
 						"/rest/user/me")
 				.permitAll()
 				// all other rest services need authentication
