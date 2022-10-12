@@ -24,6 +24,9 @@ public class SystemConfigEntity implements Protocollable {
 	@Column(nullable = false)
 	private String name;
 
+	@Column(nullable = true)
+	private String title;
+
 	@Column(nullable = false)
 	private String courts;
 
@@ -47,6 +50,7 @@ public class SystemConfigEntity implements Protocollable {
 		return protocolFields( //
 				"id", Long.toString(id), //
 				"name", name, //
+				"title", title, //
 				"courts", courts, //
 				"durationUnitInMinutes", Integer.toString(durationUnitInMinutes), //
 				"maxDaysReservationInFuture", Integer.toString(maxDaysReservationInFuture), //

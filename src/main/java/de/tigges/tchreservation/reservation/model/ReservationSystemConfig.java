@@ -15,6 +15,8 @@ public class ReservationSystemConfig {
 
 	private String name;
 
+	private String title;
+
 	private List<String> courts;
 
 	private int durationUnitInMinutes;

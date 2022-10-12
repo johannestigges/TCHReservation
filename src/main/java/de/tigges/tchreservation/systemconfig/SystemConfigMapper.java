@@ -13,6 +13,7 @@ public class SystemConfigMapper {
  		return new ReservationSystemConfig(
  				entity.getId(), 
  				entity.getName(), 
+				entity.getTitle(),
  				splitCourts(entity.getCourts()),
 				entity.getDurationUnitInMinutes(), 
 				entity.getMaxDaysReservationInFuture(), 
@@ -27,6 +28,7 @@ public class SystemConfigMapper {
 		SystemConfigEntity entity = new SystemConfigEntity();
 		entity.setId(c.getId());
 		entity.setName(c.getName());
+		entity.setTitle(c.getTitle());
 		entity.setCourts(c.getCourts().stream().collect(Collectors.joining("\t")));
 		entity.setDurationUnitInMinutes(c.getDurationUnitInMinutes());
 		entity.setMaxDaysReservationInFuture(c.getMaxDaysReservationInFuture());

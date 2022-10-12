@@ -97,7 +97,7 @@ class SystemConfigServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "ADMIN")
 	void testAdd() throws Exception {
-		ReservationSystemConfig config = new ReservationSystemConfig(1, "unit test 1",
+		ReservationSystemConfig config = new ReservationSystemConfig(1, "unit test 1", "title unit test 1",
 				Arrays.asList("Platz 1", "Platz 2", "Platz 3", "Platz 4", "Platz 5", "Platz 6"), 30, 2, 3, 8, 22);
 		verifyEquals(config, performPost("/rest/systemconfig", config).andExpect(status().isCreated()));
 		verifyEquals(config, get(1L));
@@ -162,6 +162,11 @@ class SystemConfigServiceTest extends ProtocolTest {
 	private void verifyEquals(ReservationSystemConfig c1, ReservationSystemConfig c2) {
 		assertThat(c1.getId()).isEqualTo(c2.getId());
 		assertThat(c1.getName()).isEqualTo(c2.getName());
+		if (c1.getTitle() == null) {
+			assertThat(c2.getTitle()).isNull();
+		} else {
+			assertThat(c1.getTitle()).isEqualTo(c2.getTitle());
+		}
 		assertThat(c1.getCourts()).hasSameElementsAs(c2.getCourts());
 		assertThat(c1.getDurationUnitInMinutes()).isEqualTo(c2.getDurationUnitInMinutes());
 		assertThat(c1.getMaxDaysReservationInFuture()).isEqualTo(c2.getMaxDaysReservationInFuture());

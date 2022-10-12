@@ -71,7 +71,8 @@ public class ReservationSystemConfigUtilTest {
 
 	private ReservationSystemConfig createConfig(int openingHour, int closingHour, int durationUnitInMinutes,
 			int maxDaysReservationInFuture, int maxDuration) {
-		return new ReservationSystemConfig(1, "any", Arrays.asList("Platz 1"), durationUnitInMinutes, 1, maxDuration,
+		return new ReservationSystemConfig(1, "any", null, Arrays.asList("Platz 1"), durationUnitInMinutes, 1,
+				maxDuration,
 				openingHour, closingHour);
 	}
 }
