@@ -28,7 +28,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 						"/angular/**", //
 						"/rest/reservation/getOccupations/**", //
 						"/rest/reservation/systemconfig/**", //
-						"/rest/systemconfig/getone", //
+						"/rest/systemconfig/getone/*", //
 						"/rest/application/properties", //
 						"/rest/user/me")
 				.permitAll()
