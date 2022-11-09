@@ -61,7 +61,7 @@ public class ProtocolEntity {
 	@Column(nullable = false)
 	private ActionType actionType;
 
-	@Column(length = 5000, nullable = false)
+	@Column(length = 5000, nullable = false, name="\"value\"")
 	private String value;
 
 	@Column(length = 5000, nullable = true)
