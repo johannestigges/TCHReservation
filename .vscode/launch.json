@@ -2,6 +2,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "Launch PasswortEncoder",
+            "request": "launch",
+            "mainClass": "de.tigges.tchreservation.PasswortEncoder",
+            "projectName": "TCHReservation"
+        },
+        {
+            "type": "java",
             "name": "Spring Boot-TchReservationApplication<TCHReservation>",
             "request": "launch",
             "cwd": "${workspaceFolder}",

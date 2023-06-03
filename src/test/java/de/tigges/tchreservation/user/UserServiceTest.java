@@ -44,7 +44,7 @@ public class UserServiceTest extends ProtocolTest {
 	private UserEntity registeredUser;
 
 	@BeforeEach
-	public void setup() throws Exception {
+	public void setup() {
 		this.protocolRepository.deleteAll();
 		this.userDeviceRepository.deleteAll();
 		this.userRepository.deleteAll();
@@ -56,13 +56,13 @@ public class UserServiceTest extends ProtocolTest {
 	@WithMockUser(username = "ADMIN")
 	public void addUser() throws Exception {
 		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE);
-		checkUser(performPost("/rest/user/", user).andExpect(status().isOk()), user, false, ActionType.CREATE);
+		checkUser(performPost("/rest/user", user).andExpect(status().isOk()), user, false, ActionType.CREATE);
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void addUserNull() throws Exception {
-		performPost("/rest/user/", "").andExpect(status().isBadRequest());
+		performPost("/rest/user", "").andExpect(status().isBadRequest());
 	}
 
 	@Test
@@ -70,7 +70,7 @@ public class UserServiceTest extends ProtocolTest {
 	public void addUserWithoutEmail() throws Exception {
 		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE);
 		user.setEmail(null);
-		performPost("/rest/user/", user).andExpect(status().isBadRequest());
+		performPost("/rest/user", user).andExpect(status().isBadRequest());
 	}
 
 	@Test
@@ -81,7 +81,7 @@ public class UserServiceTest extends ProtocolTest {
 			user.getDevices().add(createDevice(UserMapper.map(user), i, ActivationStatus.CREATED));
 		}
 
-		checkUser(performPost("/rest/user/", user).andExpect(status().isOk()), user, false, ActionType.CREATE);
+		checkUser(performPost("/rest/user", user).andExpect(status().isOk()), user, false, ActionType.CREATE);
 	}
 
 	@Test
@@ -96,7 +96,7 @@ public class UserServiceTest extends ProtocolTest {
 	@WithMockUser(username = "ADMIN")
 	public void setStatus() throws Exception {
 		UserEntity user = userRepository.save(createUserEntity(0, UserRole.REGISTERED, ActivationStatus.CREATED));
-		performPut("/rest/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER.toString())
+		performPut("/rest/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER)
 				.andExpect(status().isOk());
 		user.setStatus(ActivationStatus.VERIFIED_BY_USER);
 		user.setPassword(null); // don't check password
@@ -154,15 +154,15 @@ public class UserServiceTest extends ProtocolTest {
 	@WithMockUser(username = "REGISTERED")
 	public void addUserWithoutAuthorization() throws Exception {
 		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE);
-		performPost("/rest/user/", user).andExpect(status().isUnauthorized());
+		performPost("/rest/user", user).andExpect(status().isUnauthorized());
 	}
 
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void addUserDuplicate() throws Exception {
 		User user = createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE);
-		performPost("/rest/user/", user).andExpect(status().isOk());
-		performPost("/rest/user/", user).andExpect(status().isBadRequest());
+		performPost("/rest/user", user).andExpect(status().isOk());
+		performPost("/rest/user", user).andExpect(status().isBadRequest());
 	}
 
 	@Test
@@ -185,7 +185,7 @@ public class UserServiceTest extends ProtocolTest {
 	@Test
 	@WithMockUser(username = "ADMIN")
 	public void setStatusWithUserNotFound() throws Exception {
-		performPut("/rest/user/setStatus/666/" + ActivationStatus.VERIFIED_BY_USER.toString())
+		performPut("/rest/user/setStatus/666/" + ActivationStatus.VERIFIED_BY_USER)
 				.andExpect(status().isNotFound());
 	}
 
@@ -193,7 +193,7 @@ public class UserServiceTest extends ProtocolTest {
 	@WithMockUser(username = "REGISTERED")
 	public void setStatusWithoutAuthorization() throws Exception {
 		UserEntity user = userRepository.save(createUserEntity(0, UserRole.REGISTERED, ActivationStatus.CREATED));
-		performPut("/rest/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER.toString())
+		performPut("/rest/user/setStatus/" + user.getId() + "/" + ActivationStatus.VERIFIED_BY_USER)
 				.andExpect(status().isUnauthorized());
 	}
 
@@ -206,7 +206,7 @@ public class UserServiceTest extends ProtocolTest {
 				ActivationStatus.VERIFIED_BY_USER);
 		modifiedUser.setId(user.getId());
 
-		performPut("/rest/user/", modifiedUser).andExpect(status().isOk());
+		performPut("/rest/user", modifiedUser).andExpect(status().isOk());
 	}
 
 	@Test
@@ -218,34 +218,34 @@ public class UserServiceTest extends ProtocolTest {
 				ActivationStatus.VERIFIED_BY_USER);
 		modifiedUser.setId(user.getId());
 
-		performPut("/rest/user/", modifiedUser).andExpect(status().isOk());
+		performPut("/rest/user", modifiedUser).andExpect(status().isOk());
 	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void updateNotMe() throws Exception {
-		performPut("/rest/user/", adminUser).andExpect(status().isUnauthorized());
+		performPut("/rest/user", adminUser).andExpect(status().isUnauthorized());
 	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void updateMe() throws Exception {
 		registeredUser.setName("new name");
-		performPut("/rest/user/", registeredUser).andExpect(status().isOk());
+		performPut("/rest/user", registeredUser).andExpect(status().isOk());
 	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void updateMyRoleNotAuthorized() throws Exception {
 		registeredUser.setRole(UserRole.ADMIN);
-		performPut("/rest/user/", registeredUser).andExpect(status().isUnauthorized());
+		performPut("/rest/user", registeredUser).andExpect(status().isUnauthorized());
 	}
 
 	@Test
 	@WithMockUser(username = "REGISTERED")
 	public void updateMyStatusNotAuthorized() throws Exception {
 		registeredUser.setStatus(ActivationStatus.LOCKED);
-		performPut("/rest/user/", registeredUser).andExpect(status().isUnauthorized());
+		performPut("/rest/user", registeredUser).andExpect(status().isUnauthorized());
 	}
 
 	@Test
@@ -271,8 +271,8 @@ public class UserServiceTest extends ProtocolTest {
 			userList.add(userRepository.save(new UserEntity("email " + i, "name " + i, "password", UserRole.REGISTERED,
 					ActivationStatus.ACTIVE)));
 		}
-		for (int i = 0; i < userList.size(); i++) {
-			checkUser(performGet("/rest/user/" + userList.get(i).getId()).andExpect(status().isOk()), userList.get(i));
+		for (var user: userList) {
+			checkUser(performGet("/rest/user/" + user.getId()).andExpect(status().isOk()), user);
 		}
 	}
 
@@ -352,7 +352,7 @@ public class UserServiceTest extends ProtocolTest {
 
 	@Test
 	@WithMockUser(username = "ADMIN")
-	public void getUserByName() throws Exception {
+	public void getUserByName() {
 		UserEntity user = userRepository.save(createUserEntity(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
 		Optional<UserEntity> foundUser = userRepository.findByNameOrEmail(user.getName(), "");
 		assertThat(foundUser).isPresent();
@@ -361,7 +361,7 @@ public class UserServiceTest extends ProtocolTest {
 
 	@Test
 	@WithMockUser(username = "ADMIN")
-	public void getUserByEMail() throws Exception {
+	public void getUserByEMail() {
 		UserEntity user = userRepository.save(createUserEntity(0, UserRole.REGISTERED, ActivationStatus.ACTIVE));
 		Optional<UserEntity> foundUser = userRepository.findByNameOrEmail("", user.getEmail());
 		assertThat(foundUser).isPresent();
@@ -434,11 +434,11 @@ public class UserServiceTest extends ProtocolTest {
 				ActivationStatus.values()[i % 5]);
 	}
 
-	private ResultActions checkUser(ResultActions resultActions, UserEntity user) throws Exception {
-		return checkUser(resultActions, UserMapper.map(user), false, null);
+	private void checkUser(ResultActions resultActions, UserEntity user) throws Exception {
+		checkUser(resultActions, UserMapper.map(user), false, null);
 	}
 
-	private ResultActions checkUser(ResultActions resultActions, User user, boolean passwordEncoded,
+	private void checkUser(ResultActions resultActions, User user, boolean passwordEncoded,
 			ActionType actionType) throws Exception {
 		resultActions.andExpect(jsonPath("$.id").isNotEmpty()).andExpect(jsonPath("$.email").value(user.getEmail()))
 				.andExpect(jsonPath("$.name").value(user.getName()))
@@ -462,7 +462,6 @@ public class UserServiceTest extends ProtocolTest {
 		}
 
 		checkDevices(resultActions, user);
-		return resultActions;
 	}
 
 	private ResultActions checkDevices(ResultActions resultActions, User user) throws Exception {

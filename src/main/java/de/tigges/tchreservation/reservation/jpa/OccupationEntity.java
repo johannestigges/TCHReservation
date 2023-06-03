@@ -4,12 +4,12 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Map;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.protocol.Protocollable;
@@ -40,7 +40,7 @@ public class OccupationEntity implements Protocollable {
 	@Column(nullable = false)
 	private int court;
 
-	@Column(nullable = true)
+	@Column()
 	private int lastCourt;
 
 	@Column(nullable = false)

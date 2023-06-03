@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Spring Boot postgres" type="Application" factoryName="Application">
+    <envs>
+      <env name="spring.profiles.active" value="dev,postgres" />
+    </envs>
+    <option name="MAIN_CLASS_NAME" value="de.tigges.tchreservation.TchReservationApplication" />
+    <module name="TCHReservation" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

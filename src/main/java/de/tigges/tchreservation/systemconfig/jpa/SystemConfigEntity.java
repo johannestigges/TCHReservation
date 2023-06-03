@@ -2,10 +2,10 @@ package de.tigges.tchreservation.systemconfig.jpa;
 
 import java.util.Map;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.protocol.Protocollable;
@@ -24,7 +24,7 @@ public class SystemConfigEntity implements Protocollable {
 	@Column(nullable = false)
 	private String name;
 
-	@Column(nullable = true)
+	@Column()
 	private String title;
 
 	@Column(nullable = false)

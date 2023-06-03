@@ -1,20 +1,3 @@
-spring:
-  datasource:
-    url: "jdbc:mysql://localhost:3306/tch?serverTimezone=UTC"
-    username: springuser
-    password: springpassword
-  jpa:
-    hibernate:
-      ddl-auto: validate # validate update create create-drop
-
-logging:
-  level:
-    org:
-      springframework: error
-      #       web: DEBUG
-      #       web.filter.CommonsRequestLoggingFilter: error
-      hibernate: error
-
 server:
   port: "8443"
   ssl:

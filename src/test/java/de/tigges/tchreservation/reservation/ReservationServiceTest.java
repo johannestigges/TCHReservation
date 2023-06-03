@@ -20,7 +20,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.ResultActions;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,7 +48,6 @@ import de.tigges.tchreservation.user.model.UserRole;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = TchReservationApplication.class)
 @ActiveProfiles("test")
-@WebAppConfiguration
 public class ReservationServiceTest extends ProtocolTest {
 
 	@Autowired
@@ -66,8 +64,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	private UserEntity trainer;
 
 	@BeforeEach
-	public void setup() throws Exception {
-
+	public void setup() {
 		this.protocolRepository.deleteAll();
 		this.occupationRepository.deleteAll();
 		this.reservationRepository.deleteAll();
@@ -77,7 +74,7 @@ public class ReservationServiceTest extends ProtocolTest {
 	}
 
 	@BeforeEach
-	public void initSystemConfig() throws Exception {
+	public void initSystemConfig() {
 		SystemConfigEntity system1 = new SystemConfigEntity();
 		system1.setId(1L);
 		system1.setName("Platzbelegung");
@@ -646,7 +643,7 @@ public class ReservationServiceTest extends ProtocolTest {
 		return checkError(addReservationNoCheck(reservation), status, message);
 	}
 
-	private ResultActions addReservationWithOccupationFieldError(Reservation reservation, String... fieldErrors)
+	private void addReservationWithOccupationFieldError(Reservation reservation, String... fieldErrors)
 			throws Exception {
 		ResultActions resultActions = addReservationError(reservation, HttpStatus.BAD_REQUEST,
 				"Fehler beim Prüfen der Reservierung");
@@ -654,10 +651,9 @@ public class ReservationServiceTest extends ProtocolTest {
 		while (i < fieldErrors.length) {
 			assertOccupationFieldError(resultActions, i / 2, fieldErrors[i++], fieldErrors[i++]);
 		}
-		return resultActions;
 	}
 
-	private ResultActions addReservationWithFieldError(Reservation reservation, String... fieldErrors)
+	private void addReservationWithFieldError(Reservation reservation, String... fieldErrors)
 			throws Exception {
 		ResultActions resultActions = addReservationError(reservation, HttpStatus.BAD_REQUEST,
 				"Fehler beim Prüfen der Reservierung");
@@ -665,23 +661,22 @@ public class ReservationServiceTest extends ProtocolTest {
 		while (i < fieldErrors.length) {
 			assertFieldError(resultActions, i / 2, "reservation", fieldErrors[i++], fieldErrors[i++]);
 		}
-		return resultActions;
 	}
 
-	private ResultActions assertOccupationFieldError(ResultActions resultActions, int i, String field, String message)
+	private void assertOccupationFieldError(ResultActions resultActions, int i, String field, String message)
 			throws Exception {
-		return assertFieldError(resultActions, i, "occupation[0]", field, message);
+		assertFieldError(resultActions, i, "occupation[0]", field, message);
 	}
 
-	private ResultActions assertFieldError(ResultActions resultActions, int i, String entity, String field,
+	private void assertFieldError(ResultActions resultActions, int i, String entity, String field,
 			String message) throws Exception {
-		return resultActions.andExpect(jsonPath("$.fieldErrors[" + i + "].entity").value(entity))
+		resultActions.andExpect(jsonPath("$.fieldErrors[" + i + "].entity").value(entity))
 				.andExpect(jsonPath("$.fieldErrors[" + i + "].field").value(field))
 				.andExpect(jsonPath("$.fieldErrors[" + i + "].message").value(message));
 	}
 
-	private ResultActions addReservationOverlap(Reservation reservation, int nrOccupation) throws Exception {
-		return addReservationWithOccupationFieldError(reservation, "occupation",
+	private void addReservationOverlap(Reservation reservation, int nrOccupation) throws Exception {
+		addReservationWithOccupationFieldError(reservation, "occupation",
 				String.format("Reservierung am %tF %tR nicht möglich, weil Platz %s belegt ist.", reservation.getDate(),
 						reservation.getStart(), reservation.getCourts()));
 	}
@@ -689,27 +684,27 @@ public class ReservationServiceTest extends ProtocolTest {
 	private ResultActions checkReservation(ResultActions resultActions, Reservation reservation, ActionType actionType)
 			throws Exception {
 		switch (actionType) {
-		case CREATE:
-			resultActions.andExpect(status().isCreated()) //
-					.andExpect(jsonPath("$.id").isNotEmpty())
-					.andExpect(jsonPath("$.type").value(reservation.getType().ordinal()));
-			Reservation createdReservation = getResponseJson(resultActions, Reservation.class);
-			resultActions.andExpect(jsonPath("$.id").value(createdReservation.getId()));
-			checkProtocol(ReservationMapper.map(createdReservation), actionType);
-			break;
-		case MODIFY:
-			resultActions.andExpect(status().isOk());
-			checkProtocol(ReservationMapper.map(reservation), actionType);
-			break;
-		case DELETE:
-			resultActions.andExpect(status().isOk());
-			checkProtocol(ReservationMapper.map(reservation), actionType);
-			break;
+			case CREATE -> {
+				resultActions.andExpect(status().isCreated()) //
+						.andExpect(jsonPath("$.id").isNotEmpty())
+						.andExpect(jsonPath("$.type").value(reservation.getType().ordinal()));
+				Reservation createdReservation = getResponseJson(resultActions, Reservation.class);
+				resultActions.andExpect(jsonPath("$.id").value(createdReservation.getId()));
+				checkProtocol(ReservationMapper.map(createdReservation), actionType);
+			}
+			case MODIFY -> {
+				resultActions.andExpect(status().isOk());
+				checkProtocol(ReservationMapper.map(reservation), actionType);
+			}
+			case DELETE -> {
+				resultActions.andExpect(status().isOk());
+				checkProtocol(ReservationMapper.map(reservation), actionType);
+			}
 		}
 		return resultActions;
 	}
 
-	private ResultActions checkOccupation(ResultActions resultActions, Occupation occupation, ActionType actionType)
+	private void checkOccupation(ResultActions resultActions, Occupation occupation, ActionType actionType)
 			throws Exception {
 		switch (actionType) {
 		case CREATE:
@@ -726,17 +721,14 @@ public class ReservationServiceTest extends ProtocolTest {
 		default:
 			break;
 		}
-		return resultActions;
 	}
 
-	private ResultActions checkOccupations(ResultActions resultActions, List<Occupation> occupations) throws Exception {
+	private void checkOccupations(ResultActions resultActions, List<Occupation> occupations) throws Exception {
 		if (occupations == null || occupations.isEmpty()) {
 			resultActions.andExpect(jsonPath("$").isEmpty());
 		} else {
 			resultActions.andExpect(jsonPath("$", Matchers.hasSize(occupations.size())));
 		}
-		return resultActions;
-
 	}
 
 	private ResultActions checkError(ResultActions resultActions, HttpStatus status, String message) throws Exception {
