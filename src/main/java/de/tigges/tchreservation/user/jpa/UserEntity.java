@@ -4,12 +4,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
+import jakarta.persistence.*;
 
 import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.protocol.Protocollable;
@@ -38,7 +33,7 @@ public class UserEntity implements Protocollable {
 	}
 
 	@Id
-	@GeneratedValue
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private long id;
 
 	@Column(nullable = false)
