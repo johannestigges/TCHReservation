@@ -7,13 +7,9 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractAuthenticationFilterConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 
-/**
- * security configuration for the application
- */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-
     public static final String[] WHITELIST_URLS = {
             "/resources/**",
             "/css/**",
@@ -35,8 +31,8 @@ public class SecurityConfig {
                         .requestMatchers(WHITELIST_URLS).permitAll()
                         .anyRequest().authenticated())
                 .formLogin(AbstractAuthenticationFilterConfigurer::permitAll)
-                .csrf().disable();
-//                .csrf().csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
+                .csrf().disable()
+        ;
         return http.build();
     }
 }
