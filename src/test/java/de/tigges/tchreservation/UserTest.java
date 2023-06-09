@@ -1,5 +1,6 @@
 package de.tigges.tchreservation;
 
+import de.tigges.tchreservation.user.jpa.UserDeviceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tigges.tchreservation.user.UserUtils;
@@ -8,30 +9,20 @@ import de.tigges.tchreservation.user.jpa.UserRepository;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.UserRole;
 
-/**
- * base class for junit tests dealing with user data
- */
 public class UserTest extends ServiceTest {
 
 	@Autowired
-	protected UserUtils userService;
-	@Autowired
 	protected UserRepository userRepository;
+	@Autowired
+	protected UserDeviceRepository userDeviceRepository;
 
-	/**
-	 * add a user to database
-	 * 
-	 * @param role
-	 * @param status
-	 * @return inserted user
-	 */
 	public UserEntity addUser(UserRole role) {
 		// @formatter:off
 		return userRepository.save(new UserEntity(
-				"myemail@mydomain.de", 
-				role.name(), 
-				"mySecretPassword", 
-				role, 
+				"myemail@mydomain.de",
+				role.name(),
+				"mySecretPassword",
+				role,
 				ActivationStatus.ACTIVE));
 		// @formatter:on
 	}

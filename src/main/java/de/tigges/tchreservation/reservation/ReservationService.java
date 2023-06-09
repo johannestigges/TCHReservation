@@ -58,10 +58,10 @@ public class ReservationService {
 
 	/**
 	 * add one Reservation to the system
-	 * 
+	 * <p>
 	 * If the reservation has no Occupations, then all Occupations will be
 	 * generated.
-	 * 
+	 *
 	 * @param reservation
 	 * @return {@link ResponseBody}
 	 */
@@ -95,7 +95,7 @@ public class ReservationService {
 
 	/**
 	 * checks all Occupations of one Reservation
-	 * 
+	 *
 	 * @param reservation
 	 * @return checked Reservation or {@link BadRequestException}
 	 */
@@ -110,7 +110,7 @@ public class ReservationService {
 
 	/**
 	 * update one Occupation
-	 * 
+	 *
 	 * @param occupation
 	 * @return saved occupation or {@link BadRequestException} or
 	 *         {@link NotFoundException}
@@ -140,7 +140,7 @@ public class ReservationService {
 	 * <p>
 	 * Occupations with belong to this reservation but are not included in this call
 	 * are not updated
-	 * 
+	 *
 	 * @param reservation
 	 * @return saved reservation
 	 */
@@ -176,7 +176,7 @@ public class ReservationService {
 
 	/**
 	 * remove one Occupation
-	 * 
+	 *
 	 * @param id
 	 */
 	@DeleteMapping("/occupation/{id}")
@@ -192,20 +192,20 @@ public class ReservationService {
 
 	/**
 	 * remove multiple occupations
-	 * 
+	 *
 	 * @param ids comma separated list of occupation ids
 	 */
 	@DeleteMapping("/occupations/{ids}")
 	@ResponseStatus(HttpStatus.OK)
 	public void deleteOccupations(@PathVariable String ids) {
 		for (String id : ids.split(",")) {
-			deleteOccupation(Long.valueOf(id.trim()));
+			deleteOccupation(Long.parseLong(id));
 		}
 	}
 
 	/**
 	 * delete one Reservation with all Occupations
-	 * 
+	 *
 	 * @param id
 	 */
 	@DeleteMapping("/{id}")
@@ -225,8 +225,8 @@ public class ReservationService {
 	 * get one reservation by id
 	 * <p>
 	 * All occupations of the reservation are included
-	 * 
-	 * @param reservationId
+	 *
+	 * @param id reservationId
 	 * @return all reservations belonging to that user
 	 */
 	@GetMapping("/{id}")
@@ -243,7 +243,7 @@ public class ReservationService {
 
 	/**
 	 * get one occupation by id
-	 * 
+	 *
 	 * @param id
 	 * @return {@link Occupation}
 	 */
@@ -254,7 +254,7 @@ public class ReservationService {
 
 	/**
 	 * get all occupations of one day
-	 * 
+	 *
 	 * @return list of all occupations for one day
 	 */
 	@GetMapping("/getOccupations/{systemConfigId}/{date}")
@@ -276,8 +276,8 @@ public class ReservationService {
 
 	/**
 	 * get the reservation system configuration
-	 * 
-	 * @param systemId
+	 *
+	 * @param id systemId
 	 * @return
 	 */
 	@GetMapping("/systemconfig/{id}")
@@ -298,9 +298,8 @@ public class ReservationService {
 
 	/**
 	 * create all occupations for a reservation
-	 * 
+	 *
 	 * @param reservation
-	 * @return list of created occupations
 	 */
 	private void createOccupations(Reservation reservation) {
 
@@ -309,14 +308,8 @@ public class ReservationService {
 		int plusDays = 1;
 		if (reservation.getRepeatType() != null) {
 			switch (reservation.getRepeatType()) {
-				case daily:
-					plusDays = 1;
-					break;
-				case weekly:
-					plusDays = 7;
-					break;
-				default:
-					break;
+				case daily -> plusDays = 1;
+				case weekly -> plusDays = 7;
 			}
 		}
 		if (reservation.getRepeatUntil() != null) {

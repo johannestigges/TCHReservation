@@ -2,12 +2,7 @@ package de.tigges.tchreservation.user.jpa;
 
 import java.util.Map;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import jakarta.persistence.*;
 
 import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.protocol.Protocollable;
@@ -29,19 +24,19 @@ public class UserDeviceEntity implements Protocollable {
 	}
 
 	@Id
-	@GeneratedValue
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private long id;
 
 	@ManyToOne(optional = false)
 	private UserEntity user;
 
-	@Column(nullable = true)
+	@Column()
 	private String deviceId; // unique device id, such as ISME or MAC address
 
 	@Column(nullable = false)
 	private ActivationStatus status;
 
-	@Column(nullable = true)
+	@Column()
 	private String publicKey;
 
 	@Override

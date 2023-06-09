@@ -4,12 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Map;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import jakarta.persistence.*;
 
 import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.protocol.Protocollable;
@@ -22,7 +17,7 @@ import lombok.Data;
 public class OccupationEntity implements Protocollable {
 
 	@Id
-	@GeneratedValue
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private long id;
 
 	@Column(nullable = false)
@@ -40,7 +35,7 @@ public class OccupationEntity implements Protocollable {
 	@Column(nullable = false)
 	private int court;
 
-	@Column(nullable = true)
+	@Column()
 	private int lastCourt;
 
 	@Column(nullable = false)

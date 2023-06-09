@@ -4,12 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Map;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import jakarta.persistence.*;
 
 import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.protocol.Protocollable;
@@ -26,7 +21,7 @@ import lombok.NoArgsConstructor;
 public class ReservationEntity implements Protocollable {
 
 	@Id
-	@GeneratedValue
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private long id;
 
 	@Column(nullable = false)
@@ -50,26 +45,14 @@ public class ReservationEntity implements Protocollable {
 	@Column(nullable = false)
 	private ReservationType type;
 
-	@Column(nullable = true)
+	@Column()
 	private RepeatType repeatType;
 
-	@Column(nullable = true)
+	@Column()
 	private LocalDate repeatUntil;
 
 	@ManyToOne(optional = false)
 	private UserEntity user;
-
-	public ReservationEntity(long systemConfigId, UserEntity user, String text, String courts, LocalDate date,
-			LocalTime start, int duration, ReservationType type) {
-		setSystemConfigId(systemConfigId);
-		setUser(user);
-		setText(text);
-		setCourts(courts);
-		setDate(date);
-		setStart(start);
-		setDuration(duration);
-		setType(type);
-	}
 
 	@Override
 	public Map<String, String> protocolFields() {

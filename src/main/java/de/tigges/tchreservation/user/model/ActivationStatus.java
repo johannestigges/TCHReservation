@@ -7,10 +7,14 @@ import de.tigges.tchreservation.user.ActivationStatusException;
  * <p>
  * before using a device the user and the admin must verify it.
  * <p>
- * valid status changes CREATED -> VERIFIED_BY_USER user has activated
- * VERIFIED_BY_USER -> ACTIVE admin has activated ACTIVE -> LOCKED account is
- * locked ACTIVE -> REMOVED account inactive LOCKED -> ACTIVE admin has relocked
- * LOCKED -> REMOVED REMOVED-> ACTIVE admin has reactivated
+ * valid status changes:
+ * <li>CREATED -> VERIFIED_BY_USER user has activated
+ * <li>VERIFIED_BY_USER -> ACTIVE admin has activated
+ * <li>ACTIVE -> LOCKED account is locked
+ * <li>ACTIVE -> REMOVED account inactive
+ * <li>LOCKED -> ACTIVE admin has relocked
+ * <li>LOCKED -> REMOVED admin has removed
+ * <li>REMOVED-> ACTIVE admin has reactivated
  */
 public enum ActivationStatus {
 	CREATED, // created by the user, but not verified
@@ -36,8 +40,8 @@ public enum ActivationStatus {
 	private static void checkStatusChangeInRange(ActivationStatus from, ActivationStatus to, String id,
 			ActivationStatus check, ActivationStatus... range) {
 		if (to.equals(check)) {
-			for (int i = 0; i < range.length; i++) {
-				if (from.equals(range[i])) {
+			for ( var status: range) {
+				if (from.equals(status)) {
 					return;
 				}
 			}

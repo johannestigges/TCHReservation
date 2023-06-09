@@ -37,9 +37,10 @@ public class ProtocolServiceTest extends ProtocolTest {
 	private UserEntity admin;
 
 	@BeforeEach
-	public void setup() throws Exception {
+	public void setup() {
 
 		this.protocolRepository.deleteAll();
+		this.userDeviceRepository.deleteAll();
 		this.userRepository.deleteAll();
 		user = addUser(UserRole.REGISTERED);
 		admin = addUser(UserRole.ADMIN);
