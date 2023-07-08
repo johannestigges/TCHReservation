@@ -3,7 +3,6 @@ package de.tigges.tchreservation;
 import de.tigges.tchreservation.user.jpa.UserDeviceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tigges.tchreservation.user.UserUtils;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.jpa.UserRepository;
 import de.tigges.tchreservation.user.model.ActivationStatus;
