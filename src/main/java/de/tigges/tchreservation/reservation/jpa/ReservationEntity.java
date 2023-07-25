@@ -64,7 +64,8 @@ public class ReservationEntity implements Protocollable {
 				"duration", Integer.toString(duration), //
 				"courts", courts, //
 				"type", type.name(), //
-				"weekly repeat until", repeatUntil == null ? "" : repeatUntil.toString() //
+				"repeat type", repeatUntil == null ? "" : repeatType.name(), //
+				"repeat until", repeatUntil == null ? "" : repeatUntil.toString() //
 		);
 	}
 
