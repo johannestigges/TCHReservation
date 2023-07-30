@@ -43,7 +43,7 @@ public class ReservationValidator {
 	 * <li>data consistency checks
 	 * <li>authorization checks
 	 * <li>occupation overlap checks
-	 * 
+	 *
 	 * @param occupation
 	 * @param loggedInUser
 	 */
@@ -75,13 +75,15 @@ public class ReservationValidator {
 
 		if (date != null && start != null) {
 			if (start.getHour() < systemConfig.getOpeningHour()) {
-				addOccupationFieldError(errorDetails, "start", String.format(msg("error_start_hour_before_opening"),
-						start.getHour(), systemConfig.getOpeningHour()));
+				addOccupationFieldError(errorDetails, "start",
+						String.format(msg("error_start_hour_before_opening"),
+							start.getHour(), systemConfig.getOpeningHour()));
 			}
 
 			if (start.getHour() > systemConfig.getClosingHour()) {
-				addOccupationFieldError(errorDetails, "start", String.format(msg("error_start_hour_after_closing"),
-						start.getHour(), systemConfig.getClosingHour()));
+				addOccupationFieldError(errorDetails, "start",
+						String.format(msg("error_start_hour_after_closing"),
+							start.getHour(), systemConfig.getClosingHour()));
 			}
 
 			if (start.getMinute() != 0 && start.getMinute() % systemConfig.getDurationUnitInMinutes() != 0) {
@@ -123,9 +125,10 @@ public class ReservationValidator {
 		// user role checks
 		if (UserUtils.hasRole(loggedInUser.getRole(), UserRole.REGISTERED, UserRole.KIOSK, UserRole.TECHNICAL)) {
 			// only reservation type individual allowed
-			if (!ReservationType.INDIVIDUAL.equals(occupation.getType())) {
-				addOccupationFieldError(errorDetails, "type", String.format(msg("error_registered_cannot_add_type"),
-						loggedInUser.getName(), occupation.getType()));
+			if (!hasType(occupation,ReservationType.INDIVIDUAL)) {
+				addOccupationFieldError(errorDetails, "type",
+						String.format(msg("error_registered_cannot_add_type"),
+							loggedInUser.getName(), occupation.getType()));
 			}
 
 			if (occupation.getDuration() > systemConfig.getMaxDuration()) {
@@ -157,14 +160,16 @@ public class ReservationValidator {
 		case REGISTERED:
 		case TECHNICAL:
 			// only reservation type individual allowed
-			if (!ReservationType.INDIVIDUAL.equals(occupation.getType())) {
-				addOccupationFieldError(errorDetails, "type", String.format(msg("error_registered_cannot_add_type"),
-						loggedInUser.getName(), occupation.getType()));
+			if (!hasType(occupation,ReservationType.INDIVIDUAL)) {
+				addOccupationFieldError(errorDetails, "type",
+						String.format(msg("error_registered_cannot_add_type"),
+							loggedInUser.getName(), occupation.getType()));
 			}
 
 			if (occupation.getDuration() > systemConfig.getMaxDuration()) {
-				addOccupationFieldError(errorDetails, "duration", String.format(
-						msg("error_registered_cannot_add_duration"), loggedInUser.getName(), occupation.getDuration()));
+				addOccupationFieldError(errorDetails, "duration",
+						String.format(msg("error_registered_cannot_add_duration"),
+							loggedInUser.getName(), occupation.getDuration()));
 			}
 
 			// occupation in the past is not allowed
@@ -183,12 +188,17 @@ public class ReservationValidator {
 				addOccupationFieldError(errorDetails, "start", msg("error_date_too_far_in_future"));
 			}
 		case TEAMSTER:
-			if (!ReservationType.INDIVIDUAL.equals(occupation.getType())
-					&& !ReservationType.TRAINING.equals(occupation.getType())) {
-				addOccupationFieldError(errorDetails, "type", String.format(msg("error_registered_cannot_add_type"),
-						loggedInUser.getName(), occupation.getType()));
-
+			if (!hasType(occupation,ReservationType.INDIVIDUAL, ReservationType.TRAINING,ReservationType.TOURNAMENT)) {
+				addOccupationFieldError(errorDetails, "type",
+						String.format(msg("error_teamster_cannot_add_type"),
+							loggedInUser.getName(), occupation.getType()));
 			}
+			if (ReservationType.TRAINING.equals(occupation.getType()) && occupation.getDuration() > 4) {
+				addOccupationFieldError(errorDetails, "duration",
+						String.format(msg("error_teamster_cannot_add_duration"),
+							loggedInUser.getName(), occupation.getDuration()));
+			}
+
 			break;
 		case TRAINER:
 		case ADMIN:
@@ -226,7 +236,8 @@ public class ReservationValidator {
 
 		for (int court : reservation.getCourtsAsArray()) {
 			if (court < 1) {
-				addFieldError(errorDetails, "reservation", "court", String.format(msg("error_court_too_small"), court));
+				addFieldError(errorDetails, "reservation", "court",
+						String.format(msg("error_court_too_small"), court));
 			}
 			if (court > systemConfig.getCourts().size()) {
 				addFieldError(errorDetails, "reservation", "court",
@@ -245,7 +256,6 @@ public class ReservationValidator {
 		if (!errorDetails.getFieldErrors().isEmpty()) {
 			throw new InvalidDataException(errorDetails);
 		}
-
 	}
 
 	private boolean validateUser(ErrorDetails errorDetails, User user, UserEntity loggedInUser) {
@@ -253,7 +263,7 @@ public class ReservationValidator {
 			return true;
 		}
 		// @formatter:off
- 		if (!user.getName().equals(loggedInUser.getName()) 
+ 		if (!user.getName().equals(loggedInUser.getName())
  				|| !user.getStatus().equals(loggedInUser.getStatus())
 				|| !user.getRole().equals(loggedInUser.getRole())) {
  			return false;
@@ -338,5 +348,13 @@ public class ReservationValidator {
 
 	private String msg(String code, Object... args) {
 		return messageSource.getMessage(code, args, Locale.getDefault());
+	}
+	private boolean hasType(Occupation occupation, ReservationType... types) {
+		for (var expectedType: types) {
+			if (expectedType.equals(occupation.getType())) {
+				return true;
+			}
+		}
+		return false;
 	}
 }
