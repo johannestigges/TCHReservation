@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractAuthenticationFilterConfigurer;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -33,10 +32,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.formLogin(formLogin -> formLogin
-                        .loginPage("/#/login")
+                        .loginPage("/angular/#/login")
                         .loginProcessingUrl("/login")
-                        .defaultSuccessUrl("/")
+                        .defaultSuccessUrl("/angular/index.html")
                         .failureHandler(new AppAuthenticationFailureHandler()))
+                .logout(logout -> logout
+                        .logoutSuccessUrl("/angular/index.html"))
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers(WHITELIST_URLS).permitAll()
                         .anyRequest().authenticated())
