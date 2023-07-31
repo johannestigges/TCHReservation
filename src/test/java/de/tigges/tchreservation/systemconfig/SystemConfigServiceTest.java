@@ -1,3 +1,4 @@
+
 package de.tigges.tchreservation.systemconfig;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,14 +37,11 @@ class SystemConfigServiceTest extends ProtocolTest {
 	@Autowired
 	private SystemConfigRepository systemConfigRepository;
 
-	@Autowired
-	ObjectMapper objectMapper;
-
 	private UserEntity user;
 	private UserEntity admin;
 
 	@BeforeEach
-	public void setup() throws Exception {
+	public void setup() {
 		protocolRepository.deleteAll();
 		userRepository.deleteAll();
 		systemConfigRepository.deleteAll();
@@ -59,7 +57,7 @@ class SystemConfigServiceTest extends ProtocolTest {
 	}
 
 	@Test
-	@WithMockUser(username = "ADMIN")
+	@WithMockUser(username = "REGISTERED")
 	void testGetAll() throws Exception {
 		// @formatter:off
 		List<ReservationSystemConfig> configs = Arrays.asList(
@@ -68,12 +66,6 @@ class SystemConfigServiceTest extends ProtocolTest {
 				);
 		// @formatter:on
 		assertThat(responseAll(getAll().andExpect(status().is2xxSuccessful()))).containsAll(configs);
-	}
-
-	@Test
-	@WithMockUser(username = "REGISTERED")
-	void testGetAllNotAllowed() throws Exception {
-		performGet("/rest/systemconfig").andExpect(status().isUnauthorized());
 	}
 
 	@Test
@@ -138,7 +130,7 @@ class SystemConfigServiceTest extends ProtocolTest {
 
 	private ReservationSystemConfig get(long id) throws Exception {
 		return response(
-				performGet("/rest/systemconfig/getone/" + String.valueOf(id)).andExpect(status().is2xxSuccessful()));
+				performGet("/rest/systemconfig/getone/" + id).andExpect(status().is2xxSuccessful()));
 	}
 
 	private ResultActions getAll() throws Exception {
@@ -171,7 +163,7 @@ class SystemConfigServiceTest extends ProtocolTest {
 		assertThat(c1.getDurationUnitInMinutes()).isEqualTo(c2.getDurationUnitInMinutes());
 		assertThat(c1.getMaxDaysReservationInFuture()).isEqualTo(c2.getMaxDaysReservationInFuture());
 		assertThat(c1.getMaxDuration()).isEqualTo(c2.getMaxDuration());
-		assertThat(c1.getOpeningHour()).isEqualTo(c1.getOpeningHour());
+		assertThat(c1.getOpeningHour()).isEqualTo(c2.getOpeningHour());
 		assertThat(c1.getClosingHour()).isEqualTo(c2.getClosingHour());
 	}
 

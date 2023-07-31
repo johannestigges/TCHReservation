@@ -48,7 +48,6 @@ public class SystemConfigService {
 
 	@GetMapping("")
 	public List<ReservationSystemConfig> getAll() {
-		userUtils.verifyHasRole(UserRole.ADMIN);
 		return StreamSupport.stream(repository.findAll().spliterator(), false).map(SystemConfigMapper::map)
 				.collect(Collectors.toList());
 	}
