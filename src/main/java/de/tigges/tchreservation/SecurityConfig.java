@@ -36,12 +36,12 @@ public class SecurityConfig {
                         .loginProcessingUrl("/login")
                         .defaultSuccessUrl("/angular/index.html")
                         .failureHandler(new AppAuthenticationFailureHandler()))
-                .logout(logout -> logout
-                        .logoutSuccessUrl("/angular/index.html"))
+                .logout(logout -> logout.logoutSuccessUrl("/angular/index.html"))
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers(WHITELIST_URLS).permitAll()
                         .anyRequest().authenticated())
                 .csrf(csrf -> csrf.disable())
+                .rememberMe(rememberMe -> rememberMe.key("123123123"))
         ;
         return http.build();
     }
