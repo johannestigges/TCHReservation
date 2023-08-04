@@ -2,6 +2,7 @@ package de.tigges.tchreservation;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -14,6 +15,10 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    @Value("${login.remember-me.key}")
+    private String rememberMeKey;
+
     public static final String[] WHITELIST_URLS = {
             "/resources/**",
             "/css/**",
@@ -41,7 +46,7 @@ public class SecurityConfig {
                         .requestMatchers(WHITELIST_URLS).permitAll()
                         .anyRequest().authenticated())
                 .csrf(csrf -> csrf.disable())
-                .rememberMe(rememberMe -> rememberMe.key("123123123"))
+                .rememberMe(rememberMe -> rememberMe.key(rememberMeKey))
         ;
         return http.build();
     }

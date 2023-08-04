@@ -2,3 +2,7 @@ server:
    port: "8080"
    ssl:
       enabled: false
+
+login:
+   remember-me:
+      key: "fiufitfufvngdfsahgflkhjoljl"
