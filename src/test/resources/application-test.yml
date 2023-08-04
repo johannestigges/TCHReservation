@@ -17,6 +17,6 @@ logging:
       zaxxer:
         hikari: ERROR
 
-reservation:
-  title: junit title
-    
+login:
+  remember-me:
+    key: "test123"
