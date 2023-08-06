@@ -30,6 +30,7 @@ public class SecurityConfig {
             "/rest/reservation/getOccupations/**",
             "/rest/reservation/systemconfig/**",
             "/rest/systemconfig/getone/*",
+            "/rest/systemconfig/getall",
             "/rest/application/properties",
             "/rest/user/me"
     };

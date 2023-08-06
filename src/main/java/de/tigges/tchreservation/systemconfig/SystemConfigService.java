@@ -46,7 +46,7 @@ public class SystemConfigService {
 		return repository.findById(id).map(SystemConfigMapper::map);
 	}
 
-	@GetMapping("")
+	@GetMapping("/getall")
 	public List<ReservationSystemConfig> getAll() {
 		return StreamSupport.stream(repository.findAll().spliterator(), false).map(SystemConfigMapper::map)
 				.collect(Collectors.toList());
