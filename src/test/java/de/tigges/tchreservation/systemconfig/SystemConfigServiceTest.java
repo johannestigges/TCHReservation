@@ -134,7 +134,7 @@ class SystemConfigServiceTest extends ProtocolTest {
 	}
 
 	private ResultActions getAll() throws Exception {
-		return performGet("/rest/systemconfig").andExpect(status().is2xxSuccessful());
+		return performGet("/rest/systemconfig/getall").andExpect(status().is2xxSuccessful());
 	}
 
 	private ReservationSystemConfig response(ResultActions resultActions) throws Exception {

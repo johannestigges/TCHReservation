@@ -36,13 +36,13 @@ public class UserEntity implements Protocollable {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private long id;
 
-	@Column(nullable = false)
+	@Column()
 	private String email;
 
 	@Column(nullable = false)
 	private String name;
 
-	@Column()
+	@Column(nullable = false)
 	private String password;
 
 	@Column(nullable = false)

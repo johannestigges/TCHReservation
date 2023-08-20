@@ -16,16 +16,16 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 @EnableWebSecurity
 public class SecurityConfig {
 
+    private static final String ANGULAR_URL = "/angular/index.html";
     @Value("${login.remember-me.key}")
     private String rememberMeKey;
 
     public static final String[] WHITELIST_URLS = {
+            "/angular/**",
             "/resources/**",
             "/css/**",
-            "/index",
             "/actuator/**",
             "/api-docs/**",
-            "/angular/**",
             "/h2-console/**",
             "/rest/reservation/getOccupations/**",
             "/rest/reservation/systemconfig/**",
@@ -38,11 +38,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.formLogin(formLogin -> formLogin
-                        .loginPage("/angular/#/login")
+                        .loginPage(ANGULAR_URL)
                         .loginProcessingUrl("/login")
-                        .defaultSuccessUrl("/angular/index.html")
                         .failureHandler(new AppAuthenticationFailureHandler()))
-                .logout(logout -> logout.logoutSuccessUrl("/angular/index.html"))
+                .logout(logout -> logout.logoutSuccessUrl(ANGULAR_URL))
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers(WHITELIST_URLS).permitAll()
                         .anyRequest().authenticated())

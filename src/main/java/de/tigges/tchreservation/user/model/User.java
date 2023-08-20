@@ -3,6 +3,8 @@ package de.tigges.tchreservation.user.model;
 import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,14 +14,19 @@ public class User {
 
 	private long id;
 
+	@Nullable
 	private String email;
 
+	@Nonnull
 	private String name;
 
+	@Nullable
 	private String password;
 
+	@Nonnull
 	private UserRole role;
 
+	@Nonnull
 	private ActivationStatus status;
 
 	private Set<UserDevice> devices = new HashSet<>();
