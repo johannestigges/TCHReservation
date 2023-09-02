@@ -1,13 +1,12 @@
 package de.tigges.tchreservation.reservation;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.time.LocalTime;
-import java.util.Arrays;
-
+import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 import org.junit.jupiter.api.Test;
 
-import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
+import java.time.LocalTime;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ReservationSystemConfigUtilTest {
 
@@ -71,8 +70,8 @@ public class ReservationSystemConfigUtilTest {
 
 	private ReservationSystemConfig createConfig(int openingHour, int closingHour, int durationUnitInMinutes,
 			int maxDaysReservationInFuture, int maxDuration) {
-		return new ReservationSystemConfig(1, "any", null, Arrays.asList("Platz 1"), durationUnitInMinutes, 1,
+		return new ReservationSystemConfig(1, "any", null, List.of("Platz 1"), durationUnitInMinutes, 1,
 				maxDuration,
-				openingHour, closingHour);
+				openingHour, closingHour,null);
 	}
 }

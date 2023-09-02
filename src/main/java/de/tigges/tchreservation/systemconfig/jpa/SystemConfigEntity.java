@@ -1,16 +1,14 @@
 package de.tigges.tchreservation.systemconfig.jpa;
 
-import java.util.Map;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-
 import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.protocol.Protocollable;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 @Entity
 @Table(name = "systemconfig")
@@ -44,6 +42,9 @@ public class SystemConfigEntity implements Protocollable {
 
 	@Column(nullable = false)
 	private int closingHour;
+
+	@Transient
+	private Set<ReservationTypeEntity> types = new HashSet<>();
 
 	@Override
 	public Map<String, String> protocolFields() {
