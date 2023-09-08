@@ -59,11 +59,12 @@ public class SystemConfigValidator {
             addFieldError(errorDetails, "openingHour", msg("error_opening_hour_after_closing_hour"));
         }
 
+        /* not working yet
         if (config.getTypes() == null || config.getTypes().isEmpty()) {
             addFieldError(errorDetails, "reservationTypes", msg("error_no_reservation_types"));
         }
         config.getTypes().forEach(t -> checkType(t, errorDetails));
-
+        */
         if (!errorDetails.getFieldErrors().isEmpty()) {
             throw new InvalidDataException(errorDetails);
         }
