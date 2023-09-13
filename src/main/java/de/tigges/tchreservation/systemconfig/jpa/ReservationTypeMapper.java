@@ -26,7 +26,7 @@ public class ReservationTypeMapper {
                 entity.getName(), //
                 entity.getMaxDuration(), //
                 entity.getMaxDaysReservationInFuture(), //
-                entity.getMaxCancelInHours(), //
+                mapInteger(entity.getMaxCancelInHours(),0), //
                 mapRoles(entity.getRoles())
         );
     }
@@ -56,5 +56,9 @@ public class ReservationTypeMapper {
 
     public static String mapRoles(Collection<UserRole> roles) {
         return roles.stream().map(Enum::name).collect(Collectors.joining(","));
+    }
+
+    public static Integer mapInteger (Integer value, int defaultValue) {
+        return value != null ? value : defaultValue;
     }
 }
