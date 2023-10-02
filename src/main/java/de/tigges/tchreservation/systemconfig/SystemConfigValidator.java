@@ -39,7 +39,7 @@ public class SystemConfigValidator {
             throw new AuthorizationException(msg("error_not_authorized"));
         }
 
-        checkString(config.getName(), errorDetails, "name");
+        checkString(config.getName(), errorDetails, "name", MIN_LENGTH, MAX_LENGTH);
 
         if (config.getCourts() == null || config.getCourts().isEmpty()) {
             addFieldError(errorDetails, "courts", msg("error_null_not_allowed"));
@@ -47,7 +47,8 @@ public class SystemConfigValidator {
         if (config.getCourts().size() > MAX_COURTS) {
             addFieldError(errorDetails, "courts", msg("error_too_many_courts"));
         }
-        config.getCourts().forEach(court -> checkString(court, errorDetails, "court"));
+        config.getCourts().forEach(court ->
+                checkString(court, errorDetails, "court", MIN_LENGTH, MAX_LENGTH));
 
         checkInt(config.getDurationUnitInMinutes(), errorDetails, "durationUnitInMinutes", 30, 60);
         checkInt(config.getMaxDaysReservationInFuture(), errorDetails, "maxDaysReservationInFuture", 1, 365);
@@ -59,12 +60,11 @@ public class SystemConfigValidator {
             addFieldError(errorDetails, "openingHour", msg("error_opening_hour_after_closing_hour"));
         }
 
-        /* not working yet
         if (config.getTypes() == null || config.getTypes().isEmpty()) {
             addFieldError(errorDetails, "reservationTypes", msg("error_no_reservation_types"));
         }
         config.getTypes().forEach(t -> checkType(t, errorDetails));
-        */
+
         if (!errorDetails.getFieldErrors().isEmpty()) {
             throw new InvalidDataException(errorDetails);
         }
@@ -72,13 +72,13 @@ public class SystemConfigValidator {
 
     private void checkType(SystemConfigReservationType reservationType, ErrorDetails errorDetails) {
         checkInt(reservationType.getType(), errorDetails, "reservationtype.type", 1, 20);
-        checkString(reservationType.getName(), errorDetails, "reservationTypes");
+        checkString(reservationType.getName(), errorDetails, "reservationTypes", MIN_LENGTH, MAX_LENGTH);
     }
 
-    private void checkString(String value, ErrorDetails errorDetails, String field) {
-        if (value == null || value.length() < MIN_LENGTH) {
+    private void checkString(String value, ErrorDetails errorDetails, String field, int minLen, int maxLen) {
+        if (value == null || value.length() < minLen) {
             addFieldError(errorDetails, field, msg("error_null_not_allowed"));
-        } else if (value.length() > MAX_LENGTH) {
+        } else if (value.length() > maxLen) {
             addFieldError(errorDetails, field, msg("error_string_too_long"));
         }
     }

@@ -33,7 +33,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class SystemConfigValidatorTest {
 
     SystemConfigValidator validator;
-
     @Autowired
     MessageSource messageSource;
 
@@ -138,7 +137,7 @@ class SystemConfigValidatorTest {
                 "Öffnungszeit darf nicht später als Schließzeit sein");
     }
 
-    // @Test not working yet
+    @Test
     void noTypes() {
         assertFieldError(new ReservationSystemConfig(1, "res1", null, List.of("Pl1"), 8, 1, 2, 8, 22,
                         Collections.emptyList()),
@@ -146,7 +145,7 @@ class SystemConfigValidatorTest {
                 "Bitte Reservierungstypen hinzufügen");
     }
 
-    // @Test not working yet
+    @Test
     void typeWithoutName() {
         assertFieldError(new ReservationSystemConfig(1, "res1", null, List.of("Pl1"), 8, 1, 2, 8, 22,
                         List.of(SystemConfigReservationType.builder().type(1).build())),

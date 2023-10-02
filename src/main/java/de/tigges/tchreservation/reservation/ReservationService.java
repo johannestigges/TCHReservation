@@ -48,7 +48,6 @@ import lombok.extern.log4j.Log4j2;
 @RequiredArgsConstructor
 @Log4j2
 public class ReservationService {
-
 	private final ReservationRepository reservationRepository;
 	private final OccupationRepository occupationRepository;
 	private final ReservationSystemConfigRepository systemConfigRepository;
@@ -68,16 +67,17 @@ public class ReservationService {
 	@PostMapping("")
 	@ResponseStatus(HttpStatus.CREATED)
 	public @ResponseBody Reservation addReservation(@RequestBody Reservation reservation) {
-		UserEntity loggedInUser = userUtils.getLoggedInUser();
+		var loggedInUser = userUtils.getLoggedInUser();
+		var systemConfig = getSystemConfig(reservation.getSystemConfigId());
 
-		reservationValidator.validateReservation(reservation, loggedInUser);
+		reservationValidator.validateReservation(reservation, loggedInUser,systemConfig);
 		reservation.setUser(UserMapper.map(loggedInUser));
 
 		if (reservation.getOccupations().isEmpty()) {
 			createOccupations(reservation);
 		}
 
-		reservationValidator.validateOccupations(reservation, loggedInUser);
+		reservationValidator.validateOccupations(reservation, loggedInUser,systemConfig);
 
 		ReservationEntity savedReservation = reservationRepository.save(ReservationMapper.map(reservation));
 		protocolRepository.save(new ProtocolEntity(savedReservation, ActionType.CREATE, loggedInUser));
@@ -104,7 +104,9 @@ public class ReservationService {
 		if (reservation.getOccupations().isEmpty()) {
 			createOccupations(reservation);
 		}
-		reservationValidator.validateOccupations(reservation, userUtils.getLoggedInUser());
+		var loggedinUser = userUtils.getLoggedInUser();
+		var systemConfig = getSystemConfig(reservation.getSystemConfigId());
+		reservationValidator.validateOccupations(reservation, loggedinUser, systemConfig);
 		return reservation;
 	}
 
@@ -119,12 +121,13 @@ public class ReservationService {
 	@Transactional
 	public @ResponseBody Occupation updateOccupation(@RequestBody Occupation occupation) {
 
-		OccupationEntity dbOccupation = occupationRepository.findById(occupation.getId())
+		var dbOccupation = occupationRepository.findById(occupation.getId())
 				.orElseThrow(() -> new NotFoundException(EntityType.OCCUPATION, occupation.getId()));
 
-		UserEntity loggedInUser = userUtils.getLoggedInUser();
+		var loggedInUser = userUtils.getLoggedInUser();
+		var systemConfig = getSystemConfig(occupation.getSystemConfigId());
 
-		reservationValidator.validateOccupation(occupation, loggedInUser);
+		reservationValidator.validateOccupation(occupation, loggedInUser, systemConfig);
 
 		OccupationEntity occupationEntity = OccupationMapper.map(occupation);
 
@@ -148,12 +151,12 @@ public class ReservationService {
 	@Transactional
 	public @ResponseBody Reservation updateReservation(@RequestBody Reservation reservation) {
 
-		ReservationEntity dbReservation = reservationRepository.findById(reservation.getId())
+		var dbReservation = reservationRepository.findById(reservation.getId())
 				.orElseThrow(() -> new NotFoundException(EntityType.RESERVATION, reservation.getId()));
 
-		UserEntity loggedInUser = userUtils.getLoggedInUser();
-
-		reservationValidator.validateReservation(reservation, loggedInUser);
+		var loggedInUser = userUtils.getLoggedInUser();
+		var systemConfig = getSystemConfig(reservation.getSystemConfigId());
+		reservationValidator.validateReservation(reservation, loggedInUser, systemConfig);
 
 		ReservationEntity savedReservation = reservationRepository.save(ReservationMapper.map(reservation));
 		protocolRepository.save(new ProtocolEntity(savedReservation, dbReservation, loggedInUser));
