@@ -84,9 +84,15 @@ class SystemConfigValidatorTest {
         assertFieldError(new ReservationSystemConfig(100, "R", null, List.of("Court 1"), 30, 1, 2, 8, 22,
                         List.of(createType(1), createType(2), createType(3), createType(4))
                 ), "name",
-                "Bitte geben Sie einen Wert an");
+                "Bitte geben Sie mindestens 3 Zeichen ein");
     }
 
+    @Test void nameTooLong() {
+        assertFieldError(new ReservationSystemConfig(100, "1234567890123456789012345678901234567890123456789012345678901", null, List.of("Court 1"), 30, 1, 2, 8, 22,
+                        List.of(createType(1), createType(2), createType(3), createType(4))
+                ), "name",
+                "Bitte geben Sie höchstens 50 Zeichen ein");
+    }
     @Test
     void noCourts() {
         assertFieldError(new ReservationSystemConfig(1000, "res1", null, Collections.emptyList(), 30, 1, 2, 8, 22, List.of(createType(1), createType(2), createType(3), createType(4))
@@ -109,7 +115,7 @@ class SystemConfigValidatorTest {
         assertFieldError(new ReservationSystemConfig(1000, "res1", null, Arrays.asList("Pl1", "P2"), 30, 1, 2, 8, 22,
                         List.of(createType(1), createType(2), createType(3), createType(4))
                 ),
-                "court", "Bitte geben Sie einen Wert an");
+                "court", "Bitte geben Sie mindestens 3 Zeichen ein");
     }
 
     @Test

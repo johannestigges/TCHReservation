@@ -87,8 +87,8 @@ public class Reservation {
 		if (courtsString == null) {
 			return new int[0];
 		}
-		String[] c = courtsString.split(" ");
-		int[] courts = new int[c.length];
+		var c = courtsString.split(" ");
+		var courts = new int[c.length];
 		for (int i = 0; i < courts.length; i++) {
 			courts[i] = Integer.parseInt(c[i]);
 		}

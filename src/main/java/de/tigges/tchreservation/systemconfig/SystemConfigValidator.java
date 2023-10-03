@@ -25,7 +25,7 @@ public class SystemConfigValidator {
     private final MessageSource messageSource;
 
     public void validate(ReservationSystemConfig config, UserEntity loggedInUser) {
-        ErrorDetails errorDetails = new ErrorDetails(msg("error_validation_config"), null);
+        var errorDetails = new ErrorDetails(msg("error_validation_config"), null);
 
         if (config.getId() < 1) {
             throw new BadRequestException(msg("error_no_id"));
@@ -76,10 +76,12 @@ public class SystemConfigValidator {
     }
 
     private void checkString(String value, ErrorDetails errorDetails, String field, int minLen, int maxLen) {
-        if (value == null || value.length() < minLen) {
+        if (value == null || value.isEmpty()) {
             addFieldError(errorDetails, field, msg("error_null_not_allowed"));
+        } else if (value.length() < minLen) {
+            addFieldError(errorDetails, field, String.format(msg("error_string_too_short"),minLen));
         } else if (value.length() > maxLen) {
-            addFieldError(errorDetails, field, msg("error_string_too_long"));
+            addFieldError(errorDetails, field, String.format(msg("error_string_too_long"),maxLen));
         }
     }
 

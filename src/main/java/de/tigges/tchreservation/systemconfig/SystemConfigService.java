@@ -48,25 +48,29 @@ public class SystemConfigService {
 
     @GetMapping("/getone/{id}")
     Optional<ReservationSystemConfig> getOne(@PathVariable Long id) {
-        return systemConfigRepository.findById(id).map(SystemConfigMapper::map).map(this::setTypes);
+        return systemConfigRepository.findById(id)
+                .map(SystemConfigMapper::map)
+                .map(this::setTypes);
     }
 
     @GetMapping("/getall")
     public List<ReservationSystemConfig> getAll() {
         return StreamSupport.stream(systemConfigRepository.findAll().spliterator(), false)
-                .map(SystemConfigMapper::map).map(this::setTypes).toList();
+                .map(SystemConfigMapper::map)
+                .map(this::setTypes)
+                .toList();
     }
 
     @PostMapping("")
     @ResponseStatus(HttpStatus.CREATED)
     @Transactional
     public @ResponseBody ReservationSystemConfig add(@RequestBody ReservationSystemConfig config) {
-        UserEntity loggedInUser = userUtils.verifyHasRole(UserRole.ADMIN);
+        var loggedInUser = userUtils.verifyHasRole(UserRole.ADMIN);
         systemConfigRepository.findById(config.getId()).ifPresent(e -> {
             throw new FoundException(EntityType.SYSTEM_CONFIGURATION, config.getId());
         });
         validator.validate(config, loggedInUser);
-        SystemConfigEntity entity = systemConfigRepository.save(SystemConfigMapper.map(config));
+        var entity = systemConfigRepository.save(SystemConfigMapper.map(config));
         protocolRepository.save(new ProtocolEntity(entity, ActionType.CREATE, loggedInUser));
         insertTypes(loggedInUser, config.getTypes(),entity);
         return SystemConfigMapper.map(entity);
@@ -75,12 +79,12 @@ public class SystemConfigService {
     @PutMapping("")
     @Transactional
     public @ResponseBody ReservationSystemConfig update(@RequestBody ReservationSystemConfig config) {
-        UserEntity loggedInUser = userUtils.verifyHasRole(UserRole.ADMIN);
+        var loggedInUser = userUtils.verifyHasRole(UserRole.ADMIN);
         systemConfigRepository.findById(config.getId())
                 .orElseThrow(() -> new NotFoundException(EntityType.SYSTEM_CONFIGURATION, config.getId()));
         validator.validate(config, loggedInUser);
-        SystemConfigEntity entity = SystemConfigMapper.map(config);
-        SystemConfigEntity savedEntity = systemConfigRepository.save(SystemConfigMapper.map(config));
+        var entity = SystemConfigMapper.map(config);
+        var savedEntity = systemConfigRepository.save(SystemConfigMapper.map(config));
         protocolRepository.save(new ProtocolEntity(savedEntity, entity, loggedInUser));
         reservationTypeRepository.deleteBySystemConfigId(config.getId());
         insertTypes(loggedInUser, config.getTypes(), savedEntity);
@@ -90,8 +94,8 @@ public class SystemConfigService {
     @DeleteMapping("/{id}")
     @Transactional
     public @ResponseBody ReservationSystemConfig delete(@PathVariable long id) {
-        UserEntity loggedInUser = userUtils.verifyHasRole(UserRole.ADMIN);
-        SystemConfigEntity entity = systemConfigRepository.findById(id)
+        var loggedInUser = userUtils.verifyHasRole(UserRole.ADMIN);
+        var entity = systemConfigRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(EntityType.SYSTEM_CONFIGURATION, id));
         reservationTypeRepository.deleteBySystemConfigId(id);
         protocolRepository.save(new ProtocolEntity(entity, ActionType.DELETE, loggedInUser));
@@ -99,15 +103,16 @@ public class SystemConfigService {
         return SystemConfigMapper.map(entity);
     }
 
-    private ReservationSystemConfig setTypes(ReservationSystemConfig c) {
-        c.setTypes(getTypes(c.getId()));
-        return c;
+    private ReservationSystemConfig setTypes(ReservationSystemConfig systemConfig) {
+        systemConfig.setTypes(getTypes(systemConfig.getId()));
+        return systemConfig;
     }
 
     private List<SystemConfigReservationType> getTypes(long systemConfigId) {
         var entities = reservationTypeRepository.findBySystemConfigId(systemConfigId);
         return StreamSupport.stream(entities.spliterator(), false) //
-                .map(ReservationTypeMapper::map).toList();
+                .map(ReservationTypeMapper::map)
+                .toList();
     }
 
     private void insertTypes(UserEntity loggedInUser, Collection<SystemConfigReservationType> types, SystemConfigEntity systemConfig) {

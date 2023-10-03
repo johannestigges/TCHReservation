@@ -11,7 +11,7 @@ public class PasswortEncoder {
 			System.err.println("usage: PasswortEncoder <password>\n crypt password with bcrypt");
 			System.exit(1);
 		}
-		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-		System.out.println(String.format("encrypt password %s = %s", args[0], encoder.encode(args[0])));
+		var encoder = new BCryptPasswordEncoder();
+		System.out.printf("encrypt password %s = %s%n", args[0], encoder.encode(args[0]));
 	}
 }

@@ -24,7 +24,7 @@ public class SystemConfigMapper {
     }
 
     public static SystemConfigEntity map(ReservationSystemConfig c) {
-        SystemConfigEntity entity = new SystemConfigEntity();
+        var entity = new SystemConfigEntity();
         entity.setId(c.getId());
         entity.setName(c.getName());
         entity.setTitle(c.getTitle());

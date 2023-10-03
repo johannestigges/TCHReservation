@@ -9,31 +9,31 @@ public class UserMapper {
 		// avoid instantiation
 	}
 
-	public static User map(UserEntity e) {
-		if (e == null) {
+	public static User map(UserEntity userEntity) {
+		if (userEntity == null) {
 			return null;
 		}
-		User u = new User();
-		u.setId(e.getId());
-		u.setEmail(e.getEmail());
-		u.setName(e.getName());
+		var user = new User();
+		user.setId(userEntity.getId());
+		user.setEmail(userEntity.getEmail());
+		user.setName(userEntity.getName());
 		// don't set password!!
-		u.setRole(e.getRole());
-		u.setStatus(e.getStatus());
-		return u;
+		user.setRole(userEntity.getRole());
+		user.setStatus(userEntity.getStatus());
+		return user;
 	}
 
-	public static UserEntity map(User u) {
-		if (u == null) {
+	public static UserEntity map(User user) {
+		if (user == null) {
 			return null;
 		}
-		UserEntity e = new UserEntity();
-		e.setId(u.getId());
-		e.setEmail(u.getEmail());
-		e.setName(u.getName());
-		e.setPassword(u.getPassword());
-		e.setRole(u.getRole());
-		e.setStatus(u.getStatus());
-		return e;
+		var userEntity = new UserEntity();
+		userEntity.setId(user.getId());
+		userEntity.setEmail(user.getEmail());
+		userEntity.setName(user.getName());
+		userEntity.setPassword(user.getPassword());
+		userEntity.setRole(user.getRole());
+		userEntity.setStatus(user.getStatus());
+		return userEntity;
 	}
 }

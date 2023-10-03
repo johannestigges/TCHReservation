@@ -14,8 +14,11 @@ public class LocalTimeJsonSerializer extends JsonSerializer<LocalTime> {
 	@Override
 	public void serialize(LocalTime value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
 		if (value != null) {
-			gen.writeString(Long.toString(
-					value.atDate(LocalDate.ofEpochDay(0)).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
+			gen.writeString(Long.toString(value
+							.atDate(LocalDate.ofEpochDay(0))
+							.atZone(ZoneId.systemDefault())
+							.toInstant()
+							.toEpochMilli()));
 		}
 	}
 }

@@ -505,7 +505,7 @@ public class ReservationServiceTest extends ProtocolTest {
     @Test
     @WithMockUser(username = "REGISTERED")
     public void addReservationUnauthorizedDateInThePast() throws Exception {
-        Reservation reservation = createReservation(1, 1, 10, 2);
+        Reservation reservation = createReservation(2, 1, 10, 1);
         reservation.setDate(LocalDate.now().minusDays(1));
         addReservationWithOccupationFieldError(reservation, "date",
                 "Das Datum darf nicht in der Vergangenheit liegen.");
@@ -517,10 +517,10 @@ public class ReservationServiceTest extends ProtocolTest {
         int hour = LocalTime.now().getHour();
         ReservationSystemConfig systemConfig = getSystemConfig(1);
         if (hour > systemConfig.getOpeningHour() + 2 && hour < systemConfig.getClosingHour() - 1) {
-            Reservation reservation = createReservation(1, 1, hour - 2, 1);
+            Reservation reservation = createReservation(2, 1, hour - 2, 1);
             reservation.setDate(LocalDate.now());
-            addReservationWithOccupationFieldError(reservation, "time",
-                    "Die Startzeit darf nicht in der Vergangenheit liegen.");
+            addReservationWithOccupationFieldError(reservation, "date",
+                    "Das Datum darf nicht in der Vergangenheit liegen.");
         }
     }
 
@@ -562,7 +562,7 @@ public class ReservationServiceTest extends ProtocolTest {
     @Test
     @WithMockUser(username = "TRAINER")
     public void updateOccupation() throws Exception {
-        Reservation reservation = getResponseJson(addReservation(createReservation(1, 1, 12, 2)), Reservation.class);
+        Reservation reservation = getResponseJson(addReservation(createReservation(2, 1, 12, 2, 1)), Reservation.class);
         Occupation occupation = reservation.getOccupations().get(0);
         occupation.setDuration(1);
         checkOccupation(updateOccupation(occupation), occupation, ActionType.MODIFY);
@@ -627,9 +627,9 @@ public class ReservationServiceTest extends ProtocolTest {
     @Test
     @WithMockUser(username = "TRAINER")
     public void getOccupationsWithDate() throws Exception {
-        Reservation reservation = getReservation(addReservation(createReservation(1, 2, 12, 2)));
+        Reservation reservation = getReservation(addReservation(createReservation(2, 2, 12, 1)));
         long epochMilli = LocalDate.now().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
-        checkOccupations(performGet("/rest/reservation/getOccupations/1/" + epochMilli).andExpect(status().isOk()),
+        checkOccupations(performGet("/rest/reservation/getOccupations/2/" + epochMilli).andExpect(status().isOk()),
                 reservation.getOccupations());
     }
 

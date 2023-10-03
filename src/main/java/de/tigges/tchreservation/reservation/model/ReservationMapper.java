@@ -9,7 +9,7 @@ public class ReservationMapper {
 		if (e == null) {
 			return null;
 		}
-		Reservation r = new Reservation();
+		var r = new Reservation();
 		r.setId(e.getId());
 		r.setSystemConfigId(e.getSystemConfigId());
 		r.setText(e.getText());
@@ -28,7 +28,7 @@ public class ReservationMapper {
 		if (r == null) {
 			return null;
 		}
-		ReservationEntity e = new ReservationEntity();
+		var e = new ReservationEntity();
 		e.setId(r.getId());
 		e.setSystemConfigId(r.getSystemConfigId());
 		e.setText(r.getText());

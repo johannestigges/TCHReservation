@@ -24,7 +24,7 @@ public class ErrorDetails {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder("ErrorDetails: ");
+		var sb = new StringBuilder("ErrorDetails: ");
 		sb.append(message);
 		if (getDetails() != null) {
 			sb.append(" details: ").append(getDetails());
