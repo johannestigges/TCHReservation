@@ -71,7 +71,7 @@ public class SystemConfigValidator {
     }
 
     private void checkType(SystemConfigReservationType reservationType, ErrorDetails errorDetails) {
-        checkInt(reservationType.getType(), errorDetails, "reservationtype.type", 1, 20);
+        checkInt(reservationType.getType(), errorDetails, "reservationtype.type", 0, 20);
         checkString(reservationType.getName(), errorDetails, "reservationTypes", MIN_LENGTH, MAX_LENGTH);
     }
 
