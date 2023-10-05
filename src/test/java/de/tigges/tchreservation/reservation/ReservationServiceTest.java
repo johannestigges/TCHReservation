@@ -346,7 +346,7 @@ public class ReservationServiceTest extends ProtocolTest {
     }
 
     private void checkReservationMultipleCourts(int start, int expectedOccupations, int... courts) throws Exception {
-        Reservation reservation = createReservation(1, 1, start, 2);
+        Reservation reservation = createReservation(1, 1, start, 1, 1);
         reservation.setCourtsFromInteger(courts);
         Reservation savedReservation = getReservation(addReservation(reservation));
         Iterable<OccupationEntity> occupations = occupationRepository.findByReservationId(savedReservation.getId());
