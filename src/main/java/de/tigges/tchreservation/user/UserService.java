@@ -59,21 +59,25 @@ public class UserService {
     public @ResponseBody Iterable<User> getAll() {
         userUtils.verifyHasRole(UserRole.ADMIN);
         Iterable<UserEntity> allUsers = userRepository.findAll();
-        return StreamSupport.stream(allUsers.spliterator(), false).map(UserMapper::map).toList();
+        return StreamSupport.stream(allUsers.spliterator(), false)
+                .map(UserMapper::map)
+                .toList();
     }
 
     @GetMapping("/{userId}")
     public @ResponseBody Optional<User> get(@PathVariable Long userId) {
         userUtils.verifyHasRoleOrSelf(userId, UserRole.ADMIN);
-        return userRepository.findById(userId).map(UserMapper::map).map(this::addDevices);
+        return userRepository.findById(userId)
+                .map(UserMapper::map)
+                .map(this::addDevices);
     }
 
     @GetMapping("/getByDevice/{deviceId}")
     public @ResponseBody User getByDevice(@PathVariable Long deviceId) {
-        UserDevice device = getDevice(deviceId);
-        long userId = device.getUser().getId();
+        var device = getDevice(deviceId);
+        var userId = device.getUser().getId();
         userUtils.verifyHasRoleOrSelf(userId, UserRole.ADMIN);
-        User user = userRepository.findById(userId).map(UserMapper::map)
+        var user = userRepository.findById(userId).map(UserMapper::map)
                 .orElseThrow(() -> new NotFoundException(EntityType.USER, userId));
         return addDevices(user);
     }
@@ -87,12 +91,12 @@ public class UserService {
 
     @PostMapping("")
     public @ResponseBody User add(@RequestBody User user) {
-        UserEntity loggedInUser = userUtils.verifyHasRole(UserRole.ADMIN);
+        var loggedInUser = userUtils.verifyHasRole(UserRole.ADMIN);
         checkNewUser(user);
-        String cryptedPassword = encoder.encode(user.getPassword());
+        var cryptedPassword = encoder.encode(user.getPassword());
         user.setPassword(cryptedPassword);
-        UserEntity savedUserEntity = userRepository.save(UserMapper.map(user));
-        User savedUser = UserMapper.map(savedUserEntity);
+        var savedUserEntity = userRepository.save(UserMapper.map(user));
+        var savedUser = UserMapper.map(savedUserEntity);
         protocolRepository.save(new ProtocolEntity(savedUserEntity, ActionType.CREATE, loggedInUser));
         user.getDevices().forEach(device -> {
             device.setUser(savedUser);
@@ -105,18 +109,18 @@ public class UserService {
 
     @PostMapping("/device")
     public @ResponseBody UserDevice add(@RequestBody UserDevice userDevice) {
-        UserEntity loggedInUser = userUtils.verifyHasRoleOrSelf(userDevice.getUser().getId(), UserRole.ADMIN);
-        UserDeviceEntity savedDevice = userDeviceRepository.save(UserDeviceMapper.map(userDevice));
+        var loggedInUser = userUtils.verifyHasRoleOrSelf(userDevice.getUser().getId(), UserRole.ADMIN);
+        var savedDevice = userDeviceRepository.save(UserDeviceMapper.map(userDevice));
         protocolRepository.save(new ProtocolEntity(savedDevice, ActionType.CREATE, loggedInUser));
         return UserDeviceMapper.map(savedDevice);
     }
 
     @PutMapping("/setStatus/{userId}/{status}")
     public @ResponseBody void setStatus(@PathVariable long userId, @PathVariable ActivationStatus status) {
-        UserEntity loggedInUser = userUtils.verifyHasRole(UserRole.ADMIN);
-        UserEntity dbUser = userRepository.findById(userId)
+        var loggedInUser = userUtils.verifyHasRole(UserRole.ADMIN);
+        var dbUser = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(EntityType.USER, userId));
-        UserEntity saveUser = new UserEntity(dbUser);
+        var saveUser = new UserEntity(dbUser);
         saveUser.setStatus(status);
         userRepository.save(saveUser);
         protocolRepository.save(new ProtocolEntity(saveUser, dbUser, loggedInUser));
@@ -124,8 +128,8 @@ public class UserService {
 
     @PutMapping("/device/setStatus/{deviceId}/{status}")
     public @ResponseBody void setDeviceStatus(@PathVariable long deviceId, @PathVariable ActivationStatus status) {
-        UserEntity loggedInUser = userUtils.verifyHasRole(UserRole.ADMIN);
-        UserDeviceEntity device = userDeviceRepository.findById(deviceId)
+        var loggedInUser = userUtils.verifyHasRole(UserRole.ADMIN);
+        var device = userDeviceRepository.findById(deviceId)
                 .orElseThrow(() -> new NotFoundException(EntityType.USER_DEVICE, deviceId));
         device.setStatus(status);
         userDeviceRepository.save(device);
@@ -134,9 +138,9 @@ public class UserService {
 
     @PutMapping("")
     public @ResponseBody void update(@RequestBody User user) {
-        UserEntity loggedInUser = userUtils.verifyHasRoleOrSelf(user.getId(), UserRole.ADMIN);
+        var loggedInUser = userUtils.verifyHasRoleOrSelf(user.getId(), UserRole.ADMIN);
         checkUser(user);
-        UserEntity dbUser = userRepository.findById(user.getId())
+        var dbUser = userRepository.findById(user.getId())
                 .orElseThrow(() -> new NotFoundException(EntityType.USER, user.getId()));
 
         if (user.getPassword() == null || user.getPassword().isEmpty()) {
@@ -157,7 +161,7 @@ public class UserService {
             }
         }
 
-        UserEntity userEntity = UserMapper.map(user);
+        var userEntity = UserMapper.map(user);
         userRepository.save(userEntity);
         protocolRepository.save(new ProtocolEntity(userEntity, dbUser, loggedInUser));
     }
@@ -173,7 +177,8 @@ public class UserService {
     }
 
     private User addDevices(User user) {
-        userDeviceRepository.findByUserId(user.getId()).forEach(d -> user.getDevices().add(UserDeviceMapper.map(d)));
+        userDeviceRepository.findByUserId(user.getId())
+                .forEach(d -> user.getDevices().add(UserDeviceMapper.map(d)));
         return user;
     }
 
@@ -198,7 +203,7 @@ public class UserService {
         if (isEmpty(email)) {
             email = "INVALID EMAIL IGNORE IN SEARCH";
         }
-        Optional<UserEntity> dbUser = userRepository.findByNameOrEmail(user.getName(), email);
+        var dbUser = userRepository.findByNameOrEmail(user.getName(), email);
         if (dbUser.isPresent() && dbUser.get().getId() != user.getId()) {
             throw new BadRequestException(String.format("user with name '%s' and/or email '%s' already exists.",
                     user.getName(), user.getEmail()));

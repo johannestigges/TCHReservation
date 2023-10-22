@@ -21,9 +21,9 @@ public class LocalDateJsonDeserializer extends JsonDeserializer<LocalDate> {
 			return toLocalDate(p.getLongValue());
 		}
 
-		String stringValue = p.getText();
+		var stringValue = p.getText();
 		if (stringValue != null && !stringValue.isEmpty()) {
-			return toLocalDate(Long.valueOf(stringValue));
+			return toLocalDate(Long.parseLong(stringValue));
 		}
 
 		log.error("cannot deserialize local date {}", p.getCurrentToken());

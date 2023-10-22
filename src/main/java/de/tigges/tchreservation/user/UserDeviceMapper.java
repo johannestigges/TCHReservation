@@ -9,30 +9,29 @@ public class UserDeviceMapper {
 		// avoid instantiation
 	}
 
-	public static UserDevice map(UserDeviceEntity e) {
-		if (e == null) {
+	public static UserDevice map(UserDeviceEntity userDeviceEntity) {
+		if (userDeviceEntity == null) {
 			return null;
 		}
-		UserDevice u = new UserDevice();
-		u.setId(e.getId());
-		u.setUser(UserMapper.map(e.getUser()));
-		u.setDeviceId(e.getDeviceId());
-		u.setStatus(e.getStatus());
-		u.setPublicKey(e.getPublicKey());
-		return u;
-
+		var userDevice = new UserDevice();
+		userDevice.setId(userDeviceEntity.getId());
+		userDevice.setUser(UserMapper.map(userDeviceEntity.getUser()));
+		userDevice.setDeviceId(userDeviceEntity.getDeviceId());
+		userDevice.setStatus(userDeviceEntity.getStatus());
+		userDevice.setPublicKey(userDeviceEntity.getPublicKey());
+		return userDevice;
 	}
 
-	public static UserDeviceEntity map(UserDevice u) {
-		if (u == null) {
+	public static UserDeviceEntity map(UserDevice userDevice) {
+		if (userDevice == null) {
 			return null;
 		}
-		UserDeviceEntity e = new UserDeviceEntity();
-		e.setId(u.getId());
-		e.setUser(UserMapper.map(u.getUser()));
-		e.setDeviceId(u.getDeviceId());
-		e.setStatus(u.getStatus());
-		e.setPublicKey(u.getPublicKey());
-		return e;
+		var userDeviceEntity = new UserDeviceEntity();
+		userDeviceEntity.setId(userDevice.getId());
+		userDeviceEntity.setUser(UserMapper.map(userDevice.getUser()));
+		userDeviceEntity.setDeviceId(userDevice.getDeviceId());
+		userDeviceEntity.setStatus(userDevice.getStatus());
+		userDeviceEntity.setPublicKey(userDevice.getPublicKey());
+		return userDeviceEntity;
 	}
 }

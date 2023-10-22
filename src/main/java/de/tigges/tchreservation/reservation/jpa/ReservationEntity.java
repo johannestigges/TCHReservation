@@ -9,7 +9,6 @@ import jakarta.persistence.*;
 import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.protocol.Protocollable;
 import de.tigges.tchreservation.reservation.model.RepeatType;
-import de.tigges.tchreservation.reservation.model.ReservationType;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -43,7 +42,7 @@ public class ReservationEntity implements Protocollable {
 	private String courts;
 
 	@Column(nullable = false)
-	private ReservationType type;
+	private int type;
 
 	@Column()
 	private RepeatType repeatType;
@@ -63,7 +62,7 @@ public class ReservationEntity implements Protocollable {
 				"start", start.toString(), //
 				"duration", Integer.toString(duration), //
 				"courts", courts, //
-				"type", type.name(), //
+				"type", Integer.toString(type), //
 				"repeat type", repeatUntil == null ? "" : repeatType.name(), //
 				"repeat until", repeatUntil == null ? "" : repeatUntil.toString() //
 		);

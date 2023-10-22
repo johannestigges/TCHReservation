@@ -18,7 +18,7 @@ public class Occupation {
 	private int court;
 	private int lastCourt;
 
-	private ReservationType type;
+	private int type;
 
 	private long systemConfigId;
 

@@ -8,7 +8,6 @@ import jakarta.persistence.*;
 
 import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.protocol.Protocollable;
-import de.tigges.tchreservation.reservation.model.ReservationType;
 import lombok.Data;
 
 @Entity
@@ -39,7 +38,7 @@ public class OccupationEntity implements Protocollable {
 	private int lastCourt;
 
 	@Column(nullable = false)
-	private ReservationType type;
+	private int type;
 
 	@Column(nullable = false)
 	private long systemConfigId;
@@ -57,7 +56,7 @@ public class OccupationEntity implements Protocollable {
 				"start", start.toString(), //
 				"duration", Integer.toString(duration), //
 				"text", text, //
-				"type", type.name()//
+				"type", Integer.toString(type)//
 		);
 	}
 

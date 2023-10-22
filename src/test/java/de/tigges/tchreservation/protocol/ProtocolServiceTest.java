@@ -23,7 +23,6 @@ import de.tigges.tchreservation.ProtocolTest;
 import de.tigges.tchreservation.TchReservationApplication;
 import de.tigges.tchreservation.protocol.jpa.ProtocolEntity;
 import de.tigges.tchreservation.reservation.jpa.OccupationEntity;
-import de.tigges.tchreservation.reservation.model.ReservationType;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.model.UserRole;
 
@@ -81,7 +80,7 @@ public class ProtocolServiceTest extends ProtocolTest {
 		occupation.setStart(LocalTime.now().plus(Duration.ofMinutes(30)));
 		occupation.setSystemConfigId(1);
 		occupation.setText("junit protocol test");
-		occupation.setType(ReservationType.TOURNAMENT);
+		occupation.setType(3);
 		return occupation;
 	}
 }

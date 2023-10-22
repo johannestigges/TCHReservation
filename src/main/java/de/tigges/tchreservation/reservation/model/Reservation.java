@@ -23,7 +23,7 @@ public class Reservation {
 	private LocalTime start;
 	private int duration;
 	private String courts;
-	private ReservationType type;
+	private int type;
 	private RepeatType repeatType;
 	private LocalDate repeatUntil;
 
@@ -32,7 +32,7 @@ public class Reservation {
 	private List<Occupation> occupations;
 
 	public Reservation(long systemConfigId, User user, String text, String courts, LocalDate date, LocalTime start,
-			int duration, ReservationType type) {
+			int duration, int type) {
 		setSystemConfigId(systemConfigId);
 		setUser(user);
 		setText(text);
@@ -52,7 +52,7 @@ public class Reservation {
 
 	/**
 	 * set the courts
-	 * 
+	 *
 	 * @param courts
 	 */
 	public void setCourtsFromInteger(int... courts) {
@@ -61,7 +61,7 @@ public class Reservation {
 
 	/**
 	 * add courts to the list of courts
-	 * 
+	 *
 	 * @param courts
 	 */
 	public void addCourts(int... courts) {
@@ -70,7 +70,7 @@ public class Reservation {
 
 	/**
 	 * get the courts as int[]
-	 * 
+	 *
 	 * @return courts as int[]
 	 */
 	public int[] getCourtsAsArray() {
@@ -79,7 +79,7 @@ public class Reservation {
 
 	/**
 	 * convert courts from String to int[]
-	 * 
+	 *
 	 * @param courtsString
 	 * @return int[]
 	 */
@@ -87,8 +87,8 @@ public class Reservation {
 		if (courtsString == null) {
 			return new int[0];
 		}
-		String[] c = courtsString.split(" ");
-		int[] courts = new int[c.length];
+		var c = courtsString.split(" ");
+		var courts = new int[c.length];
 		for (int i = 0; i < courts.length; i++) {
 			courts[i] = Integer.parseInt(c[i]);
 		}
@@ -97,7 +97,7 @@ public class Reservation {
 
 	/**
 	 * convert courts from int... to String
-	 * 
+	 *
 	 * @param courts
 	 * @return courtsString
 	 */

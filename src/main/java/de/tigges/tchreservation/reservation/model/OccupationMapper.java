@@ -8,7 +8,7 @@ public class OccupationMapper {
 		if (o == null) {
 			return null;
 		}
-		OccupationEntity e = new OccupationEntity();
+		var e = new OccupationEntity();
 		e.setId(o.getId());
 		e.setText(o.getText());
 		e.setDate(o.getDate());
@@ -26,7 +26,7 @@ public class OccupationMapper {
 		if (e == null) {
 			return null;
 		}
-		Occupation o = new Occupation();
+		var o = new Occupation();
 		o.setId(e.getId());
 		o.setText(e.getText());
 		o.setDate(e.getDate());

@@ -26,7 +26,7 @@ public class ProtocolService {
 	@GetMapping("/{time}")
 	public Iterable<ProtocolEntity> getSince(@PathVariable Long time) {
 		userUtils.verifyHasRole(UserRole.ADMIN);
-		LocalDateTime localDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(time),
+		var localDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(time),
 				TimeZone.getDefault().toZoneId());
 		return protocolRepository.findByTimeGreaterThanOrderByIdDesc(localDateTime);
 	}

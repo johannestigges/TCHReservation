@@ -1,10 +1,10 @@
 package de.tigges.tchreservation.reservation.model;
 
-import java.util.List;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -28,4 +28,6 @@ public class ReservationSystemConfig {
 	private int openingHour;
 
 	private int closingHour;
+
+	private List<SystemConfigReservationType> types;
 }
