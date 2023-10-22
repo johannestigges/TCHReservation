@@ -5,15 +5,24 @@ import org.springframework.http.HttpStatus;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.io.Serial;
+import java.util.Collection;
+import java.util.List;
+
 @Getter
 @RequiredArgsConstructor
 public class RestException extends RuntimeException {
-	private static final long serialVersionUID = 1L;
+    @Serial
+    private static final long serialVersionUID = 1L;
 
-	private final HttpStatus status;
-	private final ErrorDetails errorDetails;
+    private final HttpStatus status;
+    private final Collection<ErrorMessage> errorMessages;
 
-	public RestException(HttpStatus status, String message) {
-		this(status, new ErrorDetails(message, null));
-	}
+    public RestException(HttpStatus status, String message) {
+        this(status, new ErrorMessage(message, null, null));
+    }
+
+    public RestException(HttpStatus status, ErrorMessage errorDetail) {
+        this(status, List.of(errorDetail));
+    }
 }

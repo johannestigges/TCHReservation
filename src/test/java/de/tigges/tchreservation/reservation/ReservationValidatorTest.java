@@ -19,8 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -149,7 +149,8 @@ class ReservationValidatorTest {
         checkOccupationFieldError(occupation, user, systemConfig, "error_duration_too_long", "duration");
     }
 
-    @Test void courtTooSmall() {
+    @Test
+    void courtTooSmall() {
         var user = createUser(UserRole.REGISTERED);
         var systemConfig = createSystemConfig();
         var type = createType(TYPE, UserRole.REGISTERED);
@@ -158,7 +159,9 @@ class ReservationValidatorTest {
         occupation.setCourt(0);
         checkOccupationFieldError(occupation, user, systemConfig, "error_court_too_small", "court");
     }
-    @Test void courtTooBig() {
+
+    @Test
+    void courtTooBig() {
         var user = createUser(UserRole.REGISTERED);
         var systemConfig = createSystemConfig();
         var type = createType(TYPE, UserRole.REGISTERED);
@@ -168,20 +171,23 @@ class ReservationValidatorTest {
         checkOccupationFieldError(occupation, user, systemConfig, "error_court_too_big", "court");
     }
 
-    @Test void userNotActive() {
+    @Test
+    void userNotActive() {
         var user = createUser(UserRole.REGISTERED);
         user.setStatus(ActivationStatus.LOCKED);
         var systemConfig = createSystemConfig();
         var type = createType(TYPE, UserRole.REGISTERED);
         systemConfig.getTypes().add(type);
         var occupation = createOccupation();
-        initMessageSource("error_user_not_active","Pfui! %s");
+        initMessageSource("error_user_not_active", "Pfui! %s");
         var exception = assertThrows(AuthorizationException.class,
-                () -> reservationValidator.validateOccupation(occupation,user,systemConfig));
-        assertEquals("Pfui! JUnit user", exception.getErrorDetails().getMessage());
+                () -> reservationValidator.validateOccupation(occupation, user, systemConfig));
+        assertTrue(exception.getErrorMessages().stream()
+                .anyMatch(e -> "Pfui! JUnit user".equals(e.getMessage())));
     }
 
-    @Test void userNotAllowed() {
+    @Test
+    void userNotAllowed() {
         var user = createUser(UserRole.REGISTERED);
         var systemConfig = createSystemConfig();
         var type = createType(TYPE, UserRole.ADMIN, UserRole.TEAMSTER, UserRole.TRAINER);
@@ -219,16 +225,17 @@ class ReservationValidatorTest {
 
     private void checkOccupationError(Occupation occupation, UserEntity user, ReservationSystemConfig systemConfig, String expectedError) {
         initMessageSource(expectedError, "Pfui!");
-        var exception = assertThrows(BadRequestException.class, () -> reservationValidator.validateOccupation(occupation, user, systemConfig));
-        assertEquals("Pfui!", exception.getErrorDetails().getMessage());
+        var exception = assertThrows(BadRequestException.class,
+                () -> reservationValidator.validateOccupation(occupation, user, systemConfig));
+        assertTrue(exception.getErrorMessages().stream().anyMatch(e -> "Pfui!".equals(e.getMessage())));
     }
 
     private void checkOccupationFieldError(Occupation occupation, UserEntity user, ReservationSystemConfig systemConfig, String expectedError, String expectedField) {
         initMessageSource(expectedError, "Pfui!");
-        var exception = assertThrows(BadRequestException.class, () -> reservationValidator.validateOccupation(occupation, user, systemConfig));
-        assertEquals("Pfui!", exception.getErrorDetails().getFieldErrors().get(0).getMessage());
-        assertEquals(expectedField, exception.getErrorDetails().getFieldErrors().get(0).getField());
-
+        var exception = assertThrows(BadRequestException.class,
+                () -> reservationValidator.validateOccupation(occupation, user, systemConfig));
+        assertTrue(exception.getErrorMessages()
+                .stream().anyMatch(e -> "Pfui!".equals(e.getMessage()) && expectedField.equals(e.getField())));
     }
 
     private Occupation createOccupation() {
