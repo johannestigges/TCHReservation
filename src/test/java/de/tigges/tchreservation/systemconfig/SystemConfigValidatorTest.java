@@ -154,10 +154,16 @@ class SystemConfigValidatorTest {
     @Test
     void typeWithoutName() {
         assertFieldError(new ReservationSystemConfig(1, "res1", null, List.of("Pl1"), 8, 1, 2, 8, 22,
-                        List.of(SystemConfigReservationType.builder().type(1).build())),
+                List.of(createType(1,null))),
                 "reservationTypes",
                 "Bitte geben Sie einen Wert an");
+    }
 
+    private static SystemConfigReservationType createType(int type, String name) {
+        return new SystemConfigReservationType(1, type, name, 0, 0, 0, Collections.emptyList());
+    }
+    private static SystemConfigReservationType createType(int type) {
+        return createType(type,"type " + type);
     }
 
     private static void assertFieldError(InvalidDataException exception, String field, String message) {
@@ -172,12 +178,5 @@ class SystemConfigValidatorTest {
 
     private static UserEntity admin() {
         return new UserEntity("egal", "admin", "", UserRole.ADMIN, ActivationStatus.ACTIVE);
-    }
-
-    private static SystemConfigReservationType createType(int type) {
-        return SystemConfigReservationType.builder()
-                .type(type)
-                .name("name " + type)
-                .build();
     }
 }

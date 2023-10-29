@@ -43,13 +43,13 @@ public class ReservationTypeMapper {
 
     public static ReservationTypeEntity map(SystemConfigReservationType type) {
         var entity = new ReservationTypeEntity();
-        entity.setId(type.getId());
-        entity.setType(type.getType());
-        entity.setName(type.getName());
-        entity.setMaxDuration(type.getMaxDuration());
-        entity.setMaxDaysReservationInFuture(type.getMaxDaysReservationInFuture());
-        entity.setMaxCancelInHours(type.getMaxCancelInHours());
-        entity.setRoles(mapRoles(type.getRoles()));
+        entity.setId(type.id());
+        entity.setType(type.type());
+        entity.setName(type.name());
+        entity.setMaxDuration(type.maxDuration());
+        entity.setMaxDaysReservationInFuture(type.maxDaysReservationInFuture());
+        entity.setMaxCancelInHours(type.maxCancelInHours());
+        entity.setRoles(mapRoles(type.roles()));
         return entity;
     }
 

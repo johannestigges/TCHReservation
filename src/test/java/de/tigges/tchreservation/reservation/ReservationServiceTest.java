@@ -176,8 +176,8 @@ public class ReservationServiceTest extends ProtocolTest {
     @Test
     @WithMockUser(username = "TRAINER")
     public void addReservationWithDifferentTimes() throws Exception {
-        addReservation(createReservation(1, 1, 10, 2));
-        addReservation(createReservation(1, 1, 11, 2));
+        addReservation(createReservation(2, 1, 10, 1));
+        addReservation(createReservation(2, 1, 11, 1));
     }
 
     @Test
@@ -204,8 +204,8 @@ public class ReservationServiceTest extends ProtocolTest {
     @Test
     @WithMockUser(username = "TRAINER")
     public void addReservationOverlap3() throws Exception {
-        addReservation(createReservation(1, 1, 11, 2));
-        addReservationOverlap(createReservation(1, 1, 10, 6), 0);
+        addReservation(createReservation(2, 1, 17, 1));
+        addReservationOverlap(createReservation(2, 1, 16, 3), 0);
     }
 
     @Test
@@ -515,7 +515,7 @@ public class ReservationServiceTest extends ProtocolTest {
     public void addReservationUnauthorizedTimeInThePast() throws Exception {
         int hour = LocalTime.now().getHour();
         ReservationSystemConfig systemConfig = getSystemConfig(1);
-        if (hour > systemConfig.getOpeningHour() + 2 && hour < systemConfig.getClosingHour() - 1) {
+        if (hour > systemConfig.openingHour() + 2 && hour < systemConfig.closingHour() - 1) {
             Reservation reservation = createReservation(2, 1, hour - 2, 1);
             reservation.setDate(LocalDate.now());
             addReservationWithOccupationFieldError(reservation, "date",

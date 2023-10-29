@@ -15,7 +15,7 @@ import org.springframework.context.MessageSource;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -50,15 +50,14 @@ class ReservationValidatorTest {
         var occupation = new Occupation();
         occupation.setSystemConfigId(SYSTEM_CONFIG_ID);
         occupation.setType(2);
-        var systemConfig = createSystemConfig();
+        var systemConfig = createSystemConfig(60);
         checkOccupationError(occupation, null, systemConfig, "error_invalid_reservation_type");
     }
 
     @Test
     void noText() {
         var user = createUser(UserRole.REGISTERED);
-        var systemConfig = createSystemConfig();
-        systemConfig.getTypes().add(createType(TYPE, UserRole.REGISTERED));
+        var systemConfig = createSystemConfig(60, createType(TYPE, 0,UserRole.REGISTERED));
         var occupation = createOccupation();
         occupation.setText(null);
         checkOccupationFieldError(occupation, user, systemConfig, "error_null_not_allowed", "text");
@@ -67,8 +66,7 @@ class ReservationValidatorTest {
     @Test
     void noDate() {
         var user = createUser(UserRole.REGISTERED);
-        var systemConfig = createSystemConfig();
-        systemConfig.getTypes().add(createType(TYPE, UserRole.REGISTERED));
+        var systemConfig = createSystemConfig(60, createType(TYPE, 0,UserRole.REGISTERED));
         var occupation = createOccupation();
         occupation.setDate(null);
         checkOccupationFieldError(occupation, user, systemConfig, "error_null_not_allowed", "date");
@@ -77,8 +75,7 @@ class ReservationValidatorTest {
     @Test
     void noStart() {
         var user = createUser(UserRole.REGISTERED);
-        var systemConfig = createSystemConfig();
-        systemConfig.getTypes().add(createType(TYPE, UserRole.REGISTERED));
+        var systemConfig = createSystemConfig(60, createType(TYPE, 0,UserRole.REGISTERED));
         var occupation = createOccupation();
         occupation.setStart(null);
         checkOccupationFieldError(occupation, user, systemConfig, "error_null_not_allowed", "start");
@@ -87,42 +84,36 @@ class ReservationValidatorTest {
     @Test
     void startBeforeOpeningHour() {
         var user = createUser(UserRole.REGISTERED);
-        var systemConfig = createSystemConfig();
-        systemConfig.getTypes().add(createType(TYPE, UserRole.REGISTERED));
+        var systemConfig = createSystemConfig(60, createType(TYPE, 0,UserRole.REGISTERED));
         var occupation = createOccupation();
-        occupation.setStart(LocalTime.of(systemConfig.getOpeningHour() - 1, 0));
+        occupation.setStart(LocalTime.of(systemConfig.openingHour() - 1, 0));
         checkOccupationFieldError(occupation, user, systemConfig, "error_start_hour_before_opening", "start");
     }
 
     @Test
     void startAfterClosingHour() {
         var user = createUser(UserRole.REGISTERED);
-        var systemConfig = createSystemConfig();
-        systemConfig.getTypes().add(createType(TYPE, UserRole.REGISTERED));
+        var systemConfig = createSystemConfig(60, createType(TYPE, 0,UserRole.REGISTERED));
         var occupation = createOccupation();
-        occupation.setStart(LocalTime.of(systemConfig.getClosingHour() + 1, 0));
+        occupation.setStart(LocalTime.of(systemConfig.closingHour() + 1, 0));
         checkOccupationFieldError(occupation, user, systemConfig, "error_start_hour_after_closing", "start");
     }
 
     @Test
     void startWrongMinutes() {
         var user = createUser(UserRole.REGISTERED);
-        var systemConfig = createSystemConfig();
-        systemConfig.setDurationUnitInMinutes(30);
-        systemConfig.getTypes().add(createType(TYPE, UserRole.REGISTERED));
+        var systemConfig = createSystemConfig(30, createType(TYPE, 0,UserRole.REGISTERED));
         var occupation = createOccupation();
-        occupation.setStart(LocalTime.of(systemConfig.getOpeningHour(), 20));
+        occupation.setStart(LocalTime.of(systemConfig.openingHour(), 20));
         checkOccupationFieldError(occupation, user, systemConfig, "error_start_time_minutes", "start");
     }
 
     @Test
     void durationAfterEnd() {
         var user = createUser(UserRole.REGISTERED);
-        var systemConfig = createSystemConfig();
-        systemConfig.setDurationUnitInMinutes(30);
-        systemConfig.getTypes().add(createType(TYPE, UserRole.REGISTERED));
+        var systemConfig = createSystemConfig(30, createType(TYPE, 0,UserRole.REGISTERED));
         var occupation = createOccupation();
-        occupation.setStart(LocalTime.of(systemConfig.getClosingHour() - 1, 30));
+        occupation.setStart(LocalTime.of(systemConfig.closingHour() - 1, 30));
         occupation.setDuration(2);
         checkOccupationFieldError(occupation, user, systemConfig, "error_start_time_plus_duration", "start");
     }
@@ -130,8 +121,7 @@ class ReservationValidatorTest {
     @Test
     void durationTooSmall() {
         var user = createUser(UserRole.REGISTERED);
-        var systemConfig = createSystemConfig();
-        systemConfig.getTypes().add(createType(TYPE, UserRole.REGISTERED));
+        var systemConfig = createSystemConfig(60, createType(TYPE, 0,UserRole.REGISTERED));
         var occupation = createOccupation();
         occupation.setDuration(0);
         checkOccupationFieldError(occupation, user, systemConfig, "error_duration_too_small", "duration");
@@ -139,11 +129,9 @@ class ReservationValidatorTest {
 
     @Test
     void durationTooLong() {
+        var type = createType(TYPE, 3,UserRole.REGISTERED);
+        var systemConfig = createSystemConfig(60, type);
         var user = createUser(UserRole.REGISTERED);
-        var systemConfig = createSystemConfig();
-        var type = createType(TYPE, UserRole.REGISTERED);
-        type.setMaxDuration(3);
-        systemConfig.getTypes().add(type);
         var occupation = createOccupation();
         occupation.setDuration(5);
         checkOccupationFieldError(occupation, user, systemConfig, "error_duration_too_long", "duration");
@@ -152,9 +140,7 @@ class ReservationValidatorTest {
     @Test
     void courtTooSmall() {
         var user = createUser(UserRole.REGISTERED);
-        var systemConfig = createSystemConfig();
-        var type = createType(TYPE, UserRole.REGISTERED);
-        systemConfig.getTypes().add(type);
+        var systemConfig = createSystemConfig(60, createType(TYPE, 0,UserRole.REGISTERED));
         var occupation = createOccupation();
         occupation.setCourt(0);
         checkOccupationFieldError(occupation, user, systemConfig, "error_court_too_small", "court");
@@ -163,9 +149,7 @@ class ReservationValidatorTest {
     @Test
     void courtTooBig() {
         var user = createUser(UserRole.REGISTERED);
-        var systemConfig = createSystemConfig();
-        var type = createType(TYPE, UserRole.REGISTERED);
-        systemConfig.getTypes().add(type);
+        var systemConfig = createSystemConfig(60, createType(TYPE, 0,UserRole.REGISTERED));
         var occupation = createOccupation();
         occupation.setCourt(10);
         checkOccupationFieldError(occupation, user, systemConfig, "error_court_too_big", "court");
@@ -175,9 +159,7 @@ class ReservationValidatorTest {
     void userNotActive() {
         var user = createUser(UserRole.REGISTERED);
         user.setStatus(ActivationStatus.LOCKED);
-        var systemConfig = createSystemConfig();
-        var type = createType(TYPE, UserRole.REGISTERED);
-        systemConfig.getTypes().add(type);
+        var systemConfig = createSystemConfig(60, createType(TYPE, 0,UserRole.REGISTERED));
         var occupation = createOccupation();
         initMessageSource("error_user_not_active", "Pfui! %s");
         var exception = assertThrows(AuthorizationException.class,
@@ -189,9 +171,7 @@ class ReservationValidatorTest {
     @Test
     void userNotAllowed() {
         var user = createUser(UserRole.REGISTERED);
-        var systemConfig = createSystemConfig();
-        var type = createType(TYPE, UserRole.ADMIN, UserRole.TEAMSTER, UserRole.TRAINER);
-        systemConfig.getTypes().add(type);
+        var systemConfig = createSystemConfig(60, createType(TYPE, 0,UserRole.ADMIN, UserRole.TEAMSTER, UserRole.TRAINER));
         var occupation = createOccupation();
         checkOccupationFieldError(occupation, user, systemConfig, "error_user_cannot_add_type", "type");
     }
@@ -204,23 +184,16 @@ class ReservationValidatorTest {
         return user;
     }
 
-    private ReservationSystemConfig createSystemConfig() {
-        var systemConfig = new ReservationSystemConfig();
-        systemConfig.setId(SYSTEM_CONFIG_ID);
-        systemConfig.setDurationUnitInMinutes(60);
-        systemConfig.setOpeningHour(8);
-        systemConfig.setClosingHour(22);
-        systemConfig.setCourts(List.of("1", "2", "3", "4", "5", "6"));
-        systemConfig.setTypes(new ArrayList<>());
-        return systemConfig;
+    private ReservationSystemConfig createSystemConfig(int durationUnits, SystemConfigReservationType... types) {
+        return new ReservationSystemConfig(
+                SYSTEM_CONFIG_ID, "", "", List.of("1", "2", "3", "4", "5", "6"),
+                durationUnits, 0, 0, 8, 22,
+                Arrays.asList(types)
+        );
     }
 
-    private SystemConfigReservationType createType(int type, UserRole... roles) {
-        var reservationType = new SystemConfigReservationType();
-        reservationType.setType(type);
-        reservationType.setName("Type" + type);
-        reservationType.setRoles(List.of(roles));
-        return reservationType;
+    private SystemConfigReservationType createType(int type, int maxDuration, UserRole... roles) {
+        return new SystemConfigReservationType(0, type, "Type" + type, maxDuration, 0, 0, List.of(roles));
     }
 
     private void checkOccupationError(Occupation occupation, UserEntity user, ReservationSystemConfig systemConfig, String expectedError) {

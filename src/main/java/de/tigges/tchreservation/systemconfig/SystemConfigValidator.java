@@ -29,7 +29,7 @@ public class SystemConfigValidator {
     public void validate(ReservationSystemConfig config, UserEntity loggedInUser) {
         var errorMessages = new ArrayList<ErrorMessage>();
 
-        if (config.getId() < 1) {
+        if (config.id() < 1) {
             throw new BadRequestException(msg("error_no_id"));
         }
 
@@ -41,31 +41,31 @@ public class SystemConfigValidator {
             throw new AuthorizationException(msg("error_not_authorized"));
         }
 
-        checkString(config.getName(), errorMessages, "name", MIN_LENGTH, MAX_LENGTH);
+        checkString(config.name(), errorMessages, "name", MIN_LENGTH, MAX_LENGTH);
 
-        if (config.getCourts() == null || config.getCourts().isEmpty()) {
+        if (config.courts() == null || config.courts().isEmpty()) {
             addFieldError(errorMessages, "courts", msg("error_null_not_allowed"));
         }
-        if (config.getCourts().size() > MAX_COURTS) {
+        if (config.courts().size() > MAX_COURTS) {
             addFieldError(errorMessages, "courts", msg("error_too_many_courts"));
         }
-        config.getCourts().forEach(court ->
+        config.courts().forEach(court ->
                 checkString(court, errorMessages, "court", MIN_LENGTH, MAX_LENGTH));
 
-        checkInt(config.getDurationUnitInMinutes(), errorMessages, "durationUnitInMinutes", 30, 60);
-        checkInt(config.getMaxDaysReservationInFuture(), errorMessages, "maxDaysReservationInFuture", 1, 365);
-        checkInt(config.getMaxDuration(), errorMessages, "maxDuration", 1, 20);
+        checkInt(config.durationUnitInMinutes(), errorMessages, "durationUnitInMinutes", 30, 60);
+        checkInt(config.maxDaysReservationInFuture(), errorMessages, "maxDaysReservationInFuture", 1, 365);
+        checkInt(config.maxDuration(), errorMessages, "maxDuration", 1, 20);
 
-        checkInt(config.getOpeningHour(), errorMessages, "openingHour", 0, 24);
-        checkInt(config.getClosingHour(), errorMessages, "closingHour", 0, 24);
-        if (config.getOpeningHour() >= config.getClosingHour()) {
+        checkInt(config.openingHour(), errorMessages, "openingHour", 0, 24);
+        checkInt(config.closingHour(), errorMessages, "closingHour", 0, 24);
+        if (config.openingHour() >= config.closingHour()) {
             addFieldError(errorMessages, "openingHour", msg("error_opening_hour_after_closing_hour"));
         }
 
-        if (config.getTypes() == null || config.getTypes().isEmpty()) {
+        if (config.types() == null || config.types().isEmpty()) {
             addFieldError(errorMessages, "reservationTypes", msg("error_no_reservation_types"));
         }
-        config.getTypes().forEach(t -> checkType(t, errorMessages));
+        config.types().forEach(t -> checkType(t, errorMessages));
 
         if (!errorMessages.isEmpty()) {
             throw new InvalidDataException(errorMessages);
@@ -73,8 +73,8 @@ public class SystemConfigValidator {
     }
 
     private void checkType(SystemConfigReservationType reservationType, Collection<ErrorMessage> errorMessages) {
-        checkInt(reservationType.getType(), errorMessages, "reservationtype.type", 0, 20);
-        checkString(reservationType.getName(), errorMessages, "reservationTypes", MIN_LENGTH, MAX_LENGTH);
+        checkInt(reservationType.type(), errorMessages, "reservationtype.type", 0, 20);
+        checkString(reservationType.name(), errorMessages, "reservationTypes", MIN_LENGTH, MAX_LENGTH);
     }
 
     private void checkString(String value, Collection<ErrorMessage> errorMessages, String field, int minLen, int maxLen) {
