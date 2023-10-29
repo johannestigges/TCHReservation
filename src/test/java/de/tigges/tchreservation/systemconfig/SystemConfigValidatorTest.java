@@ -3,7 +3,6 @@ package de.tigges.tchreservation.systemconfig;
 import de.tigges.tchreservation.TchReservationApplication;
 import de.tigges.tchreservation.exception.AuthorizationException;
 import de.tigges.tchreservation.exception.BadRequestException;
-import de.tigges.tchreservation.exception.FieldError;
 import de.tigges.tchreservation.exception.InvalidDataException;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 import de.tigges.tchreservation.reservation.model.SystemConfigReservationType;
@@ -22,10 +21,9 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = TchReservationApplication.class)
@@ -87,12 +85,14 @@ class SystemConfigValidatorTest {
                 "Bitte geben Sie mindestens 3 Zeichen ein");
     }
 
-    @Test void nameTooLong() {
+    @Test
+    void nameTooLong() {
         assertFieldError(new ReservationSystemConfig(100, "1234567890123456789012345678901234567890123456789012345678901", null, List.of("Court 1"), 30, 1, 2, 8, 22,
                         List.of(createType(1), createType(2), createType(3), createType(4))
                 ), "name",
                 "Bitte geben Sie höchstens 50 Zeichen ein");
     }
+
     @Test
     void noCourts() {
         assertFieldError(new ReservationSystemConfig(1000, "res1", null, Collections.emptyList(), 30, 1, 2, 8, 22, List.of(createType(1), createType(2), createType(3), createType(4))
@@ -154,17 +154,21 @@ class SystemConfigValidatorTest {
     @Test
     void typeWithoutName() {
         assertFieldError(new ReservationSystemConfig(1, "res1", null, List.of("Pl1"), 8, 1, 2, 8, 22,
-                        List.of(SystemConfigReservationType.builder().type(1).build())),
+                List.of(createType(1,null))),
                 "reservationTypes",
                 "Bitte geben Sie einen Wert an");
+    }
 
+    private static SystemConfigReservationType createType(int type, String name) {
+        return new SystemConfigReservationType(1, type, name, 0, 0, 0, Collections.emptyList());
+    }
+    private static SystemConfigReservationType createType(int type) {
+        return createType(type,"type " + type);
     }
 
     private static void assertFieldError(InvalidDataException exception, String field, String message) {
-        Optional<FieldError> fieldError = exception.getErrorDetails().getFieldErrors().stream()
-                .filter(e -> e.getField().equals(field)).findFirst();
-        assertThat(fieldError).isPresent();
-        assertThat(fieldError.get().getMessage()).isEqualTo(message);
+        assertTrue(exception.getErrorMessages().stream()
+                .anyMatch(e -> message.equals(e.getMessage()) && field.equals(e.getField())));
     }
 
     private void assertFieldError(ReservationSystemConfig config, String field, String message) {
@@ -174,12 +178,5 @@ class SystemConfigValidatorTest {
 
     private static UserEntity admin() {
         return new UserEntity("egal", "admin", "", UserRole.ADMIN, ActivationStatus.ACTIVE);
-    }
-
-    private static SystemConfigReservationType createType(int type) {
-        return SystemConfigReservationType.builder()
-                .type(type)
-                .name("name " + type)
-                .build();
     }
 }

@@ -18,8 +18,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 @Component
 @RequiredArgsConstructor
@@ -40,7 +39,7 @@ public class ReservationValidator {
      */
     public void validateOccupation(Occupation occupation, UserEntity loggedInUser, ReservationSystemConfig systemConfig) {
 
-        ErrorDetails errorDetails = new ErrorDetails(msg("error_validation_reservation"), null);
+        Set<ErrorMessage> errorMessages = new HashSet<>();
 
         // validate ReservationSystemConfig
         if (occupation.getSystemConfigId() <= 0) {
@@ -50,69 +49,69 @@ public class ReservationValidator {
 
         // validate text
         if (!StringUtils.hasText(occupation.getText())) {
-            addOccupationFieldError(errorDetails, "text", msg("error_null_not_allowed"));
+            addOccupationFieldError(errorMessages, "text", msg("error_null_not_allowed"));
         }
 
         // validate start date and time
         LocalDate date = occupation.getDate();
         if (date == null) {
-            addOccupationFieldError(errorDetails, "date", msg("error_null_not_allowed"));
+            addOccupationFieldError(errorMessages, "date", msg("error_null_not_allowed"));
         }
 
         LocalTime start = occupation.getStart();
         if (start == null) {
-            addOccupationFieldError(errorDetails, "start", msg("error_null_not_allowed"));
+            addOccupationFieldError(errorMessages, "start", msg("error_null_not_allowed"));
         }
 
         if (date != null && start != null) {
-            if (start.getHour() < systemConfig.getOpeningHour()) {
-                addOccupationFieldError(errorDetails, "start",
+            if (start.getHour() < systemConfig.openingHour()) {
+                addOccupationFieldError(errorMessages, "start",
                         String.format(msg("error_start_hour_before_opening"),
-                                start.getHour(), systemConfig.getOpeningHour()));
+                                start.getHour(), systemConfig.openingHour()));
             }
 
-            if (start.getHour() > systemConfig.getClosingHour()) {
-                addOccupationFieldError(errorDetails, "start",
+            if (start.getHour() > systemConfig.closingHour()) {
+                addOccupationFieldError(errorMessages, "start",
                         String.format(msg("error_start_hour_after_closing"),
-                                start.getHour(), systemConfig.getClosingHour()));
+                                start.getHour(), systemConfig.closingHour()));
             }
 
-            if (start.getMinute() != 0 && start.getMinute() % systemConfig.getDurationUnitInMinutes() != 0) {
-                addOccupationFieldError(errorDetails, "start",
+            if (start.getMinute() != 0 && start.getMinute() % systemConfig.durationUnitInMinutes() != 0) {
+                addOccupationFieldError(errorMessages, "start",
                         String.format(msg("error_start_time_minutes"), start.getMinute()));
             }
 
             if (!loggedInUser.getRole().equals(UserRole.ADMIN) && isOccupationInThePast(occupation)) {
-                addOccupationFieldError(errorDetails, "date",msg("error_date_in_the_past"));
+                addOccupationFieldError(errorMessages, "date",msg("error_date_in_the_past"));
             }
             if (of(date, start.getHour(), start.getMinute())
-                    .plusMinutes((long) occupation.getDuration() * systemConfig.getDurationUnitInMinutes())
-                    .isAfter(of(date, systemConfig.getClosingHour(), 0))) {
-                addOccupationFieldError(errorDetails, "start", msg("error_start_time_plus_duration"));
+                    .plusMinutes((long) occupation.getDuration() * systemConfig.durationUnitInMinutes())
+                    .isAfter(of(date, systemConfig.closingHour(), 0))) {
+                addOccupationFieldError(errorMessages, "start", msg("error_start_time_plus_duration"));
             }
             if (!loggedInUser.getRole().equals(UserRole.ADMIN) && isOccupationTooFarInFuture(occupation, type)) {
-                addOccupationFieldError(errorDetails, "date", msg("error_date_too_far_in_future"));
+                addOccupationFieldError(errorMessages, "date", msg("error_date_too_far_in_future"));
             }
         }
 
         // validate duration
         if (occupation.getDuration() < 1) {
-            addOccupationFieldError(errorDetails, "duration", msg("error_duration_too_small"));
+            addOccupationFieldError(errorMessages, "duration", msg("error_duration_too_small"));
         }
 
-        if (type.getMaxDuration() > 0 && occupation.getDuration() > type.getMaxDuration()) {
-            addOccupationFieldError(errorDetails, "duration", String.format(
+        if (type.maxDuration() > 0 && occupation.getDuration() > type.maxDuration()) {
+            addOccupationFieldError(errorMessages, "duration", String.format(
                     msg("error_duration_too_long"), loggedInUser.getName(), occupation.getDuration()));
         }
 
         // validate court
         if (occupation.getCourt() < 1) {
-            addOccupationFieldError(errorDetails, "court",
+            addOccupationFieldError(errorMessages, "court",
                     String.format(msg("error_court_too_small"), occupation.getCourt()));
         }
-        if (occupation.getCourt() > systemConfig.getCourts().size()) {
-            addOccupationFieldError(errorDetails, "court",
-                    String.format(msg("error_court_too_big"), occupation.getCourt(), systemConfig.getCourts().size()));
+        if (occupation.getCourt() > systemConfig.courts().size()) {
+            addOccupationFieldError(errorMessages, "court",
+                    String.format(msg("error_court_too_big"), occupation.getCourt(), systemConfig.courts().size()));
         }
 
         // authorization checks
@@ -120,9 +119,9 @@ public class ReservationValidator {
             throw new AuthorizationException(String.format(msg("error_user_not_active"), loggedInUser.getName()));
         }
 
-        if (!type.getRoles().contains(loggedInUser.getRole())) {
-            addOccupationFieldError(errorDetails, "type", String.format(msg("error_user_cannot_add_type"),
-                    loggedInUser.getName(), getTypeName(occupation.getType(), systemConfig.getTypes())));
+        if (!type.roles().contains(loggedInUser.getRole())) {
+            addOccupationFieldError(errorMessages, "type", String.format(msg("error_user_cannot_add_type"),
+                    loggedInUser.getName(), getTypeName(occupation.getType(), systemConfig.types())));
         }
 
 
@@ -130,50 +129,50 @@ public class ReservationValidator {
         occupationRepository.findBySystemConfigIdAndDate(occupation.getSystemConfigId(), occupation.getDate())
                 .forEach(o -> checkOverlap(occupation, o, systemConfig));
 
-        if (!errorDetails.getFieldErrors().isEmpty()) {
-            throw new InvalidDataException(errorDetails);
+        if (!errorMessages.isEmpty()) {
+            throw new InvalidDataException(errorMessages);
         }
     }
 
     public void validateReservation(Reservation reservation, UserEntity loggedInUser, ReservationSystemConfig systemConfig) {
-        ErrorDetails errorDetails = new ErrorDetails(msg("error_validation_reservation"), null);
+        Collection<ErrorMessage> errorMessages = new ArrayList<>();
 
         if (!validateUser(reservation.getUser(), loggedInUser)) {
             throw new AuthorizationException(msg("error_wrong_user"));
         }
         if (!StringUtils.hasText(reservation.getCourts())) {
-            addFieldError(errorDetails, "reservation", "court", msg("error_null_not_allowed"));
+            addFieldError(errorMessages, "reservation", "court", msg("error_null_not_allowed"));
         }
 
         if (ObjectUtils.isEmpty(reservation.getDate())) {
-            addFieldError(errorDetails, "reservation", "date", msg("error_null_not_allowed"));
+            addFieldError(errorMessages, "reservation", "date", msg("error_null_not_allowed"));
         }
 
         if (ObjectUtils.isEmpty(reservation.getStart())) {
-            addFieldError(errorDetails, "reservation", "start", msg("error_null_not_allowed"));
+            addFieldError(errorMessages, "reservation", "start", msg("error_null_not_allowed"));
         }
 
         for (int court : reservation.getCourtsAsArray()) {
             if (court < 1) {
-                addFieldError(errorDetails, "reservation", "court",
+                addFieldError(errorMessages, "reservation", "court",
                         String.format(msg("error_court_too_small"), court));
             }
-            if (court > systemConfig.getCourts().size()) {
-                addFieldError(errorDetails, "reservation", "court",
-                        String.format(msg("error_court_too_big"), court, systemConfig.getCourts().size()));
+            if (court > systemConfig.courts().size()) {
+                addFieldError(errorMessages, "reservation", "court",
+                        String.format(msg("error_court_too_big"), court, systemConfig.courts().size()));
             }
         }
         if (RepeatType.daily.equals(reservation.getRepeatType())
                 || RepeatType.weekly.equals(reservation.getRepeatType())) {
             if (reservation.getRepeatUntil() == null) {
-                addFieldError(errorDetails, "reservation", "repeatUntil", msg("error_repeatUntil_empty"));
+                addFieldError(errorMessages, "reservation", "repeatUntil", msg("error_repeatUntil_empty"));
             } else if (reservation.getRepeatUntil().isBefore(reservation.getDate())) {
-                addFieldError(errorDetails, "reservation", "repeatUntil", msg("error_repeatUntil_before_start"));
+                addFieldError(errorMessages, "reservation", "repeatUntil", msg("error_repeatUntil_before_start"));
             }
         }
 
-        if (!errorDetails.getFieldErrors().isEmpty()) {
-            throw new InvalidDataException(errorDetails);
+        if (!errorMessages.isEmpty()) {
+            throw new InvalidDataException(errorMessages);
         }
     }
 
@@ -187,23 +186,17 @@ public class ReservationValidator {
     }
 
     public void validateOccupations(Reservation reservation, UserEntity loggedInUser, ReservationSystemConfig systemConfig) {
-        ErrorDetails errorDetails = new ErrorDetails(msg("error_validation_reservation"), null);
+        Collection<ErrorMessage> errorMessages = new ArrayList<>();
 
         for (int i = 0; i < reservation.getOccupations().size(); i++) {
             try {
                 validateOccupation(reservation.getOccupations().get(i), loggedInUser, systemConfig);
             } catch (BadRequestException e) {
-                if (e.getErrorDetails().getFieldErrors().isEmpty()) {
-                    addFieldError(errorDetails, "occupation[" + i + "]", "occupation",
-                            e.getErrorDetails().getMessage());
-                }
-                for (FieldError fe : e.getErrorDetails().getFieldErrors()) {
-                    addFieldError(errorDetails, "occupation[" + i + "]", fe.getField(), fe.getMessage());
-                }
+                errorMessages.addAll(e.getErrorMessages());
             }
         }
-        if (!errorDetails.getFieldErrors().isEmpty()) {
-            throw new InvalidDataException(errorDetails);
+        if (!errorMessages.isEmpty()) {
+            throw new InvalidDataException(errorMessages);
         }
     }
 
@@ -227,22 +220,22 @@ public class ReservationValidator {
         }
     }
 
-    private void addOccupationFieldError(ErrorDetails errorDetails, String field, String message) {
-        addFieldError(errorDetails, "occupation", field, message);
+    private void addOccupationFieldError(Collection<ErrorMessage> errorMessages, String field, String message) {
+        addFieldError(errorMessages, "occupation", field, message);
     }
 
-    private void addFieldError(ErrorDetails errorDetails, String entity, String field, String message) {
-        errorDetails.getFieldErrors().add(new FieldError(entity, field, message));
+    private void addFieldError(Collection<ErrorMessage> errorMessages, String entity, String field, String message) {
+        errorMessages.add(new ErrorMessage(message,null, field));
     }
 
     private LocalDateTime getEnd(Occupation o, ReservationSystemConfig systemConfig) {
         return of(o.getDate(), o.getStart().getHour(), o.getStart().getMinute())
-                .plusMinutes((long) o.getDuration() * systemConfig.getDurationUnitInMinutes());
+                .plusMinutes((long) o.getDuration() * systemConfig.durationUnitInMinutes());
     }
 
     private LocalDateTime getEnd(OccupationEntity o, ReservationSystemConfig systemConfig) {
         return of(o.getDate(), o.getStart().getHour(), o.getStart().getMinute())
-                .plusMinutes((long) o.getDuration() * systemConfig.getDurationUnitInMinutes());
+                .plusMinutes((long) o.getDuration() * systemConfig.durationUnitInMinutes());
     }
 
     private LocalDateTime of(LocalDate date, int hour, int minute) {
@@ -263,15 +256,15 @@ public class ReservationValidator {
     }
 
     private SystemConfigReservationType getType(Occupation occupation, ReservationSystemConfig systemConfig) {
-        return systemConfig.getTypes().stream()
-                .filter(type -> type.getType() == occupation.getType())
+        return systemConfig.types().stream()
+                .filter(type -> type.type() == occupation.getType())
                 .findAny()
                 .orElseThrow(() -> new BadRequestException(msg("error_invalid_reservation_type")));
     }
     private String getTypeName(int type, List<SystemConfigReservationType> types) {
         return types.stream()
-                .filter(t -> t.getType() == type)
-                .map(SystemConfigReservationType::getName)
+                .filter(t -> t.type() == type)
+                .map(SystemConfigReservationType::name)
                 .findAny()
                 .orElseGet(() -> Integer.toString(type));
     }
@@ -285,11 +278,11 @@ public class ReservationValidator {
         } else return occupation.getStart().getHour() < LocalTime.now().getHour();
     }
     private boolean isOccupationTooFarInFuture(Occupation occupation, SystemConfigReservationType type) {
-        if (type.getMaxDaysReservationInFuture() <=0) {
+        if (type.maxDaysReservationInFuture() <=0) {
             return false;
         }
         var start =LocalDateTime.of(occupation.getDate(), occupation.getStart());
         var duration = Duration.between(LocalDateTime.now(), start);
-        return duration.toHours() > type.getMaxDaysReservationInFuture() * 24L;
+        return duration.toHours() > type.maxDaysReservationInFuture() * 24L;
     }
 }

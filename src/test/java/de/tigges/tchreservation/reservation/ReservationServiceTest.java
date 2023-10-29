@@ -1,22 +1,22 @@
 package de.tigges.tchreservation.reservation;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZoneOffset;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import de.tigges.tchreservation.ProtocolTest;
+import de.tigges.tchreservation.TchReservationApplication;
+import de.tigges.tchreservation.protocol.ActionType;
+import de.tigges.tchreservation.reservation.jpa.OccupationEntity;
+import de.tigges.tchreservation.reservation.jpa.OccupationRepository;
+import de.tigges.tchreservation.reservation.jpa.ReservationEntity;
+import de.tigges.tchreservation.reservation.jpa.ReservationRepository;
 import de.tigges.tchreservation.reservation.model.*;
 import de.tigges.tchreservation.systemconfig.jpa.ReservationTypeEntity;
 import de.tigges.tchreservation.systemconfig.jpa.ReservationTypeRepository;
+import de.tigges.tchreservation.systemconfig.jpa.SystemConfigEntity;
+import de.tigges.tchreservation.systemconfig.jpa.SystemConfigRepository;
+import de.tigges.tchreservation.user.UserMapper;
+import de.tigges.tchreservation.user.jpa.UserEntity;
+import de.tigges.tchreservation.user.model.ActivationStatus;
+import de.tigges.tchreservation.user.model.UserRole;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,21 +29,19 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.ResultActions;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
-import de.tigges.tchreservation.ProtocolTest;
-import de.tigges.tchreservation.TchReservationApplication;
-import de.tigges.tchreservation.protocol.ActionType;
-import de.tigges.tchreservation.reservation.jpa.OccupationEntity;
-import de.tigges.tchreservation.reservation.jpa.OccupationRepository;
-import de.tigges.tchreservation.reservation.jpa.ReservationEntity;
-import de.tigges.tchreservation.reservation.jpa.ReservationRepository;
-import de.tigges.tchreservation.systemconfig.jpa.SystemConfigEntity;
-import de.tigges.tchreservation.systemconfig.jpa.SystemConfigRepository;
-import de.tigges.tchreservation.user.UserMapper;
-import de.tigges.tchreservation.user.jpa.UserEntity;
-import de.tigges.tchreservation.user.model.ActivationStatus;
-import de.tigges.tchreservation.user.model.UserRole;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = TchReservationApplication.class)
@@ -129,7 +127,7 @@ public class ReservationServiceTest extends ProtocolTest {
         system3.setOpeningHour(8);
         system3.setClosingHour(10);
         system3.setTypes(Set.of(
-                createReservationType(0, "Quickbuchung", 1, 0,0, UserRole.TRAINER)
+                createReservationType(0, "Quickbuchung", 1, 0, 0, UserRole.TRAINER)
         ));
         systemConfigRepository.save(system3);
         saveTypes(system3);
@@ -141,6 +139,7 @@ public class ReservationServiceTest extends ProtocolTest {
             reservationTypeRepository.save(type);
         });
     }
+
     @Test
     @WithMockUser(username = "TRAINER")
     public void addReservation() throws Exception {
@@ -177,8 +176,8 @@ public class ReservationServiceTest extends ProtocolTest {
     @Test
     @WithMockUser(username = "TRAINER")
     public void addReservationWithDifferentTimes() throws Exception {
-        addReservation(createReservation(1, 1, 10, 2));
-        addReservation(createReservation(1, 1, 11, 2));
+        addReservation(createReservation(2, 1, 10, 1));
+        addReservation(createReservation(2, 1, 11, 1));
     }
 
     @Test
@@ -205,8 +204,8 @@ public class ReservationServiceTest extends ProtocolTest {
     @Test
     @WithMockUser(username = "TRAINER")
     public void addReservationOverlap3() throws Exception {
-        addReservation(createReservation(1, 1, 11, 2));
-        addReservationOverlap(createReservation(1, 1, 10, 6), 0);
+        addReservation(createReservation(2, 1, 17, 1));
+        addReservationOverlap(createReservation(2, 1, 16, 3), 0);
     }
 
     @Test
@@ -516,7 +515,7 @@ public class ReservationServiceTest extends ProtocolTest {
     public void addReservationUnauthorizedTimeInThePast() throws Exception {
         int hour = LocalTime.now().getHour();
         ReservationSystemConfig systemConfig = getSystemConfig(1);
-        if (hour > systemConfig.getOpeningHour() + 2 && hour < systemConfig.getClosingHour() - 1) {
+        if (hour > systemConfig.openingHour() + 2 && hour < systemConfig.closingHour() - 1) {
             Reservation reservation = createReservation(2, 1, hour - 2, 1);
             reservation.setDate(LocalDate.now());
             addReservationWithOccupationFieldError(reservation, "date",
@@ -554,7 +553,7 @@ public class ReservationServiceTest extends ProtocolTest {
     @Test
     @WithMockUser(username = "REGISTERED")
     public void addReservationUnauthorizedTypeTraining() throws Exception {
-        Reservation reservation = createReservation(1, 1, 8, 2,1);
+        Reservation reservation = createReservation(1, 1, 8, 2, 1);
         addReservationWithOccupationFieldError(reservation, //
                 "type", "Der Benutzer REGISTERED hat nicht die Rechte, eine Reservierung vom Typ Training anzulegen.");
     }
@@ -676,8 +675,7 @@ public class ReservationServiceTest extends ProtocolTest {
 
     private void addReservationWithOccupationFieldError(Reservation reservation, String... fieldErrors)
             throws Exception {
-        ResultActions resultActions = addReservationError(reservation, HttpStatus.BAD_REQUEST,
-                "Fehler beim Prüfen der Reservierung");
+        ResultActions resultActions = addReservationError(reservation, HttpStatus.BAD_REQUEST, null);
         int i = 0;
         while (i < fieldErrors.length) {
             assertOccupationFieldError(resultActions, i / 2, fieldErrors[i++], fieldErrors[i++]);
@@ -686,8 +684,7 @@ public class ReservationServiceTest extends ProtocolTest {
 
     private void addReservationWithFieldError(Reservation reservation, String... fieldErrors)
             throws Exception {
-        ResultActions resultActions = addReservationError(reservation, HttpStatus.BAD_REQUEST,
-                "Fehler beim Prüfen der Reservierung");
+        ResultActions resultActions = addReservationError(reservation, HttpStatus.BAD_REQUEST, null);
         int i = 0;
         while (i < fieldErrors.length) {
             assertFieldError(resultActions, i / 2, "reservation", fieldErrors[i++], fieldErrors[i++]);
@@ -701,13 +698,13 @@ public class ReservationServiceTest extends ProtocolTest {
 
     private void assertFieldError(ResultActions resultActions, int i, String entity, String field,
                                   String message) throws Exception {
-        resultActions.andExpect(jsonPath("$.fieldErrors[" + i + "].entity").value(entity))
-                .andExpect(jsonPath("$.fieldErrors[" + i + "].field").value(field))
-                .andExpect(jsonPath("$.fieldErrors[" + i + "].message").value(message));
+        resultActions //.andExpect(jsonPath("$[" + i + "].entity").value(entity))
+                .andExpect(jsonPath("$[" + i + "].field").value(field))
+                .andExpect(jsonPath("$[" + i + "].message").value(message));
     }
 
     private void addReservationOverlap(Reservation reservation, int nrOccupation) throws Exception {
-        addReservationWithOccupationFieldError(reservation, "occupation",
+        addReservationWithOccupationFieldError(reservation, null,
                 String.format("Reservierung am %tF %tR nicht möglich, weil Platz %s belegt ist.", reservation.getDate(),
                         reservation.getStart(), reservation.getCourts()));
     }
@@ -763,10 +760,10 @@ public class ReservationServiceTest extends ProtocolTest {
     }
 
     private ResultActions checkError(ResultActions resultActions, HttpStatus status, String message) throws Exception {
-        return resultActions //
-                .andExpect(status().is(status.value())) //
-                .andExpect(jsonPath("$.message").value(message)) //
-                ;
+        if (message != null) {
+            resultActions.andExpect(jsonPath("$[0].message").value(message));
+        }
+        return resultActions.andExpect(status().is(status.value()));
     }
 
     private Reservation getReservation(ResultActions resultAction) throws Exception {
@@ -792,7 +789,7 @@ public class ReservationServiceTest extends ProtocolTest {
                 LocalDate.now().plusDays(1), LocalTime.of(hour, 0), duration, 0);
     }
 
-    private Reservation createReservation(long systemId,int court, int hour, int duration, int type) {
+    private Reservation createReservation(long systemId, int court, int hour, int duration, int type) {
         return new Reservation(systemId, null, "reservation name", String.valueOf(court),
                 LocalDate.now().plusDays(1), LocalTime.of(hour, 0), duration, type);
 

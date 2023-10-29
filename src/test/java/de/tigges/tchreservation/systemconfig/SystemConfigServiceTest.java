@@ -1,15 +1,16 @@
 package de.tigges.tchreservation.systemconfig;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import de.tigges.tchreservation.ProtocolTest;
+import de.tigges.tchreservation.TchReservationApplication;
+import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 import de.tigges.tchreservation.reservation.model.SystemConfigReservationType;
 import de.tigges.tchreservation.systemconfig.jpa.ReservationTypeEntity;
 import de.tigges.tchreservation.systemconfig.jpa.ReservationTypeRepository;
+import de.tigges.tchreservation.systemconfig.jpa.SystemConfigEntity;
+import de.tigges.tchreservation.systemconfig.jpa.SystemConfigRepository;
+import de.tigges.tchreservation.user.jpa.UserEntity;
+import de.tigges.tchreservation.user.model.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,15 +22,12 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.ResultActions;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
-import de.tigges.tchreservation.ProtocolTest;
-import de.tigges.tchreservation.TchReservationApplication;
-import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
-import de.tigges.tchreservation.systemconfig.jpa.SystemConfigEntity;
-import de.tigges.tchreservation.systemconfig.jpa.SystemConfigRepository;
-import de.tigges.tchreservation.user.jpa.UserEntity;
-import de.tigges.tchreservation.user.model.UserRole;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = TchReservationApplication.class)
@@ -58,7 +56,7 @@ class SystemConfigServiceTest extends ProtocolTest {
     @Test
     @WithMockUser(username = "REGISTERED")
     void getOne() throws Exception {
-        SystemConfigEntity entity = createSystemConfig(1L, "Platz 1");
+        SystemConfigEntity entity = createSystemConfigEntity(1L, "Platz 1");
         verifyEquals(get(1L), SystemConfigMapper.map(entity));
     }
 
@@ -67,8 +65,8 @@ class SystemConfigServiceTest extends ProtocolTest {
     void testGetAll() throws Exception {
         // @formatter:off
 		List<ReservationSystemConfig> configs = Arrays.asList(
-				SystemConfigMapper.map(createSystemConfig(1L, "Platz 1")),
-				SystemConfigMapper.map(createSystemConfig(2L, "Center Court,Roland Garros,Nebenplatz"))
+				SystemConfigMapper.map(createSystemConfigEntity(1L, "Platz 1")),
+				SystemConfigMapper.map(createSystemConfigEntity(2L, "Center Court,Roland Garros,Nebenplatz"))
 				);
 		// @formatter:on
         var response = responseAll(getAll().andExpect(status().is2xxSuccessful()));
@@ -78,13 +76,13 @@ class SystemConfigServiceTest extends ProtocolTest {
     @Test
     @WithMockUser(username = "REGISTERED")
     void testAddNotAllowed() throws Exception {
-        performPost("/rest/systemconfig", new ReservationSystemConfig()).andExpect(status().isUnauthorized());
+        performPost("/rest/systemconfig", SystemConfigMapper.map(createSystemConfigEntity(1, ""))).andExpect(status().isUnauthorized());
     }
 
     @Test
     @WithMockUser(username = "REGISTERED")
     void testUpdateNotAllowed() throws Exception {
-        performPut("/rest/systemconfig", new ReservationSystemConfig()).andExpect(status().isUnauthorized());
+        performPut("/rest/systemconfig", SystemConfigMapper.map(createSystemConfigEntity(1, ""))).andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -116,18 +114,10 @@ class SystemConfigServiceTest extends ProtocolTest {
     @Test
     @WithMockUser(username = "ADMIN")
     void testUpdate() throws Exception {
-        createSystemConfig(1L, "Platz 1");
-        ReservationSystemConfig config = get(1L);
-        config.getCourts().add("Platz 2");
-        config.getCourts().add("Platz 3");
-        config.getCourts().add("Platz 4");
-        config.getCourts().add("Platz 5");
-        config.getCourts().add("Platz 6");
-        config.setName("Toller neuer Name!");
-        config.setMaxDaysReservationInFuture(7);
-        config.setMaxDuration(10);
-        config.setOpeningHour(10);
-        config.setClosingHour(20);
+        createSystemConfigEntity(1L, "Platz 1");
+        var c = get(1L);
+        var config = new ReservationSystemConfig(c.id(), "new name", "new title", Arrays.asList(c.courts().get(0), "Platz 2", "Platz 3"), 30, 7, 10, 10, 20, c.types());
+
         verifyEquals(config, performPut("/rest/systemconfig", config).andExpect(status().is2xxSuccessful()));
         verifyEquals(config, get(1L));
     }
@@ -135,9 +125,9 @@ class SystemConfigServiceTest extends ProtocolTest {
     @Test
     @WithMockUser(username = "ADMIN")
     void testDelete() throws Exception {
-        ReservationSystemConfig config1 = SystemConfigMapper.map(createSystemConfig(1L, "Platz 1"));
+        ReservationSystemConfig config1 = SystemConfigMapper.map(createSystemConfigEntity(1L, "Platz 1"));
         ReservationSystemConfig config2 = SystemConfigMapper
-                .map(createSystemConfig(2L, "Center Court,Roland Garros,Nebenplatz"));
+                .map(createSystemConfigEntity(2L, "Center Court,Roland Garros,Nebenplatz"));
 
         verifyEquals(config2, performDelete("/rest/systemconfig/2").andExpect(status().is2xxSuccessful()));
         List<ReservationSystemConfig> configs = responseAll(getAll().andExpect(status().is2xxSuccessful()));
@@ -170,22 +160,22 @@ class SystemConfigServiceTest extends ProtocolTest {
     }
 
     private void verifyEquals(ReservationSystemConfig c1, ReservationSystemConfig c2) {
-        assertThat(c1.getId()).isEqualTo(c2.getId());
-        assertThat(c1.getName()).isEqualTo(c2.getName());
-        if (c1.getTitle() == null) {
-            assertThat(c2.getTitle()).isNull();
+        assertThat(c1.id()).isEqualTo(c2.id());
+        assertThat(c1.name()).isEqualTo(c2.name());
+        if (c1.title() == null) {
+            assertThat(c2.title()).isNull();
         } else {
-            assertThat(c1.getTitle()).isEqualTo(c2.getTitle());
+            assertThat(c1.title()).isEqualTo(c2.title());
         }
-        assertThat(c1.getCourts()).hasSameElementsAs(c2.getCourts());
-        assertThat(c1.getDurationUnitInMinutes()).isEqualTo(c2.getDurationUnitInMinutes());
-        assertThat(c1.getMaxDaysReservationInFuture()).isEqualTo(c2.getMaxDaysReservationInFuture());
-        assertThat(c1.getMaxDuration()).isEqualTo(c2.getMaxDuration());
-        assertThat(c1.getOpeningHour()).isEqualTo(c2.getOpeningHour());
-        assertThat(c1.getClosingHour()).isEqualTo(c2.getClosingHour());
+        assertThat(c1.courts()).hasSameElementsAs(c2.courts());
+        assertThat(c1.durationUnitInMinutes()).isEqualTo(c2.durationUnitInMinutes());
+        assertThat(c1.maxDaysReservationInFuture()).isEqualTo(c2.maxDaysReservationInFuture());
+        assertThat(c1.maxDuration()).isEqualTo(c2.maxDuration());
+        assertThat(c1.openingHour()).isEqualTo(c2.openingHour());
+        assertThat(c1.closingHour()).isEqualTo(c2.closingHour());
     }
 
-    private SystemConfigEntity createSystemConfig(long id, String courts) {
+    private SystemConfigEntity createSystemConfigEntity(long id, String courts) {
         SystemConfigEntity e = new SystemConfigEntity();
         e.setId(id);
         e.setName("unit test " + id);
