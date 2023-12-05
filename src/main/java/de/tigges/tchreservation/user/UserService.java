@@ -3,8 +3,10 @@ package de.tigges.tchreservation.user;
 import java.util.Optional;
 import java.util.stream.StreamSupport;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,31 +35,23 @@ import de.tigges.tchreservation.user.model.UserRole;
 
 @RestController
 @RequestMapping("/rest/user")
+@RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
     private final UserDeviceRepository userDeviceRepository;
     private final ProtocolRepository protocolRepository;
-    private final PasswordEncoder encoder;
-    private final UserUtils userUtils;
-
-    public UserService(UserRepository userRepository, UserDeviceRepository userDeviceRepository,
-                       ProtocolRepository protocolRepository, UserUtils userUtils) {
-        this.userRepository = userRepository;
-        this.userDeviceRepository = userDeviceRepository;
-        this.protocolRepository = protocolRepository;
-        this.userUtils = userUtils;
-        encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
-    }
+    private final LoggedinUserService loggedinUserService;
+    private final PasswordEncoder encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
 
     @GetMapping("/me")
     public User getMyUser() {
-        return UserMapper.map(userUtils.getLoggedInUser());
+        return UserMapper.map(loggedinUserService.getLoggedInUser());
     }
 
     @GetMapping("/all")
     public @ResponseBody Iterable<User> getAll() {
-        userUtils.verifyHasRole(UserRole.ADMIN);
+        loggedinUserService.verifyHasRole(UserRole.ADMIN);
         Iterable<UserEntity> allUsers = userRepository.findAll();
         return StreamSupport.stream(allUsers.spliterator(), false)
                 .map(UserMapper::map)
@@ -66,7 +60,7 @@ public class UserService {
 
     @GetMapping("/{userId}")
     public @ResponseBody Optional<User> get(@PathVariable Long userId) {
-        userUtils.verifyHasRoleOrSelf(userId, UserRole.ADMIN);
+        loggedinUserService.verifyHasRoleOrSelf(userId, UserRole.ADMIN);
         return userRepository.findById(userId)
                 .map(UserMapper::map)
                 .map(this::addDevices);
@@ -76,7 +70,7 @@ public class UserService {
     public @ResponseBody User getByDevice(@PathVariable Long deviceId) {
         var device = getDevice(deviceId);
         var userId = device.getUser().getId();
-        userUtils.verifyHasRoleOrSelf(userId, UserRole.ADMIN);
+        loggedinUserService.verifyHasRoleOrSelf(userId, UserRole.ADMIN);
         var user = userRepository.findById(userId).map(UserMapper::map)
                 .orElseThrow(() -> new NotFoundException(EntityType.USER, userId));
         return addDevices(user);
@@ -84,14 +78,15 @@ public class UserService {
 
     @GetMapping("/device/{deviceId}")
     public @ResponseBody UserDevice getDevice(@PathVariable Long deviceId) {
-        userUtils.verifyHasRole(UserRole.ADMIN);
+        loggedinUserService.verifyHasRole(UserRole.ADMIN);
         return userDeviceRepository.findById(deviceId).map(UserDeviceMapper::map)
                 .orElseThrow(() -> new NotFoundException(EntityType.USER_DEVICE, deviceId));
     }
 
     @PostMapping("")
+    @Transactional
     public @ResponseBody User add(@RequestBody User user) {
-        var loggedInUser = userUtils.verifyHasRole(UserRole.ADMIN);
+        var loggedInUser = loggedinUserService.verifyHasRole(UserRole.ADMIN);
         checkNewUser(user);
         var cryptedPassword = encoder.encode(user.getPassword());
         user.setPassword(cryptedPassword);
@@ -109,7 +104,7 @@ public class UserService {
 
     @PostMapping("/device")
     public @ResponseBody UserDevice add(@RequestBody UserDevice userDevice) {
-        var loggedInUser = userUtils.verifyHasRoleOrSelf(userDevice.getUser().getId(), UserRole.ADMIN);
+        var loggedInUser = loggedinUserService.verifyHasRoleOrSelf(userDevice.getUser().getId(), UserRole.ADMIN);
         var savedDevice = userDeviceRepository.save(UserDeviceMapper.map(userDevice));
         protocolRepository.save(new ProtocolEntity(savedDevice, ActionType.CREATE, loggedInUser));
         return UserDeviceMapper.map(savedDevice);
@@ -117,7 +112,7 @@ public class UserService {
 
     @PutMapping("/setStatus/{userId}/{status}")
     public @ResponseBody void setStatus(@PathVariable long userId, @PathVariable ActivationStatus status) {
-        var loggedInUser = userUtils.verifyHasRole(UserRole.ADMIN);
+        var loggedInUser = loggedinUserService.verifyHasRole(UserRole.ADMIN);
         var dbUser = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(EntityType.USER, userId));
         var saveUser = new UserEntity(dbUser);
@@ -128,7 +123,7 @@ public class UserService {
 
     @PutMapping("/device/setStatus/{deviceId}/{status}")
     public @ResponseBody void setDeviceStatus(@PathVariable long deviceId, @PathVariable ActivationStatus status) {
-        var loggedInUser = userUtils.verifyHasRole(UserRole.ADMIN);
+        var loggedInUser = loggedinUserService.verifyHasRole(UserRole.ADMIN);
         var device = userDeviceRepository.findById(deviceId)
                 .orElseThrow(() -> new NotFoundException(EntityType.USER_DEVICE, deviceId));
         device.setStatus(status);
@@ -138,7 +133,7 @@ public class UserService {
 
     @PutMapping("")
     public @ResponseBody void update(@RequestBody User user) {
-        var loggedInUser = userUtils.verifyHasRoleOrSelf(user.getId(), UserRole.ADMIN);
+        var loggedInUser = loggedinUserService.verifyHasRoleOrSelf(user.getId(), UserRole.ADMIN);
         checkUser(user);
         var dbUser = userRepository.findById(user.getId())
                 .orElseThrow(() -> new NotFoundException(EntityType.USER, user.getId()));

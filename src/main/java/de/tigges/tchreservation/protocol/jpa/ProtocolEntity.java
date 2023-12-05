@@ -2,13 +2,18 @@ package de.tigges.tchreservation.protocol.jpa;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.tigges.tchreservation.exception.RestException;
 import de.tigges.tchreservation.protocol.ActionType;
 import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.protocol.Protocollable;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.Hibernate;
+import org.springframework.http.HttpStatus;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -77,7 +82,8 @@ public class ProtocolEntity {
         try {
             return new ObjectMapper().writeValueAsString(o);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new RestException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "error writing protocol element %s:%s".formatted(o.toString(), e.getMessage()));
         }
     }
 }

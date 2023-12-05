@@ -1,53 +1,12 @@
 package de.tigges.tchreservation.user;
 
-import java.util.stream.Stream;
-
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
-
-import de.tigges.tchreservation.exception.AuthorizationException;
 import de.tigges.tchreservation.user.jpa.UserEntity;
-import de.tigges.tchreservation.user.jpa.UserRepository;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.UserRole;
-import lombok.RequiredArgsConstructor;
 
-/**
- * User utilities with static methods and utils regarding logged in user
- *
- * @author johannes
- */
-@Component
-@RequiredArgsConstructor
-public class UserUtils {
+import java.util.Arrays;
 
-	private final UserRepository userRepository;
-
-	public UserEntity getLoggedInUser() {
-		var authentication = SecurityContextHolder.getContext().getAuthentication();
-		if (authentication instanceof AnonymousAuthenticationToken || authentication == null) {
-			return UserUtils.anonymous();
-		}
-		var name = authentication.getName();
-		return userRepository.findByNameOrEmail(name, name).orElse(UserUtils.anonymous());
-	}
-
-	public UserEntity verifyHasRole(UserRole... roles) {
-		var loggedInUser = getLoggedInUser();
-		if (!isActive(loggedInUser) || !hasRole(loggedInUser, roles)) {
-			throw new AuthorizationException("error_user_is_not_admin");
-		}
-		return loggedInUser;
-	}
-
-	public UserEntity verifyHasRoleOrSelf(Long userId, UserRole... roles) {
-		var loggedInUser = getLoggedInUser();
-		if (isActive(loggedInUser) && (is(loggedInUser, userId) || hasRole(loggedInUser, roles))) {
-			return loggedInUser;
-		}
-		throw new AuthorizationException("error_user_is_not_admin");
-	}
+public final class UserUtils {
 
 	public static boolean is(UserEntity user, long userId) {
 		return user.getId() == userId;
@@ -62,7 +21,7 @@ public class UserUtils {
 	}
 
 	public static boolean hasRole(UserRole userRole, UserRole... roles) {
-		return Stream.of(roles).anyMatch(r -> r.equals(userRole));
+		return Arrays.asList(roles).contains(userRole);
 	}
 
 	public static boolean isActive(UserEntity user) {

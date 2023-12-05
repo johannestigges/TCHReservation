@@ -8,6 +8,7 @@ import java.util.stream.StreamSupport;
 import de.tigges.tchreservation.reservation.model.SystemConfigReservationType;
 import de.tigges.tchreservation.systemconfig.jpa.ReservationTypeMapper;
 import de.tigges.tchreservation.systemconfig.jpa.ReservationTypeRepository;
+import de.tigges.tchreservation.user.LoggedinUserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -30,7 +31,6 @@ import de.tigges.tchreservation.protocol.jpa.ProtocolRepository;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 import de.tigges.tchreservation.systemconfig.jpa.SystemConfigEntity;
 import de.tigges.tchreservation.systemconfig.jpa.SystemConfigRepository;
-import de.tigges.tchreservation.user.UserUtils;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.model.UserRole;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +44,7 @@ public class SystemConfigService {
     private final ReservationTypeRepository reservationTypeRepository;
     private final SystemConfigValidator validator;
     private final ProtocolRepository protocolRepository;
-    private final UserUtils userUtils;
+    private final LoggedinUserService loggedinUserService;
 
     @GetMapping("/getone/{id}")
     Optional<ReservationSystemConfig> getOne(@PathVariable Long id) {
@@ -65,21 +65,21 @@ public class SystemConfigService {
     @ResponseStatus(HttpStatus.CREATED)
     @Transactional
     public @ResponseBody ReservationSystemConfig add(@RequestBody ReservationSystemConfig config) {
-        var loggedInUser = userUtils.verifyHasRole(UserRole.ADMIN);
+        var loggedInUser = loggedinUserService.verifyHasRole(UserRole.ADMIN);
         systemConfigRepository.findById(config.id()).ifPresent(e -> {
             throw new FoundException(EntityType.SYSTEM_CONFIGURATION, config.id());
         });
         validator.validate(config, loggedInUser);
         var entity = systemConfigRepository.save(SystemConfigMapper.map(config));
         protocolRepository.save(new ProtocolEntity(entity, ActionType.CREATE, loggedInUser));
-        insertTypes(loggedInUser, config.types(),entity);
+        insertTypes(loggedInUser, config.types(), entity);
         return SystemConfigMapper.map(entity);
     }
 
     @PutMapping("")
     @Transactional
     public @ResponseBody ReservationSystemConfig update(@RequestBody ReservationSystemConfig config) {
-        var loggedInUser = userUtils.verifyHasRole(UserRole.ADMIN);
+        var loggedInUser = loggedinUserService.verifyHasRole(UserRole.ADMIN);
         systemConfigRepository.findById(config.id())
                 .orElseThrow(() -> new NotFoundException(EntityType.SYSTEM_CONFIGURATION, config.id()));
         validator.validate(config, loggedInUser);
@@ -94,7 +94,7 @@ public class SystemConfigService {
     @DeleteMapping("/{id}")
     @Transactional
     public @ResponseBody ReservationSystemConfig delete(@PathVariable long id) {
-        var loggedInUser = userUtils.verifyHasRole(UserRole.ADMIN);
+        var loggedInUser = loggedinUserService.verifyHasRole(UserRole.ADMIN);
         var entity = systemConfigRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(EntityType.SYSTEM_CONFIGURATION, id));
         reservationTypeRepository.deleteBySystemConfigId(id);
@@ -114,15 +114,21 @@ public class SystemConfigService {
                 .toList();
     }
 
-    private void insertTypes(UserEntity loggedInUser, Collection<SystemConfigReservationType> types, SystemConfigEntity systemConfig) {
+    private void insertTypes(UserEntity loggedInUser,
+                             Collection<SystemConfigReservationType> types,
+                             SystemConfigEntity systemConfig) {
         if (types == null) {
             return;
         }
-        types.forEach(type -> {
-            var entity = ReservationTypeMapper.map(type);
-            entity.setSystemConfig(systemConfig);
-            reservationTypeRepository.save(entity);
-            protocolRepository.save(new ProtocolEntity(entity, ActionType.CREATE, loggedInUser));
-        });
+        types.forEach(type -> insertType(loggedInUser, type, systemConfig));
+    }
+
+    private void insertType(UserEntity loggedInUser,
+                            SystemConfigReservationType type,
+                            SystemConfigEntity systemConfig) {
+        var entity = ReservationTypeMapper.map(type);
+        entity.setSystemConfig(systemConfig);
+        reservationTypeRepository.save(entity);
+        protocolRepository.save(new ProtocolEntity(entity, ActionType.CREATE, loggedInUser));
     }
 }

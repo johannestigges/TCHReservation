@@ -1,6 +1,9 @@
 package de.tigges.tchreservation.systemconfig;
 
-import de.tigges.tchreservation.exception.*;
+import de.tigges.tchreservation.exception.AuthorizationException;
+import de.tigges.tchreservation.exception.BadRequestException;
+import de.tigges.tchreservation.exception.ErrorMessage;
+import de.tigges.tchreservation.exception.InvalidDataException;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 import de.tigges.tchreservation.reservation.model.SystemConfigReservationType;
 import de.tigges.tchreservation.user.UserUtils;
@@ -20,7 +23,6 @@ import java.util.Locale;
 public class SystemConfigValidator {
 
     private static final int MAX_COURTS = 20;
-
     private static final int MIN_LENGTH = 3;
     private static final int MAX_LENGTH = 50;
 
@@ -45,13 +47,13 @@ public class SystemConfigValidator {
 
         if (config.courts() == null || config.courts().isEmpty()) {
             addFieldError(errorMessages, "courts", msg("error_null_not_allowed"));
+        } else {
+            if (config.courts().size() > MAX_COURTS) {
+                addFieldError(errorMessages, "courts", msg("error_too_many_courts"));
+            }
+            config.courts().forEach(court ->
+                    checkString(court, errorMessages, "court", MIN_LENGTH, MAX_LENGTH));
         }
-        if (config.courts().size() > MAX_COURTS) {
-            addFieldError(errorMessages, "courts", msg("error_too_many_courts"));
-        }
-        config.courts().forEach(court ->
-                checkString(court, errorMessages, "court", MIN_LENGTH, MAX_LENGTH));
-
         checkInt(config.durationUnitInMinutes(), errorMessages, "durationUnitInMinutes", 30, 60);
         checkInt(config.maxDaysReservationInFuture(), errorMessages, "maxDaysReservationInFuture", 1, 365);
         checkInt(config.maxDuration(), errorMessages, "maxDuration", 1, 20);
@@ -81,9 +83,9 @@ public class SystemConfigValidator {
         if (value == null || value.isEmpty()) {
             addFieldError(errorMessages, field, msg("error_null_not_allowed"));
         } else if (value.length() < minLen) {
-            addFieldError(errorMessages, field, String.format(msg("error_string_too_short"),minLen));
+            addFieldError(errorMessages, field, String.format(msg("error_string_too_short"), minLen));
         } else if (value.length() > maxLen) {
-            addFieldError(errorMessages, field, String.format(msg("error_string_too_long"),maxLen));
+            addFieldError(errorMessages, field, String.format(msg("error_string_too_long"), maxLen));
         }
     }
 
@@ -97,7 +99,7 @@ public class SystemConfigValidator {
     }
 
     private void addFieldError(Collection<ErrorMessage> errorMessages, String field, String message) {
-        errorMessages.add(new ErrorMessage(message,null, field));
+        errorMessages.add(new ErrorMessage(message, null, field));
     }
 
     private String msg(String code, Object... args) {
