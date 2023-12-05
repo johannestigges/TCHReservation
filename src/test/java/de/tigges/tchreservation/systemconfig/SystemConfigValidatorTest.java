@@ -168,7 +168,7 @@ class SystemConfigValidatorTest {
 
     private static void assertFieldError(InvalidDataException exception, String field, String message) {
         assertTrue(exception.getErrorMessages().stream()
-                .anyMatch(e -> message.equals(e.getMessage()) && field.equals(e.getField())));
+                .anyMatch(e -> message.equals(e.message()) && field.equals(e.field())));
     }
 
     private void assertFieldError(ReservationSystemConfig config, String field, String message) {

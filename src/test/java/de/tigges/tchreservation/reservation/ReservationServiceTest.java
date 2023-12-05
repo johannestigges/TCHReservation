@@ -120,14 +120,14 @@ public class ReservationServiceTest extends ProtocolTest {
         SystemConfigEntity system3 = new SystemConfigEntity();
         system3.setId(3L);
         system3.setName("Testsystem für Unittests");
-        system3.setCourts("Denter Court");
+        system3.setCourts("Center Court");
         system3.setDurationUnitInMinutes(30);
         system3.setMaxDuration(3);
         system3.setMaxDaysReservationInFuture(2);
         system3.setOpeningHour(8);
         system3.setClosingHour(10);
         system3.setTypes(Set.of(
-                createReservationType(0, "Quickbuchung", 1, 0, 0, UserRole.TRAINER)
+                createReservationType(0, "Quickbuchung", 1, 0, 0, UserRole.TRAINER, UserRole.REGISTERED)
         ));
         systemConfigRepository.save(system3);
         saveTypes(system3);
@@ -275,7 +275,7 @@ public class ReservationServiceTest extends ProtocolTest {
     @Test
     @WithMockUser(username = "TRAINER")
     public void addReservationExtendsClosingHour() throws Exception {
-        Reservation reservation = createReservation(1, 1, 19, 7);
+        Reservation reservation = createReservation(1, 1, 21, 3);
         addReservationWithOccupationFieldError(reservation, "start", "Startzeit + Dauer zu spät.");
     }
 

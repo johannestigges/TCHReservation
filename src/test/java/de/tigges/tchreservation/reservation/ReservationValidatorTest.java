@@ -165,7 +165,7 @@ class ReservationValidatorTest {
         var exception = assertThrows(AuthorizationException.class,
                 () -> reservationValidator.validateOccupation(occupation, user, systemConfig));
         assertTrue(exception.getErrorMessages().stream()
-                .anyMatch(e -> "Pfui! JUnit user".equals(e.getMessage())));
+                .anyMatch(e -> "Pfui! JUnit user".equals(e.message())));
     }
 
     @Test
@@ -200,7 +200,7 @@ class ReservationValidatorTest {
         initMessageSource(expectedError, "Pfui!");
         var exception = assertThrows(BadRequestException.class,
                 () -> reservationValidator.validateOccupation(occupation, user, systemConfig));
-        assertTrue(exception.getErrorMessages().stream().anyMatch(e -> "Pfui!".equals(e.getMessage())));
+        assertTrue(exception.getErrorMessages().stream().anyMatch(e -> "Pfui!".equals(e.message())));
     }
 
     private void checkOccupationFieldError(Occupation occupation, UserEntity user, ReservationSystemConfig systemConfig, String expectedError, String expectedField) {
@@ -208,7 +208,7 @@ class ReservationValidatorTest {
         var exception = assertThrows(BadRequestException.class,
                 () -> reservationValidator.validateOccupation(occupation, user, systemConfig));
         assertTrue(exception.getErrorMessages()
-                .stream().anyMatch(e -> "Pfui!".equals(e.getMessage()) && expectedField.equals(e.getField())));
+                .stream().anyMatch(e -> "Pfui!".equals(e.message()) && expectedField.equals(e.field())));
     }
 
     private Occupation createOccupation() {
