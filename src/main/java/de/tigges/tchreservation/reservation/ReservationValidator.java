@@ -141,33 +141,33 @@ public class ReservationValidator {
             throw new AuthorizationException(msg("error_wrong_user"));
         }
         if (!StringUtils.hasText(reservation.getCourts())) {
-            addFieldError(errorMessages, "reservation", "court", msg("error_null_not_allowed"));
+            addFieldError(errorMessages, "court", msg("error_null_not_allowed"));
         }
 
         if (ObjectUtils.isEmpty(reservation.getDate())) {
-            addFieldError(errorMessages, "reservation", "date", msg("error_null_not_allowed"));
+            addFieldError(errorMessages, "date", msg("error_null_not_allowed"));
         }
 
         if (ObjectUtils.isEmpty(reservation.getStart())) {
-            addFieldError(errorMessages, "reservation", "start", msg("error_null_not_allowed"));
+            addFieldError(errorMessages, "start", msg("error_null_not_allowed"));
         }
 
         for (int court : reservation.getCourtsAsArray()) {
             if (court < 1) {
-                addFieldError(errorMessages, "reservation", "court",
+                addFieldError(errorMessages, "court",
                         String.format(msg("error_court_too_small"), court));
             }
             if (court > systemConfig.courts().size()) {
-                addFieldError(errorMessages, "reservation", "court",
+                addFieldError(errorMessages, "court",
                         String.format(msg("error_court_too_big"), court, systemConfig.courts().size()));
             }
         }
         if (RepeatType.daily.equals(reservation.getRepeatType())
                 || RepeatType.weekly.equals(reservation.getRepeatType())) {
             if (reservation.getRepeatUntil() == null) {
-                addFieldError(errorMessages, "reservation", "repeatUntil", msg("error_repeatUntil_empty"));
+                addFieldError(errorMessages, "repeatUntil", msg("error_repeatUntil_empty"));
             } else if (reservation.getRepeatUntil().isBefore(reservation.getDate())) {
-                addFieldError(errorMessages, "reservation", "repeatUntil", msg("error_repeatUntil_before_start"));
+                addFieldError(errorMessages, "repeatUntil", msg("error_repeatUntil_before_start"));
             }
         }
 
@@ -221,10 +221,10 @@ public class ReservationValidator {
     }
 
     private void addOccupationFieldError(Collection<ErrorMessage> errorMessages, String field, String message) {
-        addFieldError(errorMessages, "occupation", field, message);
+        addFieldError(errorMessages, field, message);
     }
 
-    private void addFieldError(Collection<ErrorMessage> errorMessages, String entity, String field, String message) {
+    private void addFieldError(Collection<ErrorMessage> errorMessages, String field, String message) {
         errorMessages.add(new ErrorMessage(message,null, field));
     }
 

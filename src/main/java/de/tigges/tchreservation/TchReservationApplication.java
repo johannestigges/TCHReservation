@@ -18,10 +18,10 @@ public class TchReservationApplication
 {
 	/**
 	 * register date converters
-	 * 
+	 * <p>
 	 * all date and time data is transferred in json as unix epoch timestamps
 	 * (milliseconds since 1970-01-01)
-	 *
+	 * <p>
 	 * return {@link Jackson2ObjectMapperBuilder}
 	 */
 	@Bean

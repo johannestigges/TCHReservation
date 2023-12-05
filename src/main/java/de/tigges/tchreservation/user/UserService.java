@@ -1,22 +1,5 @@
 package de.tigges.tchreservation.user;
 
-import java.util.Optional;
-import java.util.stream.StreamSupport;
-
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
-
 import de.tigges.tchreservation.exception.AuthorizationException;
 import de.tigges.tchreservation.exception.BadRequestException;
 import de.tigges.tchreservation.exception.NotFoundException;
@@ -32,6 +15,13 @@ import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.User;
 import de.tigges.tchreservation.user.model.UserDevice;
 import de.tigges.tchreservation.user.model.UserRole;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
+import java.util.stream.StreamSupport;
 
 @RestController
 @RequestMapping("/rest/user")
@@ -84,7 +74,6 @@ public class UserService {
     }
 
     @PostMapping("")
-    @Transactional
     public @ResponseBody User add(@RequestBody User user) {
         var loggedInUser = loggedinUserService.verifyHasRole(UserRole.ADMIN);
         checkNewUser(user);
