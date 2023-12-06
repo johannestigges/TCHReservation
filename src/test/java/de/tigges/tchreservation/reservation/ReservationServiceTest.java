@@ -275,7 +275,7 @@ public class ReservationServiceTest extends ProtocolTest {
     @Test
     @WithMockUser(username = "TRAINER")
     public void addReservationExtendsClosingHour() throws Exception {
-        Reservation reservation = createReservation(1, 1, 21, 3);
+        Reservation reservation = createReservation(2, 1, 22, 1);
         addReservationWithOccupationFieldError(reservation, "start", "Startzeit + Dauer zu spät.");
     }
 
