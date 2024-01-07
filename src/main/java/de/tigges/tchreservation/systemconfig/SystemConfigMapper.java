@@ -28,7 +28,7 @@ public class SystemConfigMapper {
         entity.setId(c.id());
         entity.setName(c.name());
         entity.setTitle(c.title());
-        entity.setCourts(String.join("\t", c.courts()));
+        entity.setCourts(joinCourts(c.courts()));
         entity.setDurationUnitInMinutes(c.durationUnitInMinutes());
         entity.setMaxDaysReservationInFuture(c.maxDaysReservationInFuture());
         entity.setMaxDuration(c.maxDuration());
@@ -40,5 +40,9 @@ public class SystemConfigMapper {
 
     private static List<String> splitCourts(String courts) {
         return Arrays.asList(courts.split("[,\t][\t ]*"));
+    }
+
+    private static String joinCourts(List<String> courts) {
+        return String.join("\t", courts);
     }
 }
