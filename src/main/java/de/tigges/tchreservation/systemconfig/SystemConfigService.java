@@ -1,27 +1,5 @@
 package de.tigges.tchreservation.systemconfig;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.StreamSupport;
-
-import de.tigges.tchreservation.reservation.model.SystemConfigReservationType;
-import de.tigges.tchreservation.systemconfig.jpa.ReservationTypeMapper;
-import de.tigges.tchreservation.systemconfig.jpa.ReservationTypeRepository;
-import de.tigges.tchreservation.user.LoggedinUserService;
-import org.springframework.http.HttpStatus;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
-
 import de.tigges.tchreservation.exception.FoundException;
 import de.tigges.tchreservation.exception.NotFoundException;
 import de.tigges.tchreservation.protocol.ActionType;
@@ -29,11 +7,23 @@ import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.protocol.jpa.ProtocolEntity;
 import de.tigges.tchreservation.protocol.jpa.ProtocolRepository;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
+import de.tigges.tchreservation.reservation.model.SystemConfigReservationType;
+import de.tigges.tchreservation.systemconfig.jpa.ReservationTypeMapper;
+import de.tigges.tchreservation.systemconfig.jpa.ReservationTypeRepository;
 import de.tigges.tchreservation.systemconfig.jpa.SystemConfigEntity;
 import de.tigges.tchreservation.systemconfig.jpa.SystemConfigRepository;
+import de.tigges.tchreservation.user.LoggedinUserService;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.model.UserRole;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.StreamSupport;
 
 @RestController
 @RequestMapping("/rest/systemconfig")

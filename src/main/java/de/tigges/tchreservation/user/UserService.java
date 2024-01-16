@@ -42,7 +42,7 @@ public class UserService {
     @GetMapping("/all")
     public @ResponseBody Iterable<User> getAll() {
         loggedinUserService.verifyHasRole(UserRole.ADMIN);
-        Iterable<UserEntity> allUsers = userRepository.findAll();
+        Iterable<UserEntity> allUsers = userRepository.findAllByOrderByName();
         return StreamSupport.stream(allUsers.spliterator(), false)
                 .map(UserMapper::map)
                 .toList();
