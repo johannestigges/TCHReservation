@@ -204,8 +204,8 @@ public class ReservationServiceTest extends ProtocolTest {
     @Test
     @WithMockUser(username = "TRAINER")
     public void addReservationOverlap3() throws Exception {
-        addReservation(createReservation(2, 1, 17, 1));
-        addReservationOverlap(createReservation(2, 1, 16, 3), 0);
+        addReservation(createReservation(2, 1, 17, 1, 1));
+        addReservationOverlap(createReservation(2, 1, 16, 3, 1), 0);
     }
 
     @Test
