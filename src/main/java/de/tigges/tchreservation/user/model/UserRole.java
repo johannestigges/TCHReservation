@@ -27,7 +27,7 @@ public enum UserRole {
 	 */
 	TECHNICAL,
 	/**
-	 * teamster, cadd add, modify and delete tournament reservations
+	 * teamster, can add, modify and delete tournament reservations
 	 */
 	TEAMSTER,
 	/**

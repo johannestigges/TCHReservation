@@ -25,20 +25,24 @@ public class SystemConfigMapper {
 
     public static SystemConfigEntity map(ReservationSystemConfig c) {
         var entity = new SystemConfigEntity();
-        entity.setId(c.getId());
-        entity.setName(c.getName());
-        entity.setTitle(c.getTitle());
-        entity.setCourts(String.join("\t", c.getCourts()));
-        entity.setDurationUnitInMinutes(c.getDurationUnitInMinutes());
-        entity.setMaxDaysReservationInFuture(c.getMaxDaysReservationInFuture());
-        entity.setMaxDuration(c.getMaxDuration());
-        entity.setOpeningHour(c.getOpeningHour());
-        entity.setClosingHour(c.getClosingHour());
-        entity.setTypes(ReservationTypeMapper.map(c.getTypes()));
+        entity.setId(c.id());
+        entity.setName(c.name());
+        entity.setTitle(c.title());
+        entity.setCourts(joinCourts(c.courts()));
+        entity.setDurationUnitInMinutes(c.durationUnitInMinutes());
+        entity.setMaxDaysReservationInFuture(c.maxDaysReservationInFuture());
+        entity.setMaxDuration(c.maxDuration());
+        entity.setOpeningHour(c.openingHour());
+        entity.setClosingHour(c.closingHour());
+        entity.setTypes(ReservationTypeMapper.map(c.types()));
         return entity;
     }
 
     private static List<String> splitCourts(String courts) {
         return Arrays.asList(courts.split("[,\t][\t ]*"));
+    }
+
+    private static String joinCourts(List<String> courts) {
+        return String.join("\t", courts);
     }
 }

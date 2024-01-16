@@ -12,6 +12,7 @@ import static de.tigges.tchreservation.user.model.UserRole.REGISTERED;
 import static de.tigges.tchreservation.user.model.UserRole.TRAINER;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import de.tigges.tchreservation.protocol.jpa.ProtocolRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,81 +36,77 @@ import de.tigges.tchreservation.user.model.UserRole;
 @ActiveProfiles("test")
 public class SpringUserDetailsServiceTest {
 
-	@Autowired
-	private UserDeviceRepository userDeviceRepository;
-	@Autowired
-	private UserRepository userRepository;
-	@Autowired
-	private SpringUserDetailsService service;
+    @Autowired
+    private UserDeviceRepository userDeviceRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private ProtocolRepository protocolRepository;
+    @Autowired
+    private SpringUserDetailsService service;
 
-	@BeforeEach
-	public void setup() throws Exception {
-		userDeviceRepository.deleteAll();
-		userRepository.deleteAll();
-	}
+    @BeforeEach
+    public void setup() {
+        protocolRepository.deleteAll();
+        userDeviceRepository.deleteAll();
+        userRepository.deleteAll();
+    }
 
-	@Test
-	public void allRoles() {
-		createAndLoadUser(ADMIN, ACTIVE).assertEnabled().assertNotLocked();
-		createAndLoadUser(ANONYMOUS, ACTIVE).assertEnabled().assertNotLocked();
-		createAndLoadUser(KIOSK, ACTIVE).assertEnabled().assertNotLocked();
-		createAndLoadUser(REGISTERED, ACTIVE).assertEnabled().assertNotLocked();
-		createAndLoadUser(TRAINER, ACTIVE).assertEnabled().assertNotLocked();
-	}
+    @Test
+    public void allRoles() {
+        createAndLoadUser(ADMIN, ACTIVE).assertEnabled().assertNotLocked();
+        createAndLoadUser(ANONYMOUS, ACTIVE).assertEnabled().assertNotLocked();
+        createAndLoadUser(KIOSK, ACTIVE).assertEnabled().assertNotLocked();
+        createAndLoadUser(REGISTERED, ACTIVE).assertEnabled().assertNotLocked();
+        createAndLoadUser(TRAINER, ACTIVE).assertEnabled().assertNotLocked();
+    }
 
-	@Test
-	public void allStatus() {
-		createAndLoadUser(REGISTERED, CREATED).assertDisabled().assertNotLocked();
-		createAndLoadUser(REGISTERED, ACTIVE).assertEnabled().assertNotLocked();
-		createAndLoadUser(REGISTERED, LOCKED).assertDisabled().assertLocked();
-		createAndLoadUser(REGISTERED, REMOVED).assertDisabled().assertNotLocked();
-		createAndLoadUser(REGISTERED, VERIFIED_BY_USER).assertDisabled().assertNotLocked();
-	}
+    @Test
+    public void allStatus() {
+        createAndLoadUser(REGISTERED, CREATED).assertDisabled().assertNotLocked();
+        createAndLoadUser(REGISTERED, ACTIVE).assertEnabled().assertNotLocked();
+        createAndLoadUser(REGISTERED, LOCKED).assertDisabled().assertLocked();
+        createAndLoadUser(REGISTERED, REMOVED).assertDisabled().assertNotLocked();
+        createAndLoadUser(REGISTERED, VERIFIED_BY_USER).assertDisabled().assertNotLocked();
+    }
 
-	@Test
-	public void findByEmail() {
-		userRepository.save(new UserEntity("my@email.de", "user", "mypassword", REGISTERED, ACTIVE));
-		service.loadUserByUsername("my@email.de");
-	}
+    @Test
+    public void findByEmail() {
+        userRepository.save(new UserEntity("my@email.de", "user", "mypassword", REGISTERED, ACTIVE));
+        service.loadUserByUsername("my@email.de");
+    }
 
-	@Test
-	public void unknownUser() {
-		Assertions.assertThrows(UsernameNotFoundException.class, () -> {
-			service.loadUserByUsername("unknownuser");
-		});
-	}
+    @Test
+    public void unknownUser() {
+        Assertions.assertThrows(UsernameNotFoundException.class, () -> service.loadUserByUsername("unknownuser"));
+    }
 
-	private UserChecker createAndLoadUser(UserRole role, ActivationStatus status) {
-		String username = role.name() + "." + status.name();
-		userRepository.save(new UserEntity("my@email.de", username, "mypassword", role, status));
-		return new UserChecker(service.loadUserByUsername(username));
-	}
+    private UserChecker createAndLoadUser(UserRole role, ActivationStatus status) {
+        String username = role.name() + "." + status.name();
+        userRepository.save(new UserEntity("my@email.de", username, "mypassword", role, status));
+        return new UserChecker(service.loadUserByUsername(username));
+    }
 
-	private class UserChecker {
-		private UserDetails userDetails;
+    private record UserChecker(UserDetails userDetails) {
 
-		public UserChecker(UserDetails userDetails) {
-			this.userDetails = userDetails;
-		}
+        public UserChecker assertEnabled() {
+                assertThat(userDetails.isEnabled()).isTrue();
+                return this;
+            }
 
-		public UserChecker assertEnabled() {
-			assertThat(userDetails.isEnabled()).isTrue();
-			return this;
-		}
+            public UserChecker assertDisabled() {
+                assertThat(userDetails.isEnabled()).isFalse();
+                return this;
+            }
 
-		public UserChecker assertDisabled() {
-			assertThat(userDetails.isEnabled()).isFalse();
-			return this;
-		}
+            public UserChecker assertNotLocked() {
+                assertThat(userDetails.isAccountNonLocked()).isTrue();
+                return this;
+            }
 
-		public UserChecker assertNotLocked() {
-			assertThat(userDetails.isAccountNonLocked()).isTrue();
-			return this;
-		}
-
-		public UserChecker assertLocked() {
-			assertThat(userDetails.isAccountNonLocked()).isFalse();
-			return this;
-		}
-	}
+            public UserChecker assertLocked() {
+                assertThat(userDetails.isAccountNonLocked()).isFalse();
+                return this;
+            }
+        }
 }

@@ -27,8 +27,8 @@ public interface Protocollable {
 	 * helper method to define all protocol fields
 	 * <p>
 	 * 
-	 * @param keyValues
-	 * @return
+	 * @param keyValues varargs with key-values pairs
+	 * @return map of all protocol fields
 	 */
 	default Map<String, String> protocolFields(String... keyValues) {
 

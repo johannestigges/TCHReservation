@@ -5,9 +5,12 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 import de.tigges.tchreservation.user.model.ActivationStatus;
 
+import java.io.Serial;
+
 @ResponseStatus(code = HttpStatus.BAD_REQUEST)
 public class ActivationStatusException extends RuntimeException {
 
+	@Serial
 	private static final long serialVersionUID = -6891309491588779751L;
 
 	public ActivationStatusException(ActivationStatus from, ActivationStatus to, String id) {

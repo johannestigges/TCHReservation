@@ -1,33 +1,31 @@
 package de.tigges.tchreservation.reservation.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.util.List;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class ReservationSystemConfig {
+public record ReservationSystemConfig(
+        long id,
+        String name,
+        String title,
+        List<String> courts,
+        int durationUnitInMinutes,
+        int maxDaysReservationInFuture,
+        int maxDuration,
+        int openingHour,
+        int closingHour,
+        List<SystemConfigReservationType> types) {
 
-	private long id;
-
-	private String name;
-
-	private String title;
-
-	private List<String> courts;
-
-	private int durationUnitInMinutes;
-
-	private int maxDaysReservationInFuture;
-
-	private int maxDuration;
-
-	private int openingHour;
-
-	private int closingHour;
-
-	private List<SystemConfigReservationType> types;
+    public ReservationSystemConfig withTypes(List<SystemConfigReservationType> types) {
+        return new ReservationSystemConfig(
+                id,
+                name,
+                title,
+                courts,
+                durationUnitInMinutes,
+                maxDaysReservationInFuture,
+                maxDuration,
+                openingHour,
+                closingHour,
+                types
+        );
+    }
 }
