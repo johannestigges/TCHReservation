@@ -11,6 +11,9 @@ public record SystemConfigReservationType(
         int maxDuration,
         int maxDaysReservationInFuture,
         int maxCancelInHours,
+
+        boolean repeatable,
+        boolean publicVisible,
         Collection<UserRole> roles) {
 }
 
