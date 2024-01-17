@@ -160,7 +160,7 @@ class SystemConfigValidatorTest {
     }
 
     private static SystemConfigReservationType createType(int type, String name) {
-        return new SystemConfigReservationType(1, type, name, 0, 0, 0, Collections.emptyList());
+        return new SystemConfigReservationType(1, type, name, 0, 0, 0, true,true,Collections.emptyList());
     }
     private static SystemConfigReservationType createType(int type) {
         return createType(type,"type " + type);

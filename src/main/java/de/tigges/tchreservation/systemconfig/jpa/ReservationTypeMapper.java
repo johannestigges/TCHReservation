@@ -27,6 +27,8 @@ public class ReservationTypeMapper {
                 mapInteger(entity.getMaxDuration(), 0),
                 mapInteger(entity.getMaxDaysReservationInFuture(), 0),
                 mapInteger(entity.getMaxCancelInHours(), 0),
+                entity.isRepeatable(),
+                entity.isPublicVisible(),
                 mapRoles(entity.getRoles())
         );
     }
@@ -49,6 +51,8 @@ public class ReservationTypeMapper {
         entity.setMaxDuration(type.maxDuration());
         entity.setMaxDaysReservationInFuture(type.maxDaysReservationInFuture());
         entity.setMaxCancelInHours(type.maxCancelInHours());
+        entity.setRepeatable(type.repeatable());
+        entity.setPublicVisible(type.publicVisible());
         entity.setRoles(mapRoles(type.roles()));
         return entity;
     }

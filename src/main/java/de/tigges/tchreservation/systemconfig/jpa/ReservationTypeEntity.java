@@ -30,6 +30,10 @@ public class ReservationTypeEntity implements Protocollable {
     private Integer maxDuration;
     private Integer maxDaysReservationInFuture;
     private Integer maxCancelInHours;
+    @Column(columnDefinition = "boolean default false")
+    private boolean repeatable;
+    @Column(columnDefinition = "boolean default false")
+    private boolean publicVisible;
 
     @Column(nullable = false)
     private String roles;
@@ -43,6 +47,8 @@ public class ReservationTypeEntity implements Protocollable {
                 "maxDuration", Integer.toString(maxDuration), //
                 "maxDaysReservationInFuture", Integer.toString(maxDaysReservationInFuture), //
                 "maxCancelInHours", Integer.toString(maxCancelInHours), //
+                "repeatable", Boolean.toString(repeatable),
+                "publicVisible", Boolean.toString(publicVisible),
                 "roles", roles //
         );
     }

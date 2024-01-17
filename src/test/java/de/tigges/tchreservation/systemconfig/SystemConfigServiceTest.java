@@ -98,14 +98,14 @@ class SystemConfigServiceTest extends ProtocolTest {
                 Arrays.asList("Platz 1", "Platz 2", "Platz 3", "Platz 4", "Platz 5", "Platz 6"),
                 30, 2, 3, 8, 22,
                 List.of(
-                        new SystemConfigReservationType(1L, 1, "Quickbuchung", 3, 1, 0,
+                        new SystemConfigReservationType(1L, 1, "Quickbuchung", 3, 1, 0, false, false,
                                 Arrays.asList(UserRole.REGISTERED, UserRole.KIOSK, UserRole.TECHNICAL, UserRole.TEAMSTER, UserRole.TRAINER)),
-                        new SystemConfigReservationType(2L, 2, "Training", 0, 0, 0,
+                        new SystemConfigReservationType(2L, 2, "Training", 0, 0, 0, true, true,
                                 Arrays.asList(UserRole.TEAMSTER, UserRole.TRAINER)),
-                        new SystemConfigReservationType(3L, 3, "Meisterschaft", 0, 0, 0,
+                        new SystemConfigReservationType(3L, 3, "Meisterschaft", 0, 0, 0, false, true,
                                 Arrays.asList(UserRole.TEAMSTER, UserRole.TRAINER)),
-                        new SystemConfigReservationType(3L, 3, "Dauerbuchung", 0, 0, 0,
-                                Arrays.asList(UserRole.TRAINER))
+                        new SystemConfigReservationType(3L, 3, "Dauerbuchung", 0, 0, 0, true, false,
+                                List.of(UserRole.TRAINER))
                 ));
         verifyEquals(config, performPost("/rest/systemconfig", config).andExpect(status().isCreated()));
         verifyEquals(config, get(1L));
