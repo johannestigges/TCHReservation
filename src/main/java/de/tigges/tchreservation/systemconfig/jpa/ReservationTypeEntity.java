@@ -47,6 +47,8 @@ public class ReservationTypeEntity implements Protocollable {
                 "maxDuration", Integer.toString(maxDuration), //
                 "maxDaysReservationInFuture", Integer.toString(maxDaysReservationInFuture), //
                 "maxCancelInHours", Integer.toString(maxCancelInHours), //
+                "repeatable", Boolean.toString(repeatable),
+                "publicVisible", Boolean.toString(publicVisible),
                 "roles", roles //
         );
     }
