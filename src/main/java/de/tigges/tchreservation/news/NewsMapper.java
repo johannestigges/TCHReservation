@@ -7,9 +7,21 @@ import java.util.Collections;
 
 public class NewsMapper {
     public static News map(NewsEntity n) {
-        return  new News(n.getId(),n.getSubject(),n.getText(),n.getCreatedAt());
+        return new News(
+                n.getId(),
+                n.getSubject(),
+                n.getUrl(),
+                n.getText(),
+                n.getCreatedAt());
     }
+
     public static NewsEntity map(News n) {
-        return  new NewsEntity(n.id(),n.subject(),n.text(),n.createdAt(), Collections.emptySet());
+        return new NewsEntity(
+                n.id(),
+                n.subject(),
+                n.url(),
+                n.text(),
+                n.createdAt(),
+                Collections.emptySet());
     }
 }

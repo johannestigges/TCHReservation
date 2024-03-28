@@ -1,18 +1,16 @@
 package de.tigges.tchreservation.user.jpa;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import de.tigges.tchreservation.news.user.jpa.UserNewsEntity;
-import jakarta.persistence.*;
-
 import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.protocol.Protocollable;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.UserRole;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 @Entity
 @Table(name = "\"user\"")
@@ -54,9 +52,6 @@ public class UserEntity implements Protocollable {
 
 	@Transient
 	private Set<UserDeviceEntity> devices = new HashSet<>();
-
-	@OneToMany(mappedBy = "user")
-	Set<UserNewsEntity> news;
 
 	public void setStatus(ActivationStatus status) {
 		ActivationStatus.checkStatusChange(this.status, status, "user " + id);

@@ -6,6 +6,9 @@ import de.tigges.tchreservation.user.model.UserRole;
 
 import java.util.Arrays;
 
+import static de.tigges.tchreservation.user.model.ActivationStatus.ACTIVE;
+import static de.tigges.tchreservation.user.model.UserRole.ANONYMOUS;
+
 public final class UserUtils {
 
 	public static boolean is(UserEntity user, long userId) {
@@ -13,7 +16,7 @@ public final class UserUtils {
 	}
 
 	public static UserEntity anonymous() {
-		return new UserEntity("", "", "", UserRole.ANONYMOUS, ActivationStatus.ACTIVE);
+		return new UserEntity("", "", "", ANONYMOUS, ACTIVE);
 	}
 
 	public static boolean hasRole(UserEntity user, UserRole... roles) {
@@ -25,6 +28,9 @@ public final class UserUtils {
 	}
 
 	public static boolean isActive(UserEntity user) {
-		return ActivationStatus.ACTIVE.equals(user.getStatus());
+		return hasStatus(user, ACTIVE);
 	}
+public static boolean hasStatus(UserEntity user, ActivationStatus status) {
+		return user.getStatus().equals(status);
+}
 }
