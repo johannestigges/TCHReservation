@@ -1,17 +1,16 @@
 package de.tigges.tchreservation.user.jpa;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import jakarta.persistence.*;
-
 import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.protocol.Protocollable;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.UserRole;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 @Entity
 @Table(name = "\"user\"")

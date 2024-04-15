@@ -34,8 +34,8 @@ public class ReservationValidator {
      * <li>authorization checks
      * <li>occupation overlap checks
      *
-     * @param occupation
-     * @param loggedInUser
+     * @param occupation occupation to check
+     * @param loggedInUser logged in user
      */
     public void validateOccupation(Occupation occupation, UserEntity loggedInUser, ReservationSystemConfig systemConfig) {
 
