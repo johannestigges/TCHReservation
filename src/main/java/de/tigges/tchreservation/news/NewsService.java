@@ -39,7 +39,7 @@ public class NewsService {
 
     @DeleteMapping("/days/{days}")
     public void deleteOldNews(@PathVariable int days) {
-        deleteOldNewsAsync(LocalDateTime.now().minusDays(days));
+        deleteNewsOlderThan(LocalDateTime.now().minusDays(days));
     }
 
     @DeleteMapping("/news_id/{newsId}")
@@ -49,11 +49,10 @@ public class NewsService {
     }
 
     @Async
-    private void deleteOldNewsAsync(LocalDateTime expired) {
+    private void deleteNewsOlderThan(LocalDateTime expired) {
         var count = newsRepository.findAllByCreatedAtBefore(expired)
-                .peek(newsEntity -> userNewsRepository.deleteByIdNewsId(newsEntity.getId()))
-                .peek(newsEntity -> newsRepository.deleteById(newsEntity.getId()))
+                .peek(newsEntity -> deleteByNewsId(newsEntity.getId()))
                 .count();
-        log.info("deleted {} news with expiry of {}", count, expired);
+        log.info("deleted {} news older than {}", count, expired);
     }
 }

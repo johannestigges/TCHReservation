@@ -1,5 +1,6 @@
 package de.tigges.tchreservation.news.user;
 
+import de.tigges.tchreservation.news.model.UserNews;
 import de.tigges.tchreservation.news.user.jpa.UserNewsEntity;
 
 public class UserNewsMapper {
