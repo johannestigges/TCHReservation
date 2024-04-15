@@ -37,9 +37,15 @@ public class NewsService {
         return result;
     }
 
-    @DeleteMapping("/{days}")
+    @DeleteMapping("/days/{days}")
     public void deleteOldNews(@PathVariable int days) {
         deleteOldNewsAsync(LocalDateTime.now().minusDays(days));
+    }
+
+    @DeleteMapping("/news_id/{newsId}")
+    public void deleteByNewsId(@PathVariable long newsId) {
+        userNewsRepository.deleteByIdNewsId(newsId);
+        newsRepository.deleteById(newsId);
     }
 
     @Async
