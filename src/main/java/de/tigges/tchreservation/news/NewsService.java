@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static de.tigges.tchreservation.JpaUtil.stream;
 import static de.tigges.tchreservation.news.NewsMapper.map;
 
 @RestController
@@ -25,12 +26,14 @@ public class NewsService {
 
     @GetMapping("/all")
     public List<News> getAll() {
-        return newsRepository.findAllByOrderByCreatedAtDesc()
+        return stream(newsRepository.findAllByOrderByCreatedAtDesc())
                 .map(NewsMapper::map)
                 .toList();
     }
 
-    @PostMapping("/")
+
+
+    @PostMapping("")
     public @ResponseBody News add(@RequestBody News news) {
         var result = map(newsRepository.save(map(news)));
         userNewsSyncService.syncNews(result.id());
@@ -50,7 +53,7 @@ public class NewsService {
 
     @Async
     private void deleteNewsOlderThan(LocalDateTime expired) {
-        var count = newsRepository.findAllByCreatedAtBefore(expired)
+        var count = stream(newsRepository.findAllByCreatedAtBefore(expired))
                 .peek(newsEntity -> deleteByNewsId(newsEntity.getId()))
                 .count();
         log.info("deleted {} news older than {}", count, expired);

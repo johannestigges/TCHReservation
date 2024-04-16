@@ -1,8 +1,9 @@
   spring:
     datasource:
-      url: jdbc:postgresql://localhost:5432/tch
+      url: jdbc:postgresql://localhost:5433/tch
       username: tch
       password: knofensa
     jpa:
       hibernate:
         ddl-auto: validate # validate update create create-drop
+      database-platform: org.hibernate.dialect.PostgreSQLDialect

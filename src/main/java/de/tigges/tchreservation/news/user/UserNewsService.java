@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import static de.tigges.tchreservation.JpaUtil.stream;
+
 @RestController
 @RequestMapping("/rest/news/user")
 @RequiredArgsConstructor
@@ -17,7 +19,7 @@ public class UserNewsService {
 
     @GetMapping("/{userid}")
     public List<UserNews> getNewsForUser(@PathVariable long userid) {
-        return repository.findAllByIdUserId(userid)
+        return stream(repository.findAllByIdUserId(userid))
                 .map(UserNewsMapper::map)
                 .toList();
     }
