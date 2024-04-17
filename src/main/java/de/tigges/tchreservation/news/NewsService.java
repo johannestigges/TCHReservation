@@ -4,6 +4,7 @@ import de.tigges.tchreservation.news.jpa.NewsRepository;
 import de.tigges.tchreservation.news.model.News;
 import de.tigges.tchreservation.news.user.UserNewsSyncService;
 import de.tigges.tchreservation.news.user.jpa.UserNewsRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -31,7 +32,12 @@ public class NewsService {
                 .toList();
     }
 
-
+    @GetMapping("/one/{id}")
+    public News getOne(@PathVariable long id) {
+        return newsRepository.findById(id)
+                .map(NewsMapper::map)
+                .orElseThrow();
+    }
 
     @PostMapping("")
     public @ResponseBody News add(@RequestBody News news) {
@@ -40,12 +46,22 @@ public class NewsService {
         return result;
     }
 
+    @PutMapping("")
+    public @ResponseBody News update(@RequestBody News news) {
+        return newsRepository.findById(news.id())
+                .map(db -> newsRepository.save(map(news)))
+                .map(NewsMapper::map)
+                .orElseThrow();
+    }
+
     @DeleteMapping("/days/{days}")
+    @Transactional
     public void deleteOldNews(@PathVariable int days) {
         deleteNewsOlderThan(LocalDateTime.now().minusDays(days));
     }
 
-    @DeleteMapping("/news_id/{newsId}")
+    @DeleteMapping("/id/{newsId}")
+    @Transactional
     public void deleteByNewsId(@PathVariable long newsId) {
         userNewsRepository.deleteByIdNewsId(newsId);
         newsRepository.deleteById(newsId);
