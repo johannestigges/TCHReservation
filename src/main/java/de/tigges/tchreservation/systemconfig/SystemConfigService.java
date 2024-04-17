@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.StreamSupport;
 
+import static de.tigges.tchreservation.JpaUtil.stream;
+
 @RestController
 @RequestMapping("/rest/systemconfig")
 @RequiredArgsConstructor
@@ -98,8 +100,7 @@ public class SystemConfigService {
     }
 
     private List<SystemConfigReservationType> getTypes(long systemConfigId) {
-        var entities = reservationTypeRepository.findBySystemConfigId(systemConfigId);
-        return StreamSupport.stream(entities.spliterator(), false) //
+        return stream(reservationTypeRepository.findBySystemConfigId(systemConfigId))
                 .map(ReservationTypeMapper::map)
                 .toList();
     }
