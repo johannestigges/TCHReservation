@@ -35,7 +35,7 @@ public class UserNewsSyncService {
                 .forEach(newsEntity -> syncNews(newsEntity.getId()));
     }
 
-    private void addUserNewsIfNotExisting(long newsId, long userId) {
+    private void addUserNewsIfNotExisting(long userId, long newsId) {
         userNewsRepository.findByIdUserIdAndIdNewsId(userId, newsId)
                 .orElseGet(() -> addUserNews(userId, newsId));
     }
