@@ -34,7 +34,8 @@ public class SecurityConfig {
             "/rest/systemconfig/getone/*",
             "/rest/systemconfig/getall",
             "/rest/application/properties",
-            "/rest/user/me"
+            "/rest/user/me",
+            "/rest/news/**"
     };
 
     @Bean

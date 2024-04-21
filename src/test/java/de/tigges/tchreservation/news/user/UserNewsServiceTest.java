@@ -1,15 +1,21 @@
 package de.tigges.tchreservation.news.user;
 
 import de.tigges.tchreservation.UserTest;
+import de.tigges.tchreservation.news.jpa.NewsEntity;
+import de.tigges.tchreservation.news.jpa.NewsRepository;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.model.UserRole;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -20,6 +26,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 class UserNewsServiceTest extends UserTest {
+
+    @Autowired private NewsRepository newsRepository;
 
     private static List<UserEntity> users;
 
@@ -35,15 +43,32 @@ class UserNewsServiceTest extends UserTest {
         deleteAllUsers();
     }
 
-    @Test
-    void acknowledge() throws Exception {
+    @BeforeEach void addNews() {
+        newsRepository.save(new NewsEntity(
+                1L,
+                "my subject",
+                "my text",
+                "my url",
+                LocalDateTime.now(),
+                Collections.emptySet()
+        ));
+    }
+    @AfterEach() void removeNews() {
+        newsRepository.deleteById(1L);
+    }
 
-        performPost("/rest/news/user/myUserId", userIds())
-                .andExpect(status().isFound())
+    @Test
+    @WithMockUser(username = "REGISTERED")
+    void acknowledge() throws Exception {
+        performPost("/rest/news/user/acknowledge", List.of(1L))
+                .andExpect(status().isOk())
                 .andReturn();
     }
 
-    private List<Long> userIds() {
-        return users.stream().map(UserEntity::getId).toList();
+    @Test
+    void acknowledgeWithoutLogin() throws Exception {
+        performPost("/rest/news/user/acknowledge", List.of(1L))
+                .andExpect(status().isUnauthorized())
+                .andReturn();
     }
 }

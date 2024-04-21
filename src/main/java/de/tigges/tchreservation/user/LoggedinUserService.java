@@ -29,6 +29,14 @@ public class LoggedinUserService {
         return userRepository.findByNameOrEmail(name, name).orElse(UserUtils.anonymous());
     }
 
+    public UserEntity verifyIsLoggedIn() {
+        var user = getLoggedInUser();
+        if (UserUtils.hasRole(user,UserRole.ANONYMOUS)) {
+            throw new AuthorizationException("error_user_is_not_logged_in");
+        }
+        return user;
+    }
+
     public UserEntity verifyHasRole(UserRole... roles) {
         var loggedInUser = getLoggedInUser();
         if (!UserUtils.isActive(loggedInUser) || !UserUtils.hasRole(loggedInUser, roles)) {
