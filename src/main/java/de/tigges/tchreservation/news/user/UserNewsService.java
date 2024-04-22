@@ -21,7 +21,7 @@ public class UserNewsService {
 
     @GetMapping("")
     public List<UserNews> getMyNews() {
-        var user = loggedinUserService.getLoggedInUser();
+        var user = loggedinUserService.verifyIsLoggedIn();
         return stream(repository.findAllByIdUserId(user.getId()))
                 .map(UserNewsMapper::map)
                 .toList();
