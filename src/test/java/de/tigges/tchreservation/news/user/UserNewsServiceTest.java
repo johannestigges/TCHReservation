@@ -60,14 +60,14 @@ class UserNewsServiceTest extends UserTest {
     @Test
     @WithMockUser(username = "REGISTERED")
     void acknowledge() throws Exception {
-        performPost("/rest/news/user/acknowledge", List.of(1L))
+        performPost("/rest/news/user/acknowledge", 1L)
                 .andExpect(status().isOk())
                 .andReturn();
     }
 
     @Test
     void acknowledgeWithoutLogin() throws Exception {
-        performPost("/rest/news/user/acknowledge", List.of(1L))
+        performPost("/rest/news/user/acknowledge", 1L)
                 .andExpect(status().isUnauthorized())
                 .andReturn();
     }

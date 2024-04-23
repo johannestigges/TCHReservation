@@ -29,10 +29,8 @@ public class UserNewsService {
 
     @PostMapping("/acknowledge")
     @Transactional
-    public void acknowledge(@RequestBody List<Long> newsIds) {
+    public void acknowledge(@RequestBody Long newsId) {
         var user = loggedinUserService.verifyIsLoggedIn();
-        for (Long newsId : newsIds) {
-            repository.save(new UserNewsEntity(user.getId(), newsId, true));
-        }
+        repository.save(new UserNewsEntity(user.getId(), newsId, true));
     }
 }

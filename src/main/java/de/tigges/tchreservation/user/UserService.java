@@ -3,7 +3,6 @@ package de.tigges.tchreservation.user;
 import de.tigges.tchreservation.exception.AuthorizationException;
 import de.tigges.tchreservation.exception.BadRequestException;
 import de.tigges.tchreservation.exception.NotFoundException;
-import de.tigges.tchreservation.news.user.UserNewsSyncService;
 import de.tigges.tchreservation.protocol.ActionType;
 import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.protocol.jpa.ProtocolEntity;
@@ -33,7 +32,6 @@ public class UserService {
     private final UserDeviceRepository userDeviceRepository;
     private final ProtocolRepository protocolRepository;
     private final LoggedinUserService loggedinUserService;
-    private final UserNewsSyncService userNewsSyncService;
     private final PasswordEncoder encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
 
     @GetMapping("/me")
@@ -82,7 +80,6 @@ public class UserService {
         var cryptedPassword = encoder.encode(user.getPassword());
         user.setPassword(cryptedPassword);
         var savedUserEntity = userRepository.save(UserMapper.map(user));
-        userNewsSyncService.syncUser(savedUserEntity.getId());
         var savedUser = UserMapper.map(savedUserEntity);
         protocolRepository.save(new ProtocolEntity(savedUserEntity, ActionType.CREATE, loggedInUser));
         user.getDevices().forEach(device -> {
