@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.StreamSupport;
 
 import static de.tigges.tchreservation.JpaUtil.stream;
 
@@ -47,7 +46,7 @@ public class SystemConfigService {
 
     @GetMapping("/getall")
     public List<ReservationSystemConfig> getAll() {
-        return StreamSupport.stream(systemConfigRepository.findAll().spliterator(), false)
+        return stream(systemConfigRepository.findAll())
                 .map(SystemConfigMapper::map)
                 .map(this::setTypes)
                 .toList();
