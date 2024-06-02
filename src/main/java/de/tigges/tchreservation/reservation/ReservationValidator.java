@@ -89,7 +89,7 @@ public class ReservationValidator {
                     .isAfter(of(date, systemConfig.closingHour(), 0))) {
                 addOccupationFieldError(errorMessages, "start", msg("error_start_time_plus_duration"));
             }
-            if (!loggedInUser.getRole().equals(UserRole.ADMIN) && isOccupationTooFarInFuture(occupation, type)) {
+            if (isOccupationTooFarInFuture(occupation, type)) {
                 addOccupationFieldError(errorMessages, "date", msg("error_date_too_far_in_future"));
             }
         }

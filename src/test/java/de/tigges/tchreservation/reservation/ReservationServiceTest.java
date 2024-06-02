@@ -85,7 +85,7 @@ public class ReservationServiceTest extends ProtocolTest {
         system1.setOpeningHour(8);
         system1.setClosingHour(22);
         system1.setTypes(Set.of(
-                createReservationType(0, "Quickbuchung", 3, 1, 0,
+                createReservationType(0, "Quickbuchung", 3, 60, 0,
                         UserRole.REGISTERED, UserRole.TRAINER, UserRole.KIOSK, UserRole.TECHNICAL, UserRole.TEAMSTER),
                 createReservationType(1, "Training", UserRole.TRAINER, UserRole.TEAMSTER),
                 createReservationType(2, "Meisterschaft", UserRole.TRAINER, UserRole.TEAMSTER),
@@ -527,7 +527,7 @@ public class ReservationServiceTest extends ProtocolTest {
     @WithMockUser(username = "REGISTERED")
     public void addReservationUnauthorizedInTheFarFuture() throws Exception {
         Reservation reservation = createReservation(1, 1, 8, 1);
-        reservation.setDate(LocalDate.now().plusDays(3));
+        reservation.setDate(LocalDate.now().plusDays(65));
         addReservationWithOccupationFieldError(reservation, "date", "Das Datum liegt zu weit in der Zukunft.");
     }
 
@@ -562,7 +562,7 @@ public class ReservationServiceTest extends ProtocolTest {
     @WithMockUser(username = "TRAINER")
     public void updateOccupation() throws Exception {
         Reservation reservation = getResponseJson(addReservation(createReservation(2, 1, 12, 2, 1)), Reservation.class);
-        Occupation occupation = reservation.getOccupations().get(0);
+        Occupation occupation = reservation.getOccupations().getFirst();
         occupation.setDuration(1);
         checkOccupation(updateOccupation(occupation), occupation, ActionType.MODIFY);
     }
