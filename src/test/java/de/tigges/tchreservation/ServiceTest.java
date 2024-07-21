@@ -1,16 +1,5 @@
 package de.tigges.tchreservation;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.util.Arrays;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -25,13 +14,23 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+
 /**
  * base class for unit tests testing rest services
  */
 public class ServiceTest {
 
-	private MediaType contentTypeJson = new MediaType(MediaType.APPLICATION_JSON.getType(),
-			MediaType.APPLICATION_JSON.getSubtype(), Charset.forName("utf8"));
+	private final MediaType contentTypeJson = new MediaType(
+			MediaType.APPLICATION_JSON.getType(),
+			MediaType.APPLICATION_JSON.getSubtype(),
+			StandardCharsets.UTF_8);
 
 	private MockMvc mockMvc;
 
@@ -43,63 +42,37 @@ public class ServiceTest {
 	@SuppressWarnings("unchecked")
 	@Autowired
 	private void setConverters(HttpMessageConverter<?>[] converters) {
-
-		this.mappingJackson2HttpMessageConverter = (HttpMessageConverter<Object>) Arrays.asList(converters).stream()
-				.filter(hmc -> hmc instanceof MappingJackson2HttpMessageConverter).findAny().orElse(null);
+		this.mappingJackson2HttpMessageConverter = (HttpMessageConverter<Object>) Arrays.stream(converters)
+				.filter(hmc -> hmc instanceof MappingJackson2HttpMessageConverter)
+				.findAny()
+				.orElse(null);
 
 		assertThat(this.mappingJackson2HttpMessageConverter).isNotNull();
 	}
 
 	@BeforeEach
-	public void setupServiceTest() throws Exception {
+	public void setupServiceTest() {
 		this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
 				.apply(SecurityMockMvcConfigurers.springSecurity()).build();
 	}
 
-	/**
-	 * convert object to json string
-	 * 
-	 * @param o object to be converted
-	 * @return json representation
-	 * @throws IOException
-	 */
 	protected String json(Object o) throws IOException {
-
 		if (o != null) {
-			MockHttpOutputMessage mockHttpOutputMessage = new MockHttpOutputMessage();
+			var mockHttpOutputMessage = new MockHttpOutputMessage();
 			this.mappingJackson2HttpMessageConverter.write(o, MediaType.APPLICATION_JSON, mockHttpOutputMessage);
 			return mockHttpOutputMessage.getBodyAsString();
 		}
 		return null;
 	}
 
-	/**
-	 * returns the service response object
-	 * 
-	 * @param resultActions service call result
-	 * @param c             class type of expected result
-	 * @return result
-	 * 
-	 * @throws HttpMessageNotReadableException
-	 * @throws IOException
-	 */
 	protected <T> T getResponseJson(ResultActions resultActions, Class<T> c)
 			throws HttpMessageNotReadableException, IOException {
 		return jsonObject(resultActions.andReturn().getResponse().getContentAsByteArray(), c);
 	}
 
-	/**
-	 * convert a byte array of json to a java object
-	 * 
-	 * @param content byte array with json representation
-	 * @param c       class type of expected result
-	 * @return java object
-	 * @throws HttpMessageNotReadableException
-	 * @throws IOException
-	 */
 	@SuppressWarnings("unchecked")
 	protected <T> T jsonObject(byte[] content, Class<T> c) throws HttpMessageNotReadableException, IOException {
-		MockHttpInputMessage mockHttpInputMessage = new MockHttpInputMessage(content);
+		var mockHttpInputMessage = new MockHttpInputMessage(content);
 		return (T) this.mappingJackson2HttpMessageConverter.read(c, mockHttpInputMessage);
 	}
 

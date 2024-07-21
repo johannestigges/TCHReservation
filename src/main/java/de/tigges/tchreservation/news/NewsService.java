@@ -1,8 +1,10 @@
 package de.tigges.tchreservation.news;
 
+import de.tigges.tchreservation.exception.NotFoundException;
 import de.tigges.tchreservation.news.jpa.NewsRepository;
 import de.tigges.tchreservation.news.model.News;
 import de.tigges.tchreservation.news.user.jpa.UserNewsRepository;
+import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.user.LoggedinUserService;
 import de.tigges.tchreservation.user.model.UserRole;
 import jakarta.transaction.Transactional;
@@ -35,7 +37,7 @@ public class NewsService {
     public News getOne(@PathVariable long id) {
         return newsRepository.findById(id)
                 .map(NewsMapper::map)
-                .orElseThrow();
+                .orElseThrow(() -> new NotFoundException(EntityType.NEWS, id));
     }
 
     @PostMapping("")
@@ -50,7 +52,7 @@ public class NewsService {
         return newsRepository.findById(news.id())
                 .map(db -> newsRepository.save(map(news)))
                 .map(NewsMapper::map)
-                .orElseThrow();
+                .orElseThrow(() -> new NotFoundException(EntityType.NEWS, news.id()));
     }
 
     @DeleteMapping("/id/{newsId}")

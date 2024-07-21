@@ -21,13 +21,13 @@ import java.util.stream.Stream;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-
 @SpringBootTest
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 class UserNewsServiceTest extends UserTest {
 
-    @Autowired private NewsRepository newsRepository;
+    @Autowired
+    private NewsRepository newsRepository;
 
     private static List<UserEntity> users;
 
@@ -43,7 +43,8 @@ class UserNewsServiceTest extends UserTest {
         deleteAllUsers();
     }
 
-    @BeforeEach void addNews() {
+    @BeforeEach
+    void addNews() {
         newsRepository.save(new NewsEntity(
                 1L,
                 "my subject",
@@ -53,7 +54,9 @@ class UserNewsServiceTest extends UserTest {
                 Collections.emptySet()
         ));
     }
-    @AfterEach() void removeNews() {
+
+    @AfterEach()
+    void removeNews() {
         newsRepository.deleteById(1L);
     }
 
