@@ -16,13 +16,13 @@ import static de.tigges.tchreservation.JpaUtil.stream;
 @RequestMapping("/rest/news/user")
 @RequiredArgsConstructor
 public class UserNewsService {
-    private final UserNewsRepository repository;
+    private final UserNewsRepository userNewsRepository;
     private final LoggedinUserService loggedinUserService;
 
     @GetMapping("")
     public List<UserNews> getMyNews() {
         var user = loggedinUserService.verifyIsLoggedIn();
-        return stream(repository.findAllByIdUserId(user.getId()))
+        return stream(userNewsRepository.findAllByIdUserId(user.getId()))
                 .map(UserNewsMapper::map)
                 .toList();
     }
@@ -32,7 +32,7 @@ public class UserNewsService {
     public void acknowledge(@RequestBody List<Long> newsIds) {
         var user = loggedinUserService.verifyIsLoggedIn();
         for(var newsId: newsIds) {
-            repository.save(new UserNewsEntity(user.getId(), newsId, true));
+            userNewsRepository.save(new UserNewsEntity(user.getId(), newsId, true));
         }
     }
 }

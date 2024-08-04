@@ -32,6 +32,5 @@ public class LocalDateJsonDeserializer extends JsonDeserializer<LocalDate> {
 
 	private LocalDate toLocalDate(long value) {
 		return Instant.ofEpochMilli(value).atZone(ZoneId.systemDefault()).toLocalDate();
-
 	}
 }

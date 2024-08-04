@@ -5,7 +5,7 @@ import de.tigges.tchreservation.news.model.News;
 
 import java.util.Collections;
 
-public class NewsMapper {
+public final class NewsMapper {
     public static News map(NewsEntity n) {
         return new News(
                 n.getId(),
