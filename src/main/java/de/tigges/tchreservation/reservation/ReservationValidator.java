@@ -1,6 +1,9 @@
 package de.tigges.tchreservation.reservation;
 
-import de.tigges.tchreservation.exception.*;
+import de.tigges.tchreservation.exception.AuthorizationException;
+import de.tigges.tchreservation.exception.BadRequestException;
+import de.tigges.tchreservation.exception.ErrorMessage;
+import de.tigges.tchreservation.exception.InvalidDataException;
 import de.tigges.tchreservation.reservation.jpa.OccupationEntity;
 import de.tigges.tchreservation.reservation.jpa.OccupationRepository;
 import de.tigges.tchreservation.reservation.model.*;
@@ -9,6 +12,7 @@ import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.User;
 import de.tigges.tchreservation.user.model.UserRole;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
@@ -22,6 +26,7 @@ import java.util.*;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class ReservationValidator {
 
     private final OccupationRepository occupationRepository;
@@ -34,7 +39,7 @@ public class ReservationValidator {
      * <li>authorization checks
      * <li>occupation overlap checks
      *
-     * @param occupation occupation to check
+     * @param occupation   occupation to check
      * @param loggedInUser logged in user
      */
     public void validateOccupation(Occupation occupation, UserEntity loggedInUser, ReservationSystemConfig systemConfig) {
@@ -82,7 +87,7 @@ public class ReservationValidator {
             }
 
             if (!loggedInUser.getRole().equals(UserRole.ADMIN) && isOccupationInThePast(occupation)) {
-                addOccupationFieldError(errorMessages, "date",msg("error_date_in_the_past"));
+                addOccupationFieldError(errorMessages, "date", msg("error_date_in_the_past"));
             }
             if (of(date, start.getHour(), start.getMinute())
                     .plusMinutes((long) occupation.getDuration() * systemConfig.durationUnitInMinutes())
@@ -225,7 +230,7 @@ public class ReservationValidator {
     }
 
     private void addFieldError(Collection<ErrorMessage> errorMessages, String field, String message) {
-        errorMessages.add(new ErrorMessage(message,null, field));
+        errorMessages.add(new ErrorMessage(message, null, field));
     }
 
     private LocalDateTime getEnd(Occupation o, ReservationSystemConfig systemConfig) {
@@ -261,6 +266,7 @@ public class ReservationValidator {
                 .findAny()
                 .orElseThrow(() -> new BadRequestException(msg("error_invalid_reservation_type")));
     }
+
     private String getTypeName(int type, List<SystemConfigReservationType> types) {
         return types.stream()
                 .filter(t -> t.type() == type)
@@ -277,12 +283,22 @@ public class ReservationValidator {
             return false;
         } else return occupation.getStart().getHour() < LocalTime.now().getHour();
     }
+
     private boolean isOccupationTooFarInFuture(Occupation occupation, SystemConfigReservationType type) {
-        if (type.maxDaysReservationInFuture() <=0) {
-            return false;
-        }
-        var start =LocalDateTime.of(occupation.getDate(), occupation.getStart());
-        var duration = Duration.between(LocalDateTime.now(), start);
-        return duration.toHours() > type.maxDaysReservationInFuture() * 24L;
+        var isTooFar = type.maxDaysReservationInFuture() > 0
+                && durationUntilStart(occupation).toHours() >= type.maxDaysReservationInFuture() * 24L;
+        log.info("is occupation {} at {} too far in future? {} (max days in future: {})",
+                occupation.getDate(), occupation.getStart(),
+                isTooFar, type.maxDaysReservationInFuture());
+        return isTooFar;
     }
+
+    private static LocalDateTime getStartPoint(Occupation occupation) {
+        return LocalDateTime.of(occupation.getDate(),occupation.getStart());
+    }
+
+    private static Duration durationUntilStart(Occupation occupation) {
+        return Duration.between(LocalDateTime.now(), getStartPoint(occupation));
+    }
+
 }
