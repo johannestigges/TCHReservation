@@ -7,6 +7,7 @@ import de.tigges.tchreservation.news.user.jpa.UserNewsRepository;
 import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.user.LoggedinUserService;
 import de.tigges.tchreservation.user.model.UserRole;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -57,6 +58,7 @@ public class NewsService {
     }
 
     @DeleteMapping("/id/{newsId}")
+    @Transactional
     public void deleteByNewsId(@PathVariable long newsId) {
         loggedinUserService.verifyHasRole(UserRole.ADMIN);
         newsRepository.findById(newsId).ifPresentOrElse(
