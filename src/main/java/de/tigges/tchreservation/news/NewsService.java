@@ -22,6 +22,7 @@ import static de.tigges.tchreservation.news.NewsMapper.map;
 @Slf4j
 public class NewsService {
     private final LoggedinUserService loggedinUserService;
+    private final NewsValidator newsValidator;
     private final NewsRepository newsRepository;
     private final UserNewsRepository userNewsRepository;
 
@@ -42,12 +43,14 @@ public class NewsService {
     @PostMapping("")
     public @ResponseBody News add(@RequestBody News news) {
         loggedinUserService.verifyHasRole(UserRole.ADMIN);
+        newsValidator.validate(news);
         return map(newsRepository.save(map(news)));
     }
 
     @PutMapping("")
     public @ResponseBody News update(@RequestBody News news) {
         loggedinUserService.verifyHasRole(UserRole.ADMIN);
+        newsValidator.validate(news);
         return newsRepository.findById(news.id())
                 .map(db -> map(newsRepository.save(map(news))))
                 .orElseThrow(() -> new NotFoundException(EntityType.NEWS, news.id()));
