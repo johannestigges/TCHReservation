@@ -100,7 +100,7 @@ public class SystemConfigService {
 
     private List<SystemConfigReservationType> getTypes(long systemConfigId) {
         return stream(reservationTypeRepository.findBySystemConfigId(systemConfigId))
-                .map(ReservationTypeMapper::map)
+                .map(ReservationTypeMapper::mapEntity)
                 .toList();
     }
 
@@ -116,7 +116,7 @@ public class SystemConfigService {
     private void insertType(UserEntity loggedInUser,
                             SystemConfigReservationType type,
                             SystemConfigEntity systemConfig) {
-        var entity = ReservationTypeMapper.map(type);
+        var entity = ReservationTypeMapper.mapType(type);
         entity.setSystemConfig(systemConfig);
         reservationTypeRepository.save(entity);
         protocolRepository.save(new ProtocolEntity(entity, ActionType.CREATE, loggedInUser));

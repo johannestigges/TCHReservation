@@ -9,12 +9,10 @@ import de.tigges.tchreservation.reservation.model.SystemConfigReservationType;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.UserRole;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.MessageSource;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -29,14 +27,24 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest(classes = TchReservationApplication.class)
 @ActiveProfiles("test")
 class SystemConfigValidatorTest {
-
-    SystemConfigValidator validator;
     @Autowired
-    MessageSource messageSource;
+    SystemConfigValidator validator;
 
-    @BeforeEach
-    void initMocks() {
-        validator = new SystemConfigValidator(messageSource);
+    private static SystemConfigReservationType createType(int type, String name) {
+        return new SystemConfigReservationType(1, type, name, 0, 0, 0, true, true, Collections.emptyList(), null,Collections.emptyList());
+    }
+
+    private static SystemConfigReservationType createType(int type) {
+        return createType(type, "type " + type);
+    }
+
+    private static void assertFieldError(InvalidDataException exception, String field, String message) {
+        assertTrue(exception.getErrorMessages().stream()
+                .anyMatch(e -> message.equals(e.message()) && field.equals(e.field())));
+    }
+
+    private static UserEntity admin() {
+        return new UserEntity("egal", "admin", "", UserRole.ADMIN, ActivationStatus.ACTIVE);
     }
 
     @Test
@@ -154,29 +162,13 @@ class SystemConfigValidatorTest {
     @Test
     void typeWithoutName() {
         assertFieldError(new ReservationSystemConfig(1, "res1", null, List.of("Pl1"), 8, 1, 2, 8, 22,
-                List.of(createType(1,null))),
+                        List.of(createType(1, null))),
                 "reservationTypes",
                 "Bitte geben Sie einen Wert an");
-    }
-
-    private static SystemConfigReservationType createType(int type, String name) {
-        return new SystemConfigReservationType(1, type, name, 0, 0, 0, true,true,Collections.emptyList());
-    }
-    private static SystemConfigReservationType createType(int type) {
-        return createType(type,"type " + type);
-    }
-
-    private static void assertFieldError(InvalidDataException exception, String field, String message) {
-        assertTrue(exception.getErrorMessages().stream()
-                .anyMatch(e -> message.equals(e.message()) && field.equals(e.field())));
     }
 
     private void assertFieldError(ReservationSystemConfig config, String field, String message) {
         assertFieldError(assertThrows(InvalidDataException.class, () -> validator.validate(config, admin())), field,
                 message);
-    }
-
-    private static UserEntity admin() {
-        return new UserEntity("egal", "admin", "", UserRole.ADMIN, ActivationStatus.ACTIVE);
     }
 }

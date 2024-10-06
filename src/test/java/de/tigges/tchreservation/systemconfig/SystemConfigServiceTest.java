@@ -23,6 +23,7 @@ import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -54,23 +55,21 @@ class SystemConfigServiceTest extends ProtocolTest {
     }
 
     @Test
-    @WithMockUser(username = "REGISTERED")
     void getOne() throws Exception {
         SystemConfigEntity entity = createSystemConfigEntity(1L, "Platz 1");
         verifyEquals(get(1L), SystemConfigMapper.map(entity));
     }
 
     @Test
-    @WithMockUser(username = "REGISTERED")
     void testGetAll() throws Exception {
-        // @formatter:off
-		List<ReservationSystemConfig> configs = Arrays.asList(
-				SystemConfigMapper.map(createSystemConfigEntity(1L, "Platz 1")),
-				SystemConfigMapper.map(createSystemConfigEntity(2L, "Center Court,Roland Garros,Nebenplatz"))
-				);
-		// @formatter:on
+        var config1 = createSystemConfigEntity(1L, "Platz 1");
+        var config2 = createSystemConfigEntity(2L, "Center Court,Roland Garros,Nebenplatz");
+
         var response = responseAll(getAll().andExpect(status().is2xxSuccessful()));
-        assertThat(response).containsAll(configs);
+
+        assertThat(response).hasSize(2);
+        verifyEquals(response.get(0), SystemConfigMapper.map(config1));
+        verifyEquals(response.get(1), SystemConfigMapper.map(config2));
     }
 
     @Test
@@ -99,13 +98,13 @@ class SystemConfigServiceTest extends ProtocolTest {
                 30, 2, 3, 8, 22,
                 List.of(
                         new SystemConfigReservationType(1L, 1, "Quickbuchung", 3, 1, 0, false, false,
-                                Arrays.asList(UserRole.REGISTERED, UserRole.KIOSK, UserRole.TECHNICAL, UserRole.TEAMSTER, UserRole.TRAINER)),
+                                Collections.emptyList(), null,Arrays.asList(UserRole.REGISTERED, UserRole.KIOSK, UserRole.TECHNICAL, UserRole.TEAMSTER, UserRole.TRAINER)),
                         new SystemConfigReservationType(2L, 2, "Training", 0, 0, 0, true, true,
-                                Arrays.asList(UserRole.TEAMSTER, UserRole.TRAINER)),
+                                Collections.emptyList(), null, Arrays.asList(UserRole.TEAMSTER, UserRole.TRAINER)),
                         new SystemConfigReservationType(3L, 3, "Meisterschaft", 0, 0, 0, false, true,
-                                Arrays.asList(UserRole.TEAMSTER, UserRole.TRAINER)),
+                                Collections.emptyList(), null, Arrays.asList(UserRole.TEAMSTER, UserRole.TRAINER)),
                         new SystemConfigReservationType(3L, 3, "Dauerbuchung", 0, 0, 0, true, false,
-                                List.of(UserRole.TRAINER))
+                                Collections.emptyList(), null, List.of(UserRole.TRAINER))
                 ));
         verifyEquals(config, performPost("/rest/systemconfig", config).andExpect(status().isCreated()));
         verifyEquals(config, get(1L));
@@ -116,7 +115,7 @@ class SystemConfigServiceTest extends ProtocolTest {
     void testUpdate() throws Exception {
         createSystemConfigEntity(1L, "Platz 1");
         var c = get(1L);
-        var config = new ReservationSystemConfig(c.id(), "new name", "new title", Arrays.asList(c.courts().get(0), "Platz 2", "Platz 3"), 30, 7, 10, 10, 20, c.types());
+        var config = new ReservationSystemConfig(c.id(), "new name", "new title", Arrays.asList(c.courts().getFirst(), "Platz 2", "Platz 3"), 30, 7, 10, 10, 20, c.types());
 
         verifyEquals(config, performPut("/rest/systemconfig", config).andExpect(status().is2xxSuccessful()));
         verifyEquals(config, get(1L));
@@ -132,7 +131,7 @@ class SystemConfigServiceTest extends ProtocolTest {
         verifyEquals(config2, performDelete("/rest/systemconfig/2").andExpect(status().is2xxSuccessful()));
         List<ReservationSystemConfig> configs = responseAll(getAll().andExpect(status().is2xxSuccessful()));
         assertThat(configs).hasSize(1);
-        ReservationSystemConfig config3 = configs.get(0);
+        ReservationSystemConfig config3 = configs.getFirst();
         verifyEquals(config1, config3);
     }
 
@@ -190,7 +189,7 @@ class SystemConfigServiceTest extends ProtocolTest {
         ReservationTypeEntity type = new ReservationTypeEntity();
         type.setSystemConfig(e);
         type.setType(1);
-        type.setName("Quichbuchungen");
+        type.setName("Quickbuchung");
         type.setMaxDuration(3);
         type.setMaxDaysReservationInFuture(1);
         type.setMaxCancelInHours(0);

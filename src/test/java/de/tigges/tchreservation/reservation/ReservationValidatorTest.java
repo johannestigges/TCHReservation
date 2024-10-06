@@ -9,16 +9,18 @@ import de.tigges.tchreservation.reservation.model.SystemConfigReservationType;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.UserRole;
+import de.tigges.tchreservation.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.MessageSource;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
+import static java.time.DayOfWeek.SUNDAY;
+import static java.time.temporal.TemporalAdjusters.next;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -37,7 +39,7 @@ class ReservationValidatorTest {
 
     @BeforeEach
     void initValidator() {
-        reservationValidator = new ReservationValidator(occupationRepositoryMock, messageSourceMock);
+        reservationValidator = new ReservationValidator(occupationRepositoryMock, new Validator(messageSourceMock));
     }
 
     @Test
@@ -106,6 +108,15 @@ class ReservationValidatorTest {
         var occupation = createOccupation();
         occupation.setStart(LocalTime.of(systemConfig.openingHour(), 20));
         checkOccupationFieldError(occupation, user, systemConfig, "error_start_time_minutes", "start");
+    }
+
+    @Test
+    void restrictedWeekday() {
+        var user = createUser(UserRole.GUEST);
+        var systemConfig = createSystemConfig(30, createType(UserRole.GUEST, List.of(SUNDAY)));
+        var occupation = createOccupation();
+        occupation.setDate(LocalDate.now().with(next(SUNDAY)));
+        checkOccupationFieldError(occupation, user, systemConfig, "error_day_of_week_not_allowed", "date");
     }
 
     @Test
@@ -186,18 +197,52 @@ class ReservationValidatorTest {
 
     private ReservationSystemConfig createSystemConfig(int durationUnits, SystemConfigReservationType... types) {
         return new ReservationSystemConfig(
-                SYSTEM_CONFIG_ID, "", "", List.of("1", "2", "3", "4", "5", "6"),
-                durationUnits, 0, 0, 8, 22,
+                SYSTEM_CONFIG_ID,
+                "",
+                "",
+                List.of("1", "2", "3", "4", "5", "6"),
+                durationUnits,
+                0,
+                0,
+                8,
+                22,
                 Arrays.asList(types)
         );
     }
 
     private SystemConfigReservationType createType(int maxDuration, UserRole... roles) {
-        return new SystemConfigReservationType(0, TYPE, "Type" + TYPE, maxDuration, 0, 0, true, true, List.of(roles));
+        return new SystemConfigReservationType(
+                0,
+                TYPE,
+                "Type" + TYPE,
+                maxDuration,
+                0,
+                0,
+                true,
+                true,
+                Collections.emptyList(),
+                null,
+                List.of(roles));
     }
 
     private SystemConfigReservationType createType(UserRole... roles) {
         return createType(0, roles);
+    }
+
+    private SystemConfigReservationType createType(UserRole role, Collection<DayOfWeek> forbiddenDays) {
+        return new SystemConfigReservationType(
+                0,
+                TYPE,
+                "Type" + TYPE,
+                0,
+                0,
+                0,
+                true,
+                true,
+                forbiddenDays,
+                null,
+                List.of(role)
+        );
     }
 
     private void checkOccupationError(Occupation occupation, UserEntity user, ReservationSystemConfig systemConfig, String expectedError) {

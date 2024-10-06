@@ -34,21 +34,24 @@ public class ReservationTypeEntity implements Protocollable {
     private boolean repeatable;
     @Column(columnDefinition = "boolean default false")
     private boolean publicVisible;
-
+    private String forbiddenDaysOfWeek;
+    private String cssStyle;
     @Column(nullable = false)
     private String roles;
 
     @Override
     public Map<String, String> protocolFields() {
-        return protocolFields(//
-                "systemConfig", Long.toString(systemConfig.getId()), //
-                "type", Integer.toString(type), //
-                "name", name, //
-                "maxDuration", Integer.toString(maxDuration), //
-                "maxDaysReservationInFuture", Integer.toString(maxDaysReservationInFuture), //
-                "maxCancelInHours", Integer.toString(maxCancelInHours), //
+        return protocolFields(
+                "systemConfig", Long.toString(systemConfig.getId()),
+                "type", Integer.toString(type),
+                "name", name,
+                "maxDuration", Integer.toString(maxDuration),
+                "maxDaysReservationInFuture", Integer.toString(maxDaysReservationInFuture),
+                "maxCancelInHours", Integer.toString(maxCancelInHours),
                 "repeatable", Boolean.toString(repeatable),
                 "publicVisible", Boolean.toString(publicVisible),
+                "forbiddenDaysOfWeek", forbiddenDaysOfWeek,
+                "cssStyle", cssStyle,
                 "roles", roles //
         );
     }

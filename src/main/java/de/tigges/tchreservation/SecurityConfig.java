@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.*;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -16,11 +16,6 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-
-    private static final String ANGULAR_URL = "/angular/index.html";
-
-    @Value("${login.remember-me.key}")
-    private String rememberMeKey;
 
     public static final String[] WHITELIST_URLS = {
             "/angular/**",
@@ -38,26 +33,47 @@ public class SecurityConfig {
             "/rest/news/**"
     };
 
+    private static final String ANGULAR_URL = "/angular/index.html";
+
+    @Value("${login.remember-me.key}")
+    private String rememberMeKey;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.formLogin(formLogin -> formLogin
-                        .loginPage(ANGULAR_URL)
-                        .loginProcessingUrl("/login")
-                        .failureHandler(new AppAuthenticationFailureHandler()))
-                .logout(logout -> logout.logoutSuccessUrl(ANGULAR_URL))
-                .authorizeHttpRequests(requests -> requests
-                        .requestMatchers(WHITELIST_URLS).permitAll()
-                        .anyRequest().authenticated())
+        return http
+                .formLogin(SecurityConfig::formLoginConfiguration)
+                .logout(SecurityConfig::logoutConfiguration)
+                .authorizeHttpRequests(SecurityConfig::requestConfiguration)
                 .csrf(AbstractHttpConfigurer::disable)
-                .rememberMe(rememberMe -> rememberMe.key(rememberMeKey))
-        ;
-        return http.build();
+                .rememberMe(this::rememberMeConfiguration)
+                .build();
+    }
+
+    private static void logoutConfiguration(LogoutConfigurer<HttpSecurity> logout) {
+        logout.logoutSuccessUrl(ANGULAR_URL);
+    }
+
+    private static void requestConfiguration(AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry requests) {
+        requests.requestMatchers(WHITELIST_URLS).permitAll()
+                .anyRequest().authenticated();
+    }
+
+    private static void formLoginConfiguration(FormLoginConfigurer<HttpSecurity> formLogin) {
+        formLogin.loginPage(ANGULAR_URL)
+                .loginProcessingUrl("/login")
+                .failureHandler(new AppAuthenticationFailureHandler());
+    }
+
+    private void rememberMeConfiguration(RememberMeConfigurer<HttpSecurity> rememberMe) {
+        rememberMe.key(rememberMeKey).alwaysRemember(true);
     }
 
     private static class AppAuthenticationFailureHandler implements AuthenticationFailureHandler {
         @Override
         public void onAuthenticationFailure(
-                HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) {
+                HttpServletRequest request,
+                HttpServletResponse response,
+                AuthenticationException exception) {
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
         }
     }
