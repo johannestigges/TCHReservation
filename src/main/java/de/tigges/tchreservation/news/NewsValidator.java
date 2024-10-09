@@ -1,8 +1,8 @@
 package de.tigges.tchreservation.news;
 
-import de.tigges.tchreservation.Validator;
 import de.tigges.tchreservation.exception.InvalidDataException;
 import de.tigges.tchreservation.news.model.News;
+import de.tigges.tchreservation.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
