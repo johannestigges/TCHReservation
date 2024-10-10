@@ -2,24 +2,23 @@ package de.tigges.tchreservation.systemconfig.jpa;
 
 import de.tigges.tchreservation.reservation.model.SystemConfigReservationType;
 import de.tigges.tchreservation.user.model.UserRole;
+import org.springframework.util.StringUtils;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.time.DayOfWeek;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class ReservationTypeMapper {
 
-    public static List<SystemConfigReservationType> map(Iterable<ReservationTypeEntity> entities) {
+    public static List<SystemConfigReservationType> mapEntities(Iterable<ReservationTypeEntity> entities) {
         return entities == null ? null
                 : StreamSupport.stream(entities.spliterator(), false)
-                .map(ReservationTypeMapper::map)
+                .map(ReservationTypeMapper::mapEntity)
                 .toList();
     }
 
-    public static SystemConfigReservationType map(ReservationTypeEntity entity) {
+    public static SystemConfigReservationType mapEntity(ReservationTypeEntity entity) {
         return new SystemConfigReservationType(
                 entity.getId(),
                 entity.getType(),
@@ -29,21 +28,19 @@ public class ReservationTypeMapper {
                 mapInteger(entity.getMaxCancelInHours(), 0),
                 entity.isRepeatable(),
                 entity.isPublicVisible(),
+                mapForbiddenDaysOfWeek(entity.getForbiddenDaysOfWeek()),
+                entity.getCssStyle(),
                 mapRoles(entity.getRoles())
         );
     }
 
-
-    public static Collection<UserRole> mapRoles(String roles) {
-        return Arrays.stream(roles.split(",")).map(UserRole::valueOf).toList();
+    public static Set<ReservationTypeEntity> mapTypes(Collection<SystemConfigReservationType> types) {
+        return types == null
+                ? null
+                : types.stream().map(ReservationTypeMapper::mapType).collect(Collectors.toSet());
     }
 
-    public static Set<ReservationTypeEntity> map(Collection<SystemConfigReservationType> types) {
-        return types == null ? null
-                : types.stream().map(ReservationTypeMapper::map).collect(Collectors.toSet());
-    }
-
-    public static ReservationTypeEntity map(SystemConfigReservationType type) {
+    public static ReservationTypeEntity mapType(SystemConfigReservationType type) {
         var entity = new ReservationTypeEntity();
         entity.setId(type.id());
         entity.setType(type.type());
@@ -53,12 +50,30 @@ public class ReservationTypeMapper {
         entity.setMaxCancelInHours(type.maxCancelInHours());
         entity.setRepeatable(type.repeatable());
         entity.setPublicVisible(type.publicVisible());
+        entity.setForbiddenDaysOfWeek(mapForbiddenDaysOfWeek(type.forbiddenDaysOfWeek()));
+        entity.setCssStyle(type.cssStyle());
         entity.setRoles(mapRoles(type.roles()));
         return entity;
     }
 
+    private static Collection<DayOfWeek> mapForbiddenDaysOfWeek(String forbiddenDaysOfWeek) {
+        return StringUtils.hasText(forbiddenDaysOfWeek)
+                ? Arrays.stream(forbiddenDaysOfWeek.split(",")).map(DayOfWeek::valueOf).toList()
+                : Collections.emptySet();
+    }
+
+    private static String mapForbiddenDaysOfWeek(Collection<DayOfWeek> forbiddenDaysOfWeek) {
+        return forbiddenDaysOfWeek == null
+                ? null
+                : forbiddenDaysOfWeek.stream().map(Enum::name).collect(Collectors.joining(","));
+    }
+
     public static String mapRoles(Collection<UserRole> roles) {
         return roles.stream().map(Enum::name).collect(Collectors.joining(","));
+    }
+
+    public static Collection<UserRole> mapRoles(String roles) {
+        return Arrays.stream(roles.split(",")).map(UserRole::valueOf).toList();
     }
 
     public static Integer mapInteger(Integer value, int defaultValue) {

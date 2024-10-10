@@ -19,7 +19,7 @@ public class SystemConfigMapper {
                 entity.getMaxDuration(),
                 entity.getOpeningHour(),
                 entity.getClosingHour(),
-                ReservationTypeMapper.map(entity.getTypes())
+                ReservationTypeMapper.mapEntities(entity.getTypes())
         );
     }
 
@@ -34,7 +34,7 @@ public class SystemConfigMapper {
         entity.setMaxDuration(c.maxDuration());
         entity.setOpeningHour(c.openingHour());
         entity.setClosingHour(c.closingHour());
-        entity.setTypes(ReservationTypeMapper.map(c.types()));
+        entity.setTypes(ReservationTypeMapper.mapTypes(c.types()));
         return entity;
     }
 
