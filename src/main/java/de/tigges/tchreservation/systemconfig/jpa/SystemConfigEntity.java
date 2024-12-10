@@ -16,57 +16,57 @@ import java.util.Set;
 @NoArgsConstructor
 public class SystemConfigEntity implements Protocollable {
 
-	@Id
-	private long id;
+    @Id
+    private Long id;
 
-	@Column(nullable = false)
-	private String name;
+    @Column(nullable = false)
+    private String name;
 
-	@Column()
-	private String title;
+    @Column()
+    private String title;
 
-	@Column(nullable = false)
-	private String courts;
+    @Column(nullable = false)
+    private String courts;
 
-	@Column(nullable = false)
-	private int durationUnitInMinutes;
+    @Column(nullable = false)
+    private int durationUnitInMinutes;
 
-	@Column(nullable = false)
-	private int maxDaysReservationInFuture;
+    @Column(nullable = false)
+    private int maxDaysReservationInFuture;
 
-	@Column(nullable = false)
-	private int maxDuration;
+    @Column(nullable = false)
+    private int maxDuration;
 
-	@Column(nullable = false)
-	private int openingHour;
+    @Column(nullable = false)
+    private int openingHour;
 
-	@Column(nullable = false)
-	private int closingHour;
+    @Column(nullable = false)
+    private int closingHour;
 
-	@Transient
-	private Set<ReservationTypeEntity> types = new HashSet<>();
+    @Transient
+    private Set<ReservationTypeEntity> types = new HashSet<>();
 
-	@Override
-	public Map<String, String> protocolFields() {
-		return protocolFields( //
-				"id", Long.toString(id), //
-				"name", name, //
-				"title", title, //
-				"courts", courts, //
-				"durationUnitInMinutes", Integer.toString(durationUnitInMinutes), //
-				"maxDaysReservationInFuture", Integer.toString(maxDaysReservationInFuture), //
-				"maxDuration", Integer.toString(maxDuration), //
-				"openingHour", Integer.toString(openingHour), //
-				"closingHour", Integer.toString(closingHour));
-	}
+    @Override
+    public Map<String, String> protocolFields() {
+        return protocolFields( //
+                "id", Long.toString(id), //
+                "name", name, //
+                "title", title, //
+                "courts", courts, //
+                "durationUnitInMinutes", Integer.toString(durationUnitInMinutes), //
+                "maxDaysReservationInFuture", Integer.toString(maxDaysReservationInFuture), //
+                "maxDuration", Integer.toString(maxDuration), //
+                "openingHour", Integer.toString(openingHour), //
+                "closingHour", Integer.toString(closingHour));
+    }
 
-	@Override
-	public EntityType protocolEntityType() {
-		return EntityType.SYSTEM_CONFIGURATION;
-	}
+    @Override
+    public EntityType protocolEntityType() {
+        return EntityType.SYSTEM_CONFIGURATION;
+    }
 
-	@Override
-	public long protocolEntityId() {
-		return id;
-	}
+    @Override
+    public long protocolEntityId() {
+        return id;
+    }
 }

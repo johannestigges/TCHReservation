@@ -159,28 +159,28 @@ public class ReservationServiceTest extends ProtocolTest {
     @WithMockUser(username = "TRAINER")
     public void addReservationOverlap() throws Exception {
         addReservation(createReservation(1, 1, 10, 3));
-        addReservationOverlap(createReservation(1, 1, 11, 2), 0);
+        addReservationOverlap(createReservation(1, 1, 11, 2));
     }
 
     @Test
     @WithMockUser(username = "TRAINER")
     public void addReservationDuplicate() throws Exception {
         addReservation(createReservation(1, 1, 10, 3));
-        addReservationOverlap(createReservation(1, 1, 10, 3), 0);
+        addReservationOverlap(createReservation(1, 1, 10, 3));
     }
 
     @Test
     @WithMockUser(username = "TRAINER")
     public void addReservationOverlap2() throws Exception {
         addReservation(createReservation(1, 1, 10, 6, 1));
-        addReservationOverlap(createReservation(1, 1, 11, 2, 1), 0);
+        addReservationOverlap(createReservation(1, 1, 11, 2, 1));
     }
 
     @Test
     @WithMockUser(username = "TRAINER")
     public void addReservationOverlap3() throws Exception {
         addReservation(createReservation(2, 1, 17, 1, 1));
-        addReservationOverlap(createReservation(2, 1, 16, 3, 1), 0);
+        addReservationOverlap(createReservation(2, 1, 16, 3, 1));
     }
 
     @Test
@@ -670,22 +670,21 @@ public class ReservationServiceTest extends ProtocolTest {
         var resultActions = addReservationError(reservation, HttpStatus.BAD_REQUEST, null);
         var i = 0;
         while (i < fieldErrors.length) {
-            assertFieldError(resultActions, i / 2, "reservation", fieldErrors[i++], fieldErrors[i++]);
+            assertFieldError(resultActions, i / 2, fieldErrors[i++], fieldErrors[i++]);
         }
     }
 
     private void assertOccupationFieldError(ResultActions resultActions, int i, String field, String message) throws Exception {
-        assertFieldError(resultActions, i, "occupation[0]", field, message);
+        assertFieldError(resultActions, i, field, message);
     }
 
-    private void assertFieldError(ResultActions resultActions, int i, String entity, String field, String message) throws Exception {
+    private void assertFieldError(ResultActions resultActions, int i, String field, String message) throws Exception {
         resultActions
-                //.andExpect(jsonPath("$[" + i + "].entity").value(entity))
                 .andExpect(jsonPath("$[" + i + "].field").value(field))
                 .andExpect(jsonPath("$[" + i + "].message").value(message));
     }
 
-    private void addReservationOverlap(Reservation reservation, int nrOccupation) throws Exception {
+    private void addReservationOverlap(Reservation reservation) throws Exception {
         addReservationWithOccupationFieldError(reservation, null,
                 "Reservierung am %tF %tR nicht möglich, weil Platz %s belegt ist."
                         .formatted(reservation.getDate(), reservation.getStart(), reservation.getCourts()));
@@ -701,11 +700,7 @@ public class ReservationServiceTest extends ProtocolTest {
                 resultActions.andExpect(jsonPath("$.id").value(createdReservation.getId()));
                 checkProtocol(ReservationMapper.map(createdReservation), actionType);
             }
-            case MODIFY -> {
-                resultActions.andExpect(status().isOk());
-                checkProtocol(ReservationMapper.map(reservation), actionType);
-            }
-            case DELETE -> {
+            case MODIFY, DELETE -> {
                 resultActions.andExpect(status().isOk());
                 checkProtocol(ReservationMapper.map(reservation), actionType);
             }
@@ -792,7 +787,6 @@ public class ReservationServiceTest extends ProtocolTest {
 
     private ReservationTypeEntity createReservationType(int type, String name, UserRole... roles) {
         var systemConfigReservationType = new ReservationTypeEntity();
-        systemConfigReservationType.setId(Double.valueOf(Math.random() * 100_000).longValue());
         systemConfigReservationType.setType(type);
         systemConfigReservationType.setName(name);
         systemConfigReservationType.setRoles(roles(roles));

@@ -15,7 +15,6 @@ import java.util.Map;
 public class ReservationTypeEntity implements Protocollable {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
     @ManyToOne(optional = false)

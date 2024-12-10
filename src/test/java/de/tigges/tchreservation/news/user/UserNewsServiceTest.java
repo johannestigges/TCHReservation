@@ -26,10 +26,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class UserNewsServiceTest extends UserTest {
 
+    private static List<UserEntity> users;
     @Autowired
     private NewsRepository newsRepository;
-
-    private static List<UserEntity> users;
 
     @BeforeEach
     void addUsers() {
@@ -46,7 +45,7 @@ class UserNewsServiceTest extends UserTest {
     @BeforeEach
     void addNews() {
         newsRepository.save(new NewsEntity(
-                1L,
+                null,
                 "my subject",
                 "my text",
                 "my url",

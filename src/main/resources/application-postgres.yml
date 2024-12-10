@@ -1,6 +1,6 @@
   spring:
     datasource:
-      url: jdbc:postgresql://localhost:5433/tch
+      url: jdbc:postgresql://localhost:5432/tch
       username: tch
       password: knofensa
     jpa:

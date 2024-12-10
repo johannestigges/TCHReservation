@@ -6,7 +6,7 @@ import jakarta.annotation.Nullable;
 import java.time.LocalDateTime;
 
 public record News(
-        long id,
+        Long id,
         @Nonnull String subject,
         @Nullable String url,
         @Nonnull String text,

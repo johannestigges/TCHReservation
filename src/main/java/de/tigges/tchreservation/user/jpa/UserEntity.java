@@ -33,7 +33,7 @@ public class UserEntity implements Protocollable {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private long id;
+	private Long id;
 
 	@Column()
 	private String email;

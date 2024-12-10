@@ -257,7 +257,7 @@ public class UserServiceTest extends ProtocolTest {
     @Test
     @WithMockUser(username = "ADMIN")
     public void updateUserNotFound() throws Exception {
-        registeredUser.setId(666);
+        registeredUser.setId(666L);
         performPut("/rest/user", registeredUser).andExpect(status().isNotFound());
     }
 

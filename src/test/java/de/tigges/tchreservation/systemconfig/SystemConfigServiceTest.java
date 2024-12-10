@@ -57,7 +57,7 @@ class SystemConfigServiceTest extends ProtocolTest {
     @Test
     void getOne() throws Exception {
         SystemConfigEntity entity = createSystemConfigEntity(1L, "Platz 1");
-        verifyEquals(get(1L), SystemConfigMapper.map(entity));
+        verifyEquals(get(entity.getId()), SystemConfigMapper.map(entity));
     }
 
     @Test
