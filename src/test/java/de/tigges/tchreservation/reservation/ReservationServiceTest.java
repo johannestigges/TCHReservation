@@ -670,17 +670,16 @@ public class ReservationServiceTest extends ProtocolTest {
         var resultActions = addReservationError(reservation, HttpStatus.BAD_REQUEST, null);
         var i = 0;
         while (i < fieldErrors.length) {
-            assertFieldError(resultActions, i / 2, "reservation", fieldErrors[i++], fieldErrors[i++]);
+            assertFieldError(resultActions, i / 2, fieldErrors[i++], fieldErrors[i++]);
         }
     }
 
     private void assertOccupationFieldError(ResultActions resultActions, int i, String field, String message) throws Exception {
-        assertFieldError(resultActions, i, "occupation[0]", field, message);
+        assertFieldError(resultActions, i, field, message);
     }
 
-    private void assertFieldError(ResultActions resultActions, int i, String entity, String field, String message) throws Exception {
+    private void assertFieldError(ResultActions resultActions, int i,  String field, String message) throws Exception {
         resultActions
-                //.andExpect(jsonPath("$[" + i + "].entity").value(entity))
                 .andExpect(jsonPath("$[" + i + "].field").value(field))
                 .andExpect(jsonPath("$[" + i + "].message").value(message));
     }
@@ -701,11 +700,7 @@ public class ReservationServiceTest extends ProtocolTest {
                 resultActions.andExpect(jsonPath("$.id").value(createdReservation.getId()));
                 checkProtocol(ReservationMapper.map(createdReservation), actionType);
             }
-            case MODIFY -> {
-                resultActions.andExpect(status().isOk());
-                checkProtocol(ReservationMapper.map(reservation), actionType);
-            }
-            case DELETE -> {
+            case MODIFY, DELETE -> {
                 resultActions.andExpect(status().isOk());
                 checkProtocol(ReservationMapper.map(reservation), actionType);
             }

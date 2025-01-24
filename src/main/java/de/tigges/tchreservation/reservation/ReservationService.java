@@ -42,6 +42,7 @@ public class ReservationService {
     private final ReservationSystemConfigRepository systemConfigRepository;
     private final ProtocolRepository protocolRepository;
     private final ReservationValidator reservationValidator;
+    private final OccupationValidator occupationValidator;
     private final LoggedinUserService loggedinUserService;
 
     /**
@@ -115,7 +116,7 @@ public class ReservationService {
         var loggedInUser = loggedinUserService.getLoggedInUser();
         var systemConfig = getSystemConfig(occupation.getSystemConfigId());
 
-        reservationValidator.validateOccupation(occupation, loggedInUser, systemConfig);
+        occupationValidator.validateOccupation(occupation, loggedInUser, systemConfig);
 
         var occupationEntity = OccupationMapper.map(occupation);
 
