@@ -11,6 +11,7 @@ import de.tigges.tchreservation.user.model.UserRole;
 import de.tigges.tchreservation.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 
 @Component
 @RequiredArgsConstructor
@@ -23,7 +24,7 @@ public class SystemConfigValidator {
     private final Validator validator;
 
     public void validate(ReservationSystemConfig config, UserEntity loggedInUser) {
-        validator.startValidation();
+        validator.clearErrorMessages();
         checkConfigId(config);
         checkUser(loggedInUser);
         checkString("name", config.name());
@@ -37,9 +38,7 @@ public class SystemConfigValidator {
     }
 
     private void checkCourts(ReservationSystemConfig config) {
-        if (config.courts() == null || config.courts().isEmpty()) {
-            validator.addFieldErrorMessage("courts", "error_null_not_allowed");
-        } else {
+        if (validator.checkNotEmpty("courts", config.courts())) {
             if (config.courts().size() > MAX_COURTS) {
                 validator.addFieldErrorMessage("courts", "error_too_many_courts");
             }
@@ -72,7 +71,7 @@ public class SystemConfigValidator {
     }
 
     private void checkTypes(ReservationSystemConfig config) {
-        if (config.types() == null || config.types().isEmpty()) {
+        if (ObjectUtils.isEmpty(config.types())) {
             validator.addFieldErrorMessage("reservationTypes", "error_no_reservation_types");
         } else {
             config.types().forEach(this::checkType);
