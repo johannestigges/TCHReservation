@@ -2,6 +2,7 @@ package de.tigges.tchreservation.reservation;
 
 import de.tigges.tchreservation.exception.AuthorizationException;
 import de.tigges.tchreservation.exception.BadRequestException;
+import de.tigges.tchreservation.exception.ErrorCode;
 import de.tigges.tchreservation.reservation.model.RepeatType;
 import de.tigges.tchreservation.reservation.model.Reservation;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
@@ -19,7 +20,7 @@ public class ReservationValidator {
 
     private final OccupationValidator occupationValidator;
     private final Validator validator;
-    
+
     public void validateReservation(
             Reservation reservation,
             UserEntity loggedInUser,
@@ -57,7 +58,8 @@ public class ReservationValidator {
 
     private void validateUser(Reservation reservation, UserEntity loggedInUser) {
         if (!checkUser(reservation.getUser(), loggedInUser)) {
-            throw new AuthorizationException(validator.msg("error_wrong_user"));
+            throw new AuthorizationException(ErrorCode.WRONG_USER,
+                    validator.msg("error_wrong_user"));
         }
     }
 
@@ -65,9 +67,9 @@ public class ReservationValidator {
         if (RepeatType.daily.equals(reservation.getRepeatType())
                 || RepeatType.weekly.equals(reservation.getRepeatType())) {
             if (reservation.getRepeatUntil() == null) {
-                validator.addFieldErrorMessage("repeatUntil", "error_repeatUntil_empty");
+                validator.addFieldErrorMessage("repeatUntil", ErrorCode.REPEATUNTIL_EMPTY, "error_repeatUntil_empty");
             } else if (reservation.getRepeatUntil().isBefore(reservation.getDate())) {
-                validator.addFieldErrorMessage("repeatUntil", "error_repeatUntil_before_start");
+                validator.addFieldErrorMessage("repeatUntil", ErrorCode.REPEATUNTIL_BEFORE_START, "error_repeatUntil_before_start");
             }
         }
     }
@@ -75,11 +77,11 @@ public class ReservationValidator {
     private void validateCourts(Reservation reservation, ReservationSystemConfig systemConfig) {
         for (int court : reservation.getCourtsAsArray()) {
             if (court < 1) {
-                validator.addFieldErrorMessage("court",
+                validator.addFieldErrorMessage("court", ErrorCode.COURT_TOO_SMALL,
                         "error_court_too_small", court);
             }
             if (court > systemConfig.courts().size()) {
-                validator.addFieldErrorMessage("court",
+                validator.addFieldErrorMessage("court", ErrorCode.COURT_TOO_BIG,
                         "error_court_too_big", court, systemConfig.courts().size());
             }
         }

@@ -2,6 +2,7 @@ package de.tigges.tchreservation.user;
 
 import de.tigges.tchreservation.exception.AuthorizationException;
 import de.tigges.tchreservation.exception.BadRequestException;
+import de.tigges.tchreservation.exception.ErrorCode;
 import de.tigges.tchreservation.exception.NotFoundException;
 import de.tigges.tchreservation.protocol.ActionType;
 import de.tigges.tchreservation.protocol.EntityType;
@@ -135,13 +136,13 @@ public class UserService {
 
         if (!UserUtils.hasRole(loggedInUser, UserRole.ADMIN)) {
             if (!user.getName().equals(dbUser.getName())) {
-                throw new AuthorizationException("user cannot modify name.");
+                throw new AuthorizationException(ErrorCode.USER_NOT_AUTHORIZED, "user cannot modify name.");
             }
             if (user.getRole() != dbUser.getRole()) {
-                throw new AuthorizationException("user cannot modify role.");
+                throw new AuthorizationException(ErrorCode.USER_NOT_AUTHORIZED, "user cannot modify role.");
             }
             if (user.getStatus() != dbUser.getStatus()) {
-                throw new AuthorizationException("user cannot modify status.");
+                throw new AuthorizationException(ErrorCode.USER_NOT_AUTHORIZED, "user cannot modify status.");
             }
         }
 
@@ -168,14 +169,14 @@ public class UserService {
 
     private void checkUser(User user) {
         if (isEmpty(user.getName())) {
-            throw new BadRequestException("user without name not allowed");
+            throw new BadRequestException(ErrorCode.USER_NAME_EMPTY, "user without name not allowed");
         }
     }
 
     private void checkNewUser(User user) {
         checkUser(user);
         if (isEmpty(user.getPassword())) {
-            throw new BadRequestException("user without password not allowed");
+            throw new BadRequestException(ErrorCode.PASSWORD_EMPTY, "user without password not allowed");
         }
         var email = user.getEmail();
         if (isEmpty(email)) {
@@ -183,8 +184,9 @@ public class UserService {
         }
         var dbUser = userRepository.findByNameOrEmail(user.getName(), email);
         if (dbUser.isPresent() && dbUser.get().getId() != user.getId()) {
-            throw new BadRequestException(String.format("user with name '%s' and/or email '%s' already exists.",
-                    user.getName(), user.getEmail()));
+            throw new BadRequestException(ErrorCode.USER_EXISTS,
+                    String.format("user with name '%s' and/or email '%s' already exists.",
+                            user.getName(), user.getEmail()));
         }
     }
 

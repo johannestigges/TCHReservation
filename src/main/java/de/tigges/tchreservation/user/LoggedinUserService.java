@@ -1,6 +1,7 @@
 package de.tigges.tchreservation.user;
 
 import de.tigges.tchreservation.exception.AuthorizationException;
+import de.tigges.tchreservation.exception.ErrorCode;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.jpa.UserRepository;
 import de.tigges.tchreservation.user.model.UserRole;
@@ -31,8 +32,8 @@ public class LoggedinUserService {
 
     public UserEntity verifyIsLoggedIn() {
         var user = getLoggedInUser();
-        if (UserUtils.hasRole(user,UserRole.ANONYMOUS)) {
-            throw new AuthorizationException("error_user_is_not_logged_in");
+        if (UserUtils.hasRole(user, UserRole.ANONYMOUS)) {
+            throw new AuthorizationException(ErrorCode.USER_NOT_LOGGED_IN, "You have to login first");
         }
         return user;
     }
@@ -40,7 +41,7 @@ public class LoggedinUserService {
     public UserEntity verifyHasRole(UserRole... roles) {
         var loggedInUser = getLoggedInUser();
         if (!UserUtils.isActive(loggedInUser) || !UserUtils.hasRole(loggedInUser, roles)) {
-            throw new AuthorizationException("error_user_is_not_admin");
+            throw new AuthorizationException(ErrorCode.USER_NOT_AUTHORIZED, "You don't have the permission");
         }
         return loggedInUser;
     }
@@ -50,6 +51,6 @@ public class LoggedinUserService {
         if (UserUtils.isActive(loggedInUser) && (UserUtils.is(loggedInUser, userId) || UserUtils.hasRole(loggedInUser, roles))) {
             return loggedInUser;
         }
-        throw new AuthorizationException("error_user_is_not_admin");
+        throw new AuthorizationException(ErrorCode.USER_NOT_AUTHORIZED, "You don't have permission");
     }
 }

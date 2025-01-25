@@ -10,6 +10,7 @@ public class FoundException extends RestException {
     private static final long serialVersionUID = 1L;
 
     public FoundException(EntityType entityType, long id) {
-        super(HttpStatus.BAD_REQUEST, String.format("%s with id %d exists already", entityType.name(), id));
+        super(HttpStatus.BAD_REQUEST, ErrorCode.EXISTS,
+                String.format("%s with id %d exists already", entityType.name(), id));
     }
 }

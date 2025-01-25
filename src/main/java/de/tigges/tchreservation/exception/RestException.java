@@ -18,8 +18,8 @@ public class RestException extends RuntimeException {
     private final HttpStatus status;
     private final Collection<ErrorMessage> errorMessages;
 
-    public RestException(HttpStatus status, String message) {
-        this(status, new ErrorMessage(message, null));
+    public RestException(HttpStatus status, ErrorCode code, String message) {
+        this(status, new ErrorMessage(code, message, null));
     }
 
     public RestException(HttpStatus status, ErrorMessage errorDetail) {

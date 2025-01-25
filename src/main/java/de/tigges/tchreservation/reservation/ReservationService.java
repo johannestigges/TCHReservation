@@ -2,6 +2,7 @@ package de.tigges.tchreservation.reservation;
 
 import de.tigges.tchreservation.exception.AuthorizationException;
 import de.tigges.tchreservation.exception.BadRequestException;
+import de.tigges.tchreservation.exception.ErrorCode;
 import de.tigges.tchreservation.exception.NotFoundException;
 import de.tigges.tchreservation.protocol.ActionType;
 import de.tigges.tchreservation.protocol.EntityType;
@@ -349,6 +350,6 @@ public class ReservationService {
                 && (UserUtils.is(loggedInUser, userId) || UserUtils.hasRole(loggedInUser, UserRole.ADMIN, UserRole.TRAINER))) {
             return loggedInUser;
         }
-        throw new AuthorizationException("error_user_is_not_admin");
+        throw new AuthorizationException(ErrorCode.USER_NOT_AUTHORIZED,"You have no permissions");
     }
 }

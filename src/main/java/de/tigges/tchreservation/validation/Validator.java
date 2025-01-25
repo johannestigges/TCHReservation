@@ -1,5 +1,6 @@
 package de.tigges.tchreservation.validation;
 
+import de.tigges.tchreservation.exception.ErrorCode;
 import de.tigges.tchreservation.exception.ErrorMessage;
 import de.tigges.tchreservation.exception.InvalidDataException;
 import lombok.RequiredArgsConstructor;
@@ -31,12 +32,12 @@ public class Validator {
         this.errorMessages.addAll(errorMessages);
     }
 
-    public void addErrorMessage(String code, Object... args) {
-        errorMessages.add(new ErrorMessage(msg(code, args), null));
+    public void addErrorMessage(ErrorCode code, String message, Object... args) {
+        errorMessages.add(new ErrorMessage(code, msg(message, args), null));
     }
 
-    public void addFieldErrorMessage(String field, String code, Object... args) {
-        errorMessages.add(new ErrorMessage(msg(code, args), field));
+    public void addFieldErrorMessage(String field, ErrorCode code, String message, Object... args) {
+        errorMessages.add(new ErrorMessage(code, msg(message, args), field));
     }
 
     public String msg(String code, Object... args) {
@@ -47,16 +48,16 @@ public class Validator {
     public void checkString(String field, String value, int minLen, int maxLen) {
         if (checkNotEmpty(field, value)) {
             if (value.length() < minLen) {
-                addFieldErrorMessage(field, "error_string_too_short", minLen);
+                addFieldErrorMessage(field, ErrorCode.STRING_TOO_SHORT, "error_string_too_short", minLen);
             } else if (value.length() > maxLen) {
-                addFieldErrorMessage(field, "error_string_too_long", maxLen);
+                addFieldErrorMessage(field, ErrorCode.STRING_TOO_LONG, "error_string_too_long", maxLen);
             }
         }
     }
 
     public boolean checkNotEmpty(String field, Object value) {
         if (ObjectUtils.isEmpty(value)) {
-            addFieldErrorMessage(field, "error_null_not_allowed");
+            addFieldErrorMessage(field, ErrorCode.NULL_NOT_ALLOWED, "error_null_not_allowed");
             return false;
         }
         return true;
@@ -64,10 +65,10 @@ public class Validator {
 
     public void checkInt(String field, int value, int minValue, int maxValue) {
         if (value < minValue) {
-            addFieldErrorMessage(field, "error_value_too_small", minValue);
+            addFieldErrorMessage(field, ErrorCode.NUMBER_TOO_SMALL, "error_value_too_small", minValue);
         }
         if (value > maxValue) {
-            addFieldErrorMessage(field, "error_value_too_big", maxValue);
+            addFieldErrorMessage(field, ErrorCode.NUMBER_TOO_BIG, "error_value_too_big", maxValue);
         }
     }
 }

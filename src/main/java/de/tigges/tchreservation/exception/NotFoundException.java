@@ -12,6 +12,7 @@ public class NotFoundException extends RestException {
     private static final long serialVersionUID = 1L;
 
     public NotFoundException(EntityType entityType, long id) {
-        super(HttpStatus.NOT_FOUND, "%s with id %d not found".formatted(entityType.name(), id));
+        super(HttpStatus.NOT_FOUND, ErrorCode.NOT_EXISTS,
+                "%s with id %d not found".formatted(entityType.name(), id));
     }
 }
