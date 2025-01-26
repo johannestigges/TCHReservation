@@ -41,7 +41,7 @@ public class SystemConfigValidator {
     private void checkCourts(ReservationSystemConfig config) {
         if (validator.checkNotEmpty("courts", config.courts())) {
             if (config.courts().size() > MAX_COURTS) {
-                validator.addFieldErrorMessage("courts", ErrorCode.TOO_MANY_COURTS, "error_too_many_courts");
+                validator.addFieldErrorMessage("courts", ErrorCode.TOO_MANY_COURTS);
             }
             config.courts().forEach(court -> checkString("court", court));
         }
@@ -50,17 +50,17 @@ public class SystemConfigValidator {
     private void checkConfigId(ReservationSystemConfig config) {
         if (config.id() < 1) {
             throw new BadRequestException(ErrorCode.NO_SYSTEM_CONFIG_ID,
-                    validator.msg("error_no_id", "The system configuration has no id"));
+                    validator.msg(ErrorCode.NO_SYSTEM_CONFIG_ID));
         }
     }
 
     private void checkUser(UserEntity loggedInUser) {
         if (!UserUtils.hasRole(loggedInUser.getRole(), UserRole.ADMIN)) {
-            throw new AuthorizationException(ErrorCode.USER_NOT_AUTHORIZED, validator.msg("error_not_authorized"));
+            throw new AuthorizationException(ErrorCode.USER_NOT_AUTHORIZED, validator.msg(ErrorCode.USER_NOT_AUTHORIZED));
         }
 
         if (!ActivationStatus.ACTIVE.equals(loggedInUser.getStatus())) {
-            throw new AuthorizationException(ErrorCode.USER_NOT_AUTHORIZED, validator.msg("error_not_authorized"));
+            throw new AuthorizationException(ErrorCode.USER_NOT_AUTHORIZED, validator.msg(ErrorCode.USER_NOT_AUTHORIZED));
         }
     }
 
@@ -68,13 +68,13 @@ public class SystemConfigValidator {
         validator.checkInt("openingHour", config.openingHour(), 0, 24);
         validator.checkInt("closingHour", config.closingHour(), 0, 24);
         if (config.openingHour() >= config.closingHour()) {
-            validator.addFieldErrorMessage("openingHour", ErrorCode.OPENING_HOUR_AFTER_CLOSING_HOUR, "error_opening_hour_after_closing_hour");
+            validator.addFieldErrorMessage("openingHour", ErrorCode.OPENING_HOUR_AFTER_CLOSING_HOUR);
         }
     }
 
     private void checkTypes(ReservationSystemConfig config) {
         if (ObjectUtils.isEmpty(config.types())) {
-            validator.addFieldErrorMessage("reservationTypes", ErrorCode.NO_RESERVATION_TYPES, "error_no_reservation_types");
+            validator.addFieldErrorMessage("reservationTypes", ErrorCode.NO_RESERVATION_TYPES);
         } else {
             config.types().forEach(this::checkType);
         }

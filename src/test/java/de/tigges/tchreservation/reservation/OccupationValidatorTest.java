@@ -2,6 +2,7 @@ package de.tigges.tchreservation.reservation;
 
 import de.tigges.tchreservation.ValidatorTest;
 import de.tigges.tchreservation.exception.AuthorizationException;
+import de.tigges.tchreservation.exception.ErrorCode;
 import de.tigges.tchreservation.reservation.jpa.OccupationRepository;
 import de.tigges.tchreservation.reservation.model.Occupation;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
@@ -41,7 +42,7 @@ public class OccupationValidatorTest extends ValidatorTest {
 
     @Test
     void noSystemConfig() {
-        checkOccupationError(new Occupation(), null, null, "error_no_reservation_system");
+        checkOccupationError(new Occupation(), null, null, ErrorCode.NO_RESERVATION_SYSTEM);
     }
 
     @Test
@@ -51,7 +52,7 @@ public class OccupationValidatorTest extends ValidatorTest {
         occupation.setType(2);
         var systemConfig = createSystemConfig(60);
 
-        checkOccupationError(occupation, null, systemConfig, "error_invalid_reservation_type");
+        checkOccupationError(occupation, null, systemConfig, ErrorCode.INVALID_RESERVATION_TYPE);
     }
 
     @Test
@@ -61,7 +62,7 @@ public class OccupationValidatorTest extends ValidatorTest {
         var occupation = createOccupation();
         occupation.setText(null);
 
-        checkOccupationFieldError(occupation, user, systemConfig, "error_null_not_allowed", "text");
+        checkOccupationFieldError(occupation, user, systemConfig, ErrorCode.NULL_NOT_ALLOWED, "text");
     }
 
     @Test
@@ -71,7 +72,7 @@ public class OccupationValidatorTest extends ValidatorTest {
         var occupation = createOccupation();
         occupation.setDate(null);
 
-        checkOccupationFieldError(occupation, user, systemConfig, "error_null_not_allowed", "date");
+        checkOccupationFieldError(occupation, user, systemConfig, ErrorCode.NULL_NOT_ALLOWED, "date");
     }
 
     @Test
@@ -81,7 +82,7 @@ public class OccupationValidatorTest extends ValidatorTest {
         var occupation = createOccupation();
         occupation.setStart(null);
 
-        checkOccupationFieldError(occupation, user, systemConfig, "error_null_not_allowed", "start");
+        checkOccupationFieldError(occupation, user, systemConfig, ErrorCode.NULL_NOT_ALLOWED, "start");
     }
 
     @Test
@@ -91,7 +92,7 @@ public class OccupationValidatorTest extends ValidatorTest {
         var occupation = createOccupation();
         occupation.setStart(LocalTime.of(systemConfig.openingHour() - 1, 0));
 
-        checkOccupationFieldError(occupation, user, systemConfig, "error_start_hour_before_opening", "start");
+        checkOccupationFieldError(occupation, user, systemConfig, ErrorCode.START_HOUR_BEFORE_OPENING, "start");
     }
 
     @Test
@@ -101,7 +102,7 @@ public class OccupationValidatorTest extends ValidatorTest {
         var occupation = createOccupation();
         occupation.setStart(LocalTime.of(systemConfig.closingHour() + 1, 0));
 
-        checkOccupationFieldError(occupation, user, systemConfig, "error_start_hour_after_closing", "start");
+        checkOccupationFieldError(occupation, user, systemConfig, ErrorCode.START_HOUR_AFTER_CLOSING, "start");
     }
 
     @Test
@@ -111,7 +112,7 @@ public class OccupationValidatorTest extends ValidatorTest {
         var occupation = createOccupation();
         occupation.setStart(LocalTime.of(systemConfig.openingHour(), 20));
 
-        checkOccupationFieldError(occupation, user, systemConfig, "error_start_time_minutes", "start");
+        checkOccupationFieldError(occupation, user, systemConfig, ErrorCode.START_TIME_MINUTES, "start");
     }
 
     @Test
@@ -121,7 +122,7 @@ public class OccupationValidatorTest extends ValidatorTest {
         var occupation = createOccupation();
         occupation.setDate(LocalDate.now().with(next(SUNDAY)));
 
-        checkOccupationFieldError(occupation, user, systemConfig, "error_day_of_week_not_allowed", "date");
+        checkOccupationFieldError(occupation, user, systemConfig, ErrorCode.DAY_OF_WEEK_NOT_ALLOWED, "date");
     }
 
     @Test
@@ -132,7 +133,7 @@ public class OccupationValidatorTest extends ValidatorTest {
         occupation.setStart(LocalTime.of(systemConfig.closingHour() - 1, 30));
         occupation.setDuration(2);
 
-        checkOccupationFieldError(occupation, user, systemConfig, "error_start_time_plus_duration", "start");
+        checkOccupationFieldError(occupation, user, systemConfig, ErrorCode.START_TIME_PLUS_DURATION, "start");
     }
 
     @Test
@@ -142,7 +143,7 @@ public class OccupationValidatorTest extends ValidatorTest {
         var occupation = createOccupation();
         occupation.setDuration(0);
 
-        checkOccupationFieldError(occupation, user, systemConfig, "error_duration_too_small", "duration");
+        checkOccupationFieldError(occupation, user, systemConfig, ErrorCode.DURATION_TOO_SMALL, "duration");
     }
 
     @Test
@@ -153,7 +154,7 @@ public class OccupationValidatorTest extends ValidatorTest {
         var occupation = createOccupation();
         occupation.setDuration(5);
 
-        checkOccupationFieldError(occupation, user, systemConfig, "error_duration_too_long", "duration");
+        checkOccupationFieldError(occupation, user, systemConfig, ErrorCode.DURATION_TOO_LONG, "duration");
     }
 
     @Test
@@ -163,7 +164,7 @@ public class OccupationValidatorTest extends ValidatorTest {
         var occupation = createOccupation();
         occupation.setCourt(0);
 
-        checkOccupationFieldError(occupation, user, systemConfig, "error_court_too_small", "court");
+        checkOccupationFieldError(occupation, user, systemConfig, ErrorCode.COURT_TOO_SMALL, "court");
     }
 
     @Test
@@ -173,7 +174,7 @@ public class OccupationValidatorTest extends ValidatorTest {
         var occupation = createOccupation();
         occupation.setCourt(10);
 
-        checkOccupationFieldError(occupation, user, systemConfig, "error_court_too_big", "court");
+        checkOccupationFieldError(occupation, user, systemConfig, ErrorCode.COURT_TOO_BIG, "court");
     }
 
     @Test
@@ -182,7 +183,7 @@ public class OccupationValidatorTest extends ValidatorTest {
         user.setStatus(ActivationStatus.LOCKED);
         var systemConfig = createSystemConfig(60, createType(UserRole.REGISTERED));
         var occupation = createOccupation();
-        initMessageSource("error_user_not_active", "Pfui! %s");
+        initMessageSource(ErrorCode.USER_NOT_ACTIVE, "Pfui! %s");
 
         var exception = assertThrows(AuthorizationException.class,
                 () -> occupationValidator.validateOccupation(occupation, user, systemConfig));
@@ -197,16 +198,16 @@ public class OccupationValidatorTest extends ValidatorTest {
         var systemConfig = createSystemConfig(60, createType(UserRole.ADMIN, UserRole.TEAMSTER, UserRole.TRAINER));
         var occupation = createOccupation();
 
-        checkOccupationFieldError(occupation, user, systemConfig, "error_user_cannot_add_type", "type");
+        checkOccupationFieldError(occupation, user, systemConfig, ErrorCode.USER_CANNOT_ADD_TYPE, "type");
     }
 
-    private void checkOccupationError(Occupation occupation, UserEntity user, ReservationSystemConfig systemConfig, String expectedError) {
+    private void checkOccupationError(Occupation occupation, UserEntity user, ReservationSystemConfig systemConfig, ErrorCode expectedError) {
         checkError(
                 () -> occupationValidator.validateOccupation(occupation, user, systemConfig),
                 expectedError);
     }
 
-    private void checkOccupationFieldError(Occupation occupation, UserEntity user, ReservationSystemConfig systemConfig, String expectedError, String expectedField) {
+    private void checkOccupationFieldError(Occupation occupation, UserEntity user, ReservationSystemConfig systemConfig, ErrorCode expectedError, String expectedField) {
         checkFieldError(
                 () -> occupationValidator.validateOccupation(occupation, user, systemConfig),
                 expectedError, expectedField);
