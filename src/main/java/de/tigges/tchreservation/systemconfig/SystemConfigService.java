@@ -1,6 +1,5 @@
 package de.tigges.tchreservation.systemconfig;
 
-import de.tigges.tchreservation.exception.FoundException;
 import de.tigges.tchreservation.exception.NotFoundException;
 import de.tigges.tchreservation.protocol.ActionType;
 import de.tigges.tchreservation.protocol.EntityType;
@@ -23,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import static de.tigges.tchreservation.JpaUtil.stream;
 
@@ -33,7 +33,7 @@ public class SystemConfigService {
 
     private final SystemConfigRepository systemConfigRepository;
     private final ReservationTypeRepository reservationTypeRepository;
-    private final SystemConfigValidator validator;
+    private final SystemConfigValidator systemConfigValidator;
     private final ProtocolRepository protocolRepository;
     private final LoggedinUserService loggedinUserService;
 
@@ -58,9 +58,10 @@ public class SystemConfigService {
     public @ResponseBody ReservationSystemConfig add(@RequestBody ReservationSystemConfig config) {
         var loggedInUser = loggedinUserService.verifyHasRole(UserRole.ADMIN);
         systemConfigRepository.findById(config.id()).ifPresent(e -> {
-            throw new FoundException(EntityType.SYSTEM_CONFIGURATION, config.id());
+            throw systemConfigValidator.validator.foundException(
+                    EntityType.SYSTEM_CONFIGURATION, config.id());
         });
-        validator.validate(config, loggedInUser);
+        systemConfigValidator.validate(config, loggedInUser);
         var entity = systemConfigRepository.save(SystemConfigMapper.map(config));
         protocolRepository.save(new ProtocolEntity(entity, ActionType.CREATE, loggedInUser));
         insertTypes(loggedInUser, config.types(), entity);
@@ -71,9 +72,8 @@ public class SystemConfigService {
     @Transactional
     public @ResponseBody ReservationSystemConfig update(@RequestBody ReservationSystemConfig config) {
         var loggedInUser = loggedinUserService.verifyHasRole(UserRole.ADMIN);
-        systemConfigRepository.findById(config.id())
-                .orElseThrow(() -> new NotFoundException(EntityType.SYSTEM_CONFIGURATION, config.id()));
-        validator.validate(config, loggedInUser);
+        systemConfigRepository.findById(config.id()).orElseThrow(notFoundException(config.id()));
+        systemConfigValidator.validate(config, loggedInUser);
         var entity = SystemConfigMapper.map(config);
         var savedEntity = systemConfigRepository.save(SystemConfigMapper.map(config));
         protocolRepository.save(new ProtocolEntity(savedEntity, entity, loggedInUser));
@@ -86,8 +86,7 @@ public class SystemConfigService {
     @Transactional
     public @ResponseBody ReservationSystemConfig delete(@PathVariable long id) {
         var loggedInUser = loggedinUserService.verifyHasRole(UserRole.ADMIN);
-        var entity = systemConfigRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException(EntityType.SYSTEM_CONFIGURATION, id));
+        var entity = systemConfigRepository.findById(id).orElseThrow(notFoundException(id));
         reservationTypeRepository.deleteBySystemConfigId(id);
         protocolRepository.save(new ProtocolEntity(entity, ActionType.DELETE, loggedInUser));
         systemConfigRepository.delete(entity);
@@ -120,5 +119,9 @@ public class SystemConfigService {
         entity.setSystemConfig(systemConfig);
         reservationTypeRepository.save(entity);
         protocolRepository.save(new ProtocolEntity(entity, ActionType.CREATE, loggedInUser));
+    }
+
+    private Supplier<NotFoundException> notFoundException(long id) {
+        return () -> systemConfigValidator.validator.notFoundException(EntityType.SYSTEM_CONFIGURATION, id);
     }
 }

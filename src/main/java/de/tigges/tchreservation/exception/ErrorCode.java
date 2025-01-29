@@ -39,6 +39,6 @@ public enum ErrorCode {
     NUMBER_TOO_BIG,
 
     JSON_SERIALIZATION,
-    NOT_EXISTS,
+    NOT_FOUND,
     EXISTS,
 }

@@ -22,7 +22,7 @@ public class RestException extends RuntimeException {
         this(status, new ErrorMessage(code, message, null));
     }
 
-    public RestException(HttpStatus status, ErrorMessage errorDetail) {
-        this(status, List.of(errorDetail));
+    public RestException(HttpStatus status, ErrorMessage errorMessage) {
+        this(status, List.of(errorMessage));
     }
 }

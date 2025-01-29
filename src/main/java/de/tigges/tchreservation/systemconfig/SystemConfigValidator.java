@@ -1,7 +1,5 @@
 package de.tigges.tchreservation.systemconfig;
 
-import de.tigges.tchreservation.exception.AuthorizationException;
-import de.tigges.tchreservation.exception.BadRequestException;
 import de.tigges.tchreservation.exception.ErrorCode;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 import de.tigges.tchreservation.reservation.model.SystemConfigReservationType;
@@ -22,7 +20,7 @@ public class SystemConfigValidator {
     private static final int MIN_STRING_LENGTH = 3;
     private static final int MAX_STRING_LENGTH = 50;
 
-    private final Validator validator;
+    public final Validator validator;
 
     public void validate(ReservationSystemConfig config, UserEntity loggedInUser) {
         validator.clearErrorMessages();
@@ -49,18 +47,17 @@ public class SystemConfigValidator {
 
     private void checkConfigId(ReservationSystemConfig config) {
         if (config.id() < 1) {
-            throw new BadRequestException(ErrorCode.NO_SYSTEM_CONFIG_ID,
-                    validator.msg(ErrorCode.NO_SYSTEM_CONFIG_ID));
+            throw validator.badRequestException(ErrorCode.NO_SYSTEM_CONFIG_ID);
         }
     }
 
     private void checkUser(UserEntity loggedInUser) {
         if (!UserUtils.hasRole(loggedInUser.getRole(), UserRole.ADMIN)) {
-            throw new AuthorizationException(ErrorCode.USER_NOT_AUTHORIZED, validator.msg(ErrorCode.USER_NOT_AUTHORIZED));
+            throw validator.authorizationException(ErrorCode.USER_NOT_AUTHORIZED);
         }
 
         if (!ActivationStatus.ACTIVE.equals(loggedInUser.getStatus())) {
-            throw new AuthorizationException(ErrorCode.USER_NOT_AUTHORIZED, validator.msg(ErrorCode.USER_NOT_AUTHORIZED));
+            throw validator.authorizationException(ErrorCode.USER_NOT_AUTHORIZED);
         }
     }
 

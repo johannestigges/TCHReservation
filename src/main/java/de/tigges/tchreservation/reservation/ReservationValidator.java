@@ -1,6 +1,5 @@
 package de.tigges.tchreservation.reservation;
 
-import de.tigges.tchreservation.exception.AuthorizationException;
 import de.tigges.tchreservation.exception.BadRequestException;
 import de.tigges.tchreservation.exception.ErrorCode;
 import de.tigges.tchreservation.reservation.model.RepeatType;
@@ -19,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class ReservationValidator {
 
     private final OccupationValidator occupationValidator;
-    private final Validator validator;
+    public final Validator validator;
 
     public void validateReservation(
             Reservation reservation,
@@ -58,8 +57,7 @@ public class ReservationValidator {
 
     private void validateUser(Reservation reservation, UserEntity loggedInUser) {
         if (!checkUser(reservation.getUser(), loggedInUser)) {
-            throw new AuthorizationException(ErrorCode.WRONG_USER,
-                    validator.msg(ErrorCode.WRONG_USER));
+            throw validator.authorizationException(ErrorCode.WRONG_USER);
         }
     }
 

@@ -1,7 +1,5 @@
 package de.tigges.tchreservation.reservation;
 
-import de.tigges.tchreservation.exception.AuthorizationException;
-import de.tigges.tchreservation.exception.BadRequestException;
 import de.tigges.tchreservation.exception.ErrorCode;
 import de.tigges.tchreservation.reservation.jpa.OccupationEntity;
 import de.tigges.tchreservation.reservation.jpa.OccupationRepository;
@@ -77,8 +75,8 @@ public class OccupationValidator {
         }
         // check time overlap
         if (getStart(o1).isBefore(getEnd(o2, systemConfig)) && getEnd(o1, systemConfig).isAfter(getStart(o2))) {
-            throw new BadRequestException(ErrorCode.OCCUPIED, validator.msg(ErrorCode.OCCUPIED,
-                    o1.getDate(), o1.getStart(), o1.getCourt()));
+            throw validator.badRequestException(ErrorCode.OCCUPIED,
+                    o1.getDate(), o1.getStart(), o1.getCourt());
         }
     }
 
@@ -124,8 +122,7 @@ public class OccupationValidator {
 
     private void validateUserIsActive(UserEntity loggedInUser) {
         if (!ActivationStatus.ACTIVE.equals(loggedInUser.getStatus())) {
-            throw new AuthorizationException(ErrorCode.USER_NOT_ACTIVE,
-                    validator.msg(ErrorCode.USER_NOT_ACTIVE, loggedInUser.getName()));
+            throw validator.authorizationException(ErrorCode.USER_NOT_ACTIVE, loggedInUser.getName());
         }
     }
 
@@ -133,14 +130,12 @@ public class OccupationValidator {
         return systemConfig.types().stream()
                 .filter(type -> type.type() == occupation.getType())
                 .findAny()
-                .orElseThrow(() -> new BadRequestException(ErrorCode.INVALID_RESERVATION_TYPE,
-                        validator.msg(ErrorCode.INVALID_RESERVATION_TYPE)));
+                .orElseThrow(() -> validator.badRequestException(ErrorCode.INVALID_RESERVATION_TYPE));
     }
 
     private void validateSystemConfigId(Occupation occupation) {
         if (occupation.getSystemConfigId() <= 0) {
-            throw new BadRequestException(ErrorCode.NO_RESERVATION_SYSTEM,
-                    validator.msg(ErrorCode.NO_RESERVATION_SYSTEM));
+            throw validator.badRequestException(ErrorCode.NO_RESERVATION_SYSTEM);
         }
     }
 
