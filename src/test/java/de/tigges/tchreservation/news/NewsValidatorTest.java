@@ -1,6 +1,7 @@
 package de.tigges.tchreservation.news;
 
 import de.tigges.tchreservation.ValidatorTest;
+import de.tigges.tchreservation.exception.ErrorCode;
 import de.tigges.tchreservation.news.model.News;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,18 +24,19 @@ class NewsValidatorTest extends ValidatorTest {
     void noSubject() {
         var news = createNews("", null);
 
-        checkNewsFieldError(news, "error_null_not_allowed", "subject");
+        checkNewsFieldErrorNullNotAllowed(news, "subject");
     }
 
     @Test
     void noText() {
         var news = createNews("my subject", null);
 
-        checkNewsFieldError(news, "error_null_not_allowed", "text");
+        checkNewsFieldErrorNullNotAllowed(news, "text");
     }
 
-    private void checkNewsFieldError(News news, String expectedError, String expectedField) {
-        checkFieldError(() -> newsValidator.validate(news), expectedError, expectedField);
+    private void checkNewsFieldErrorNullNotAllowed(
+            News news, String expectedField) {
+        checkFieldError(() -> newsValidator.validate(news), ErrorCode.NULL_NOT_ALLOWED, expectedField);
     }
 
     private News createNews(String subject, String text) {

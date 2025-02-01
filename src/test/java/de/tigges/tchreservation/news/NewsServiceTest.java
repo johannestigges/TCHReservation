@@ -1,5 +1,7 @@
 package de.tigges.tchreservation.news;
 
+import de.tigges.tchreservation.ValidatorTest;
+import de.tigges.tchreservation.exception.ErrorCode;
 import de.tigges.tchreservation.exception.NotFoundException;
 import de.tigges.tchreservation.news.jpa.NewsEntity;
 import de.tigges.tchreservation.news.jpa.NewsRepository;
@@ -24,16 +26,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class NewsServiceTest {
+class NewsServiceTest extends ValidatorTest {
     @Mock
     private LoggedinUserService loggedinUserService;
-    @Mock
-    NewsValidator newsValidator;
     @Mock
     private NewsRepository newsRepository;
     @Mock
     private UserNewsRepository userNewsRepository;
-
 
     private NewsService newsService;
 
@@ -41,15 +40,15 @@ class NewsServiceTest {
     void createNewsService() {
         newsService = new NewsService(
                 loggedinUserService,
-                newsValidator,
+                new NewsValidator(createValidator()),
                 newsRepository,
                 userNewsRepository);
     }
 
     @Test
     void getAll() {
-        when(newsRepository.findAllByOrderByCreatedAtDesc())
-                .thenReturn(List.of(
+        when(newsRepository.findAllByOrderByCreatedAtDesc()).thenReturn(
+                List.of(
                         new NewsEntity("Subject 1", "Text 1"),
                         new NewsEntity("Subject 2", "Text 2")
                 ));
@@ -86,16 +85,16 @@ class NewsServiceTest {
 
     @Test
     void getOneNotFound() {
-        when(newsRepository.findById(1L))
-                .thenReturn(Optional.empty());
+        initMessageSource(ErrorCode.NOT_FOUND, "NEWS with id 1 not found");
+        when(newsRepository.findById(1L)).thenReturn(Optional.empty());
 
         var exception = assertThrows(NotFoundException.class,
                 () -> newsService.getOne(1L));
 
         assertThat(exception.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(exception.getErrorMessages()).hasSize(1);
-        assertThat(exception.getErrorMessages().stream().toList().getFirst()
-                .message()).isEqualTo("NEWS with id 1 not found");
+        assertThat(exception.getErrorMessages().stream().toList().getFirst().message())
+                .isEqualTo("NEWS with id 1 not found");
     }
 
     @Test
@@ -147,8 +146,8 @@ class NewsServiceTest {
 
     @Test
     void updateNotFound() {
-        when(newsRepository.findById(3L))
-                .thenReturn(Optional.empty());
+        initMessageSource(ErrorCode.NOT_FOUND, "NEWS with id 3 not found");
+        when(newsRepository.findById(3L)).thenReturn(Optional.empty());
 
         var exception = assertThrows(NotFoundException.class,
                 () -> newsService.update(new News(

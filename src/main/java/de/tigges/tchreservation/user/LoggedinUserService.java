@@ -1,24 +1,21 @@
 package de.tigges.tchreservation.user;
 
-import de.tigges.tchreservation.exception.AuthorizationException;
+import de.tigges.tchreservation.exception.ErrorCode;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.jpa.UserRepository;
 import de.tigges.tchreservation.user.model.UserRole;
+import de.tigges.tchreservation.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-/**
- * User utilities with methods and utils regarding logged in user
- *
- * @author johannes
- */
 @Component
 @RequiredArgsConstructor
 public class LoggedinUserService {
 
     private final UserRepository userRepository;
+    private final Validator validator;
 
     public UserEntity getLoggedInUser() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -31,8 +28,8 @@ public class LoggedinUserService {
 
     public UserEntity verifyIsLoggedIn() {
         var user = getLoggedInUser();
-        if (UserUtils.hasRole(user,UserRole.ANONYMOUS)) {
-            throw new AuthorizationException("error_user_is_not_logged_in");
+        if (UserUtils.hasRole(user, UserRole.ANONYMOUS)) {
+            throw validator.authorizationException(ErrorCode.USER_NOT_LOGGED_IN);
         }
         return user;
     }
@@ -40,7 +37,7 @@ public class LoggedinUserService {
     public UserEntity verifyHasRole(UserRole... roles) {
         var loggedInUser = getLoggedInUser();
         if (!UserUtils.isActive(loggedInUser) || !UserUtils.hasRole(loggedInUser, roles)) {
-            throw new AuthorizationException("error_user_is_not_admin");
+            throw validator.authorizationException(ErrorCode.USER_NOT_AUTHORIZED);
         }
         return loggedInUser;
     }
@@ -50,6 +47,6 @@ public class LoggedinUserService {
         if (UserUtils.isActive(loggedInUser) && (UserUtils.is(loggedInUser, userId) || UserUtils.hasRole(loggedInUser, roles))) {
             return loggedInUser;
         }
-        throw new AuthorizationException("error_user_is_not_admin");
+        throw validator.authorizationException(ErrorCode.USER_NOT_AUTHORIZED);
     }
 }

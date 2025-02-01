@@ -1,33 +1,24 @@
 package de.tigges.tchreservation.reservation;
 
 import de.tigges.tchreservation.ValidatorTest;
-import de.tigges.tchreservation.exception.BadRequestException;
+import de.tigges.tchreservation.exception.ErrorCode;
 import de.tigges.tchreservation.reservation.jpa.OccupationRepository;
-import de.tigges.tchreservation.reservation.model.Occupation;
 import de.tigges.tchreservation.reservation.model.Reservation;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 import de.tigges.tchreservation.reservation.model.SystemConfigReservationType;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.UserRole;
-import de.tigges.tchreservation.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.MessageSource;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 class ReservationValidatorTest extends ValidatorTest {
     static final int SYSTEM_CONFIG_ID = 100;
@@ -36,11 +27,10 @@ class ReservationValidatorTest extends ValidatorTest {
     private final OccupationRepository occupationRepositoryMock = mock(OccupationRepository.class);
 
     private ReservationValidator reservationValidator;
-    private OccupationValidator occupationValidator;
 
     @BeforeEach
     void initValidator() {
-        occupationValidator = new OccupationValidator(occupationRepositoryMock, createValidator());
+        OccupationValidator occupationValidator = new OccupationValidator(occupationRepositoryMock, createValidator());
         reservationValidator = new ReservationValidator(occupationValidator, createValidator());
     }
 
@@ -50,42 +40,38 @@ class ReservationValidatorTest extends ValidatorTest {
         var systemConfig = createSystemConfig(60, createType(UserRole.REGISTERED));
         var reservation = createReservation();
         reservation.setCourts(null);
-        checkReservationFieldError(reservation,user,systemConfig,"error_null_not_allowed","court");
+        checkReservationFieldErrorNullNotAllowed(reservation, user, systemConfig, "court");
     }
-    @Test void noDate() {
+
+    @Test
+    void noDate() {
         var user = createUser(UserRole.REGISTERED);
         var systemConfig = createSystemConfig(60, createType(UserRole.REGISTERED));
         var reservation = createReservation();
         reservation.setDate(null);
-        checkReservationFieldError(reservation,user,systemConfig,"error_null_not_allowed","date");
+        checkReservationFieldErrorNullNotAllowed(reservation, user, systemConfig, "date");
     }
 
-    @Test void noStart(){
+    @Test
+    void noStart() {
         var user = createUser(UserRole.REGISTERED);
         var systemConfig = createSystemConfig(60, createType(UserRole.REGISTERED));
         var reservation = createReservation();
         reservation.setStart(null);
-        checkReservationFieldError(reservation,user,systemConfig,"error_null_not_allowed","start");
+        checkReservationFieldErrorNullNotAllowed(reservation, user, systemConfig, "start");
 
     }
 
-    private void checkReservationError(Reservation reservation, UserEntity user, ReservationSystemConfig systemConfig, String expectedError) {
-        initMessageSource(expectedError, "Pfui!");
-        var exception = assertThrows(BadRequestException.class,
-                () -> reservationValidator.validateReservation(reservation, user, systemConfig));
-        assertTrue(exception.getErrorMessages().stream().anyMatch(e -> "Pfui!".equals(e.message())));
+    private void checkReservationFieldErrorNullNotAllowed(Reservation reservation, UserEntity user, ReservationSystemConfig systemConfig, String expectedField) {
+        checkFieldError(() ->
+                reservationValidator.validateReservation(reservation, user, systemConfig), ErrorCode.NULL_NOT_ALLOWED, expectedField);
     }
-
-    private void checkReservationFieldError(Reservation reservation, UserEntity user, ReservationSystemConfig systemConfig, String expectedError, String expectedField) {
-        checkFieldError(() -> reservationValidator.validateReservation(reservation, user, systemConfig),expectedError,expectedField);
-    }
-
 
     private Reservation createReservation() {
         var r = new Reservation();
         r.setCourts("1");
         r.setDate(LocalDate.now().plusDays(1));
-        r.setStart(LocalTime.of(10,0));
+        r.setStart(LocalTime.of(10, 0));
         return r;
     }
 
@@ -130,34 +116,5 @@ class ReservationValidatorTest extends ValidatorTest {
 
     private SystemConfigReservationType createType(UserRole... roles) {
         return createType(0, roles);
-    }
-
-    private SystemConfigReservationType createType(UserRole role, Collection<DayOfWeek> forbiddenDays) {
-        return new SystemConfigReservationType(
-                0,
-                TYPE,
-                "Type" + TYPE,
-                0,
-                0,
-                0,
-                true,
-                true,
-                forbiddenDays,
-                null,
-                List.of(role)
-        );
-    }
-
-
-    private Occupation createOccupation() {
-        var occupation = new Occupation();
-        occupation.setSystemConfigId(SYSTEM_CONFIG_ID);
-        occupation.setType(TYPE);
-        occupation.setText("Text " + TYPE);
-        occupation.setDate(LocalDate.now().plusDays(1));
-        occupation.setStart(LocalTime.of(10, 0));
-        occupation.setDuration(1);
-        occupation.setCourt(1);
-        return occupation;
     }
 }

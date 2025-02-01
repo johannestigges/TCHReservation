@@ -1,7 +1,6 @@
 package de.tigges.tchreservation.reservation;
 
-import de.tigges.tchreservation.exception.AuthorizationException;
-import de.tigges.tchreservation.exception.BadRequestException;
+import de.tigges.tchreservation.exception.ErrorCode;
 import de.tigges.tchreservation.reservation.jpa.OccupationEntity;
 import de.tigges.tchreservation.reservation.jpa.OccupationRepository;
 import de.tigges.tchreservation.reservation.model.Occupation;
@@ -76,28 +75,28 @@ public class OccupationValidator {
         }
         // check time overlap
         if (getStart(o1).isBefore(getEnd(o2, systemConfig)) && getEnd(o1, systemConfig).isAfter(getStart(o2))) {
-            throw new BadRequestException(validator.msg("error_occupied",
-                    o1.getDate(), o1.getStart(), o1.getCourt()));
+            throw validator.badRequestException(ErrorCode.OCCUPIED,
+                    o1.getDate(), o1.getStart(), o1.getCourt());
         }
     }
 
     private void validateDuration(Occupation occupation, UserEntity loggedInUser, SystemConfigReservationType type) {
         if (occupation.getDuration() < 1) {
-            validator.addFieldErrorMessage("duration", "error_duration_too_small");
+            validator.addFieldErrorMessage("duration", ErrorCode.DURATION_TOO_SMALL);
         }
 
         if (type.maxDuration() > 0 && occupation.getDuration() > type.maxDuration()) {
-            validator.addFieldErrorMessage("duration", "error_duration_too_long",
+            validator.addFieldErrorMessage("duration", ErrorCode.DURATION_TOO_LONG,
                     loggedInUser.getName(), occupation.getDuration());
         }
     }
 
     private void validateCourt(Occupation occupation, ReservationSystemConfig systemConfig) {
         if (occupation.getCourt() < 1) {
-            validator.addFieldErrorMessage("court", "error_court_too_small", occupation);
+            validator.addFieldErrorMessage("court", ErrorCode.COURT_TOO_SMALL, occupation);
         }
         if (occupation.getCourt() > systemConfig.courts().size()) {
-            validator.addFieldErrorMessage("court", "error_court_too_big",
+            validator.addFieldErrorMessage("court", ErrorCode.COURT_TOO_BIG,
                     occupation, systemConfig.courts().size());
         }
     }
@@ -108,7 +107,7 @@ public class OccupationValidator {
             ReservationSystemConfig systemConfig,
             SystemConfigReservationType type) {
         if (!type.roles().contains(loggedInUser.getRole())) {
-            validator.addFieldErrorMessage("type", "error_user_cannot_add_type",
+            validator.addFieldErrorMessage("type", ErrorCode.USER_CANNOT_ADD_TYPE,
                     loggedInUser.getName(), getTypeName(occupation.getType(), systemConfig.types()));
         }
     }
@@ -123,7 +122,7 @@ public class OccupationValidator {
 
     private void validateUserIsActive(UserEntity loggedInUser) {
         if (!ActivationStatus.ACTIVE.equals(loggedInUser.getStatus())) {
-            throw new AuthorizationException(validator.msg("error_user_not_active", loggedInUser.getName()));
+            throw validator.authorizationException(ErrorCode.USER_NOT_ACTIVE, loggedInUser.getName());
         }
     }
 
@@ -131,12 +130,12 @@ public class OccupationValidator {
         return systemConfig.types().stream()
                 .filter(type -> type.type() == occupation.getType())
                 .findAny()
-                .orElseThrow(() -> new BadRequestException(validator.msg("error_invalid_reservation_type")));
+                .orElseThrow(() -> validator.badRequestException(ErrorCode.INVALID_RESERVATION_TYPE));
     }
 
     private void validateSystemConfigId(Occupation occupation) {
         if (occupation.getSystemConfigId() <= 0) {
-            throw new BadRequestException(validator.msg("error_no_reservation_system"));
+            throw validator.badRequestException(ErrorCode.NO_RESERVATION_SYSTEM);
         }
     }
 
@@ -154,7 +153,7 @@ public class OccupationValidator {
         LocalDate date = occupation.getDate();
         if (validator.checkNotEmpty("date", date)) {
             if (type.forbiddenDaysOfWeek().contains(date.getDayOfWeek())) {
-                validator.addFieldErrorMessage("date", "error_day_of_week_not_allowed");
+                validator.addFieldErrorMessage("date", ErrorCode.DAY_OF_WEEK_NOT_ALLOWED);
             }
         }
 
@@ -163,30 +162,30 @@ public class OccupationValidator {
 
         if (date != null && start != null) {
             if (start.getHour() < systemConfig.openingHour()) {
-                validator.addFieldErrorMessage("start", "error_start_hour_before_opening",
+                validator.addFieldErrorMessage("start", ErrorCode.START_HOUR_BEFORE_OPENING,
                         start.getHour(), systemConfig.openingHour());
             }
 
             if (start.getHour() > systemConfig.closingHour()) {
-                validator.addFieldErrorMessage("start", "error_start_hour_after_closing",
+                validator.addFieldErrorMessage("start", ErrorCode.START_HOUR_AFTER_CLOSING,
                         start.getHour(), systemConfig.closingHour());
             }
 
             if (start.getMinute() != 0 && start.getMinute() % systemConfig.durationUnitInMinutes() != 0) {
-                validator.addFieldErrorMessage("start", "error_start_time_minutes",
+                validator.addFieldErrorMessage("start", ErrorCode.START_TIME_MINUTES,
                         start.getMinute());
             }
 
             if (!loggedInUser.getRole().equals(UserRole.ADMIN) && isOccupationInThePast(occupation)) {
-                validator.addFieldErrorMessage("date", "error_date_in_the_past");
+                validator.addFieldErrorMessage("date", ErrorCode.DATE_IN_THE_PAST);
             }
             if (of(date, start.getHour(), start.getMinute())
                     .plusMinutes((long) occupation.getDuration() * systemConfig.durationUnitInMinutes())
                     .isAfter(of(date, systemConfig.closingHour(), 0))) {
-                validator.addFieldErrorMessage("start", "error_start_time_plus_duration");
+                validator.addFieldErrorMessage("start", ErrorCode.START_TIME_PLUS_DURATION);
             }
             if (isOccupationTooFarInFuture(occupation, type)) {
-                validator.addFieldErrorMessage("date", "error_date_too_far_in_future");
+                validator.addFieldErrorMessage("date", ErrorCode.DATE_TOO_FAR_IN_FUTURE);
             }
         }
     }

@@ -1,7 +1,7 @@
 package de.tigges.tchreservation.reservation;
 
-import de.tigges.tchreservation.exception.AuthorizationException;
 import de.tigges.tchreservation.exception.BadRequestException;
+import de.tigges.tchreservation.exception.ErrorCode;
 import de.tigges.tchreservation.exception.NotFoundException;
 import de.tigges.tchreservation.protocol.ActionType;
 import de.tigges.tchreservation.protocol.EntityType;
@@ -28,6 +28,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
 
 import static de.tigges.tchreservation.reservation.model.RepeatType.weekly;
@@ -44,6 +45,18 @@ public class ReservationService {
     private final ReservationValidator reservationValidator;
     private final OccupationValidator occupationValidator;
     private final LoggedinUserService loggedinUserService;
+
+    private static int plusDays(@Nullable RepeatType repeatType) {
+        if (weekly.equals(repeatType)) {
+            return 7;
+        }
+        return 1;
+    }
+
+    private static LocalDate repeatUntil(Reservation reservation) {
+        var repeatUntil = reservation.getRepeatUntil();
+        return (repeatUntil != null) ? repeatUntil : reservation.getDate();
+    }
 
     /**
      * add one Reservation to the system
@@ -111,7 +124,7 @@ public class ReservationService {
     public @ResponseBody Occupation updateOccupation(@RequestBody Occupation occupation) {
 
         var dbOccupation = occupationRepository.findById(occupation.getId())
-                .orElseThrow(() -> new NotFoundException(EntityType.OCCUPATION, occupation.getId()));
+                .orElseThrow(notFoundException(EntityType.OCCUPATION, occupation.getId()));
 
         var loggedInUser = loggedinUserService.getLoggedInUser();
         var systemConfig = getSystemConfig(occupation.getSystemConfigId());
@@ -141,7 +154,7 @@ public class ReservationService {
     public @ResponseBody Reservation updateReservation(@RequestBody Reservation reservation) {
 
         var dbReservation = reservationRepository.findById(reservation.getId())
-                .orElseThrow(() -> new NotFoundException(EntityType.RESERVATION, reservation.getId()));
+                .orElseThrow(notFoundException(EntityType.RESERVATION, reservation.getId()));
 
         var loggedInUser = loggedinUserService.getLoggedInUser();
         var systemConfig = getSystemConfig(reservation.getSystemConfigId());
@@ -154,9 +167,9 @@ public class ReservationService {
         var dbOccupations = occupationRepository.findByReservationId(reservation.getId());
 
         reservation.getOccupations().forEach(occupation -> {
-            OccupationEntity dbOccupation = StreamSupport.stream(dbOccupations.spliterator(), false) //
-                    .filter(o -> occupation.getId() == o.getId()).findAny() //
-                    .orElseThrow(() -> new NotFoundException(EntityType.OCCUPATION, occupation.getId()));
+            OccupationEntity dbOccupation = StreamSupport.stream(dbOccupations.spliterator(), false)
+                    .filter(o -> occupation.getId() == o.getId()).findAny()
+                    .orElseThrow(notFoundException(EntityType.OCCUPATION, occupation.getId()));
             occupation.setReservation(response);
             var savedOccupation = occupationRepository.save(OccupationMapper.map(occupation));
             protocolRepository.save(new ProtocolEntity(savedOccupation, dbOccupation, loggedInUser));
@@ -175,7 +188,7 @@ public class ReservationService {
     @ResponseStatus(HttpStatus.OK)
     public void deleteOccupation(@PathVariable long id) {
         var occupation = occupationRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException(EntityType.OCCUPATION, id));
+                .orElseThrow(notFoundException(EntityType.OCCUPATION, id));
 
         var loggedInUser = verifyCanDelete(occupation.getReservation().getUser().getId());
 
@@ -205,7 +218,7 @@ public class ReservationService {
     @ResponseStatus(HttpStatus.OK)
     public void deleteReservation(@PathVariable long id) {
         var reservation = reservationRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException(EntityType.RESERVATION, id));
+                .orElseThrow(notFoundException(EntityType.RESERVATION, id));
 
         var loggedInUser = verifyCanDelete(reservation.getUser().getId());
 
@@ -213,6 +226,10 @@ public class ReservationService {
 
         protocolRepository.save(new ProtocolEntity(reservation, ActionType.DELETE, loggedInUser));
         reservationRepository.delete(reservation);
+    }
+
+    private Supplier<NotFoundException> notFoundException(EntityType reservation, long id) {
+        return () -> reservationValidator.validator.notFoundException(reservation, id);
     }
 
     /**
@@ -287,18 +304,6 @@ public class ReservationService {
         protocolRepository.save(new ProtocolEntity(occupation, ActionType.DELETE, user));
     }
 
-    private static int plusDays(@Nullable RepeatType repeatType) {
-        if (weekly.equals(repeatType)) {
-            return 7;
-        }
-        return 1;
-    }
-
-    private static LocalDate repeatUntil(Reservation reservation) {
-        var repeatUntil = reservation.getRepeatUntil();
-        return (repeatUntil != null) ? repeatUntil : reservation.getDate();
-    }
-
     private void createOccupations(Reservation reservation) {
 
         var repeatUntil = repeatUntil(reservation);
@@ -349,6 +354,6 @@ public class ReservationService {
                 && (UserUtils.is(loggedInUser, userId) || UserUtils.hasRole(loggedInUser, UserRole.ADMIN, UserRole.TRAINER))) {
             return loggedInUser;
         }
-        throw new AuthorizationException("error_user_is_not_admin");
+        throw reservationValidator.validator.authorizationException(ErrorCode.USER_NOT_AUTHORIZED);
     }
 }
