@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Set;
 
 @Getter
@@ -35,5 +36,6 @@ public class NewsEntity {
         this.subject = subject;
         this.text = text;
         this.createdAt = LocalDateTime.now();
+        this.users = Collections.emptySet();
     }
 }

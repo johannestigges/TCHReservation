@@ -6,7 +6,7 @@ import java.time.DayOfWeek;
 import java.util.Collection;
 
 public record SystemConfigReservationType(
-        long id,
+        Long id,
         int type,
         String name,
         int maxDuration,
@@ -18,4 +18,9 @@ public record SystemConfigReservationType(
         Collection<DayOfWeek> forbiddenDaysOfWeek,
         String cssStyle,
         Collection<UserRole> roles) {
+    public SystemConfigReservationType(int type, String name, int maxDuration, int maxDaysReservationInFuture, int maxCancelInHours,
+                                boolean repeatable, boolean publicVisible, Collection<DayOfWeek> forbiddenDaysOfWeek, String cssStyle, Collection<UserRole> userRoles) {
+        this(null, type, name, maxDuration, maxDaysReservationInFuture, maxCancelInHours,
+                repeatable, publicVisible, forbiddenDaysOfWeek, cssStyle, userRoles);
+    }
 }

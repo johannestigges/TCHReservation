@@ -62,7 +62,7 @@ public class SystemConfigService {
                     EntityType.SYSTEM_CONFIGURATION, config.id());
         });
         systemConfigValidator.validate(config, loggedInUser);
-        var entity = systemConfigRepository.save(SystemConfigMapper.map(config));
+        var entity = systemConfigRepository.save(SystemConfigMapper.map(config,true));
         protocolRepository.save(new ProtocolEntity(entity, ActionType.CREATE, loggedInUser));
         insertTypes(loggedInUser, config.types(), entity);
         return SystemConfigMapper.map(entity);
@@ -74,8 +74,8 @@ public class SystemConfigService {
         var loggedInUser = loggedinUserService.verifyHasRole(UserRole.ADMIN);
         systemConfigRepository.findById(config.id()).orElseThrow(notFoundException(config.id()));
         systemConfigValidator.validate(config, loggedInUser);
-        var entity = SystemConfigMapper.map(config);
-        var savedEntity = systemConfigRepository.save(SystemConfigMapper.map(config));
+        var entity = SystemConfigMapper.map(config,false);
+        var savedEntity = systemConfigRepository.save(SystemConfigMapper.map(config,false));
         protocolRepository.save(new ProtocolEntity(savedEntity, entity, loggedInUser));
         reservationTypeRepository.deleteBySystemConfigId(config.id());
         insertTypes(loggedInUser, config.types(), savedEntity);
@@ -116,6 +116,7 @@ public class SystemConfigService {
                             SystemConfigReservationType type,
                             SystemConfigEntity systemConfig) {
         var entity = ReservationTypeMapper.mapType(type);
+        entity.setId(null);
         entity.setSystemConfig(systemConfig);
         reservationTypeRepository.save(entity);
         protocolRepository.save(new ProtocolEntity(entity, ActionType.CREATE, loggedInUser));

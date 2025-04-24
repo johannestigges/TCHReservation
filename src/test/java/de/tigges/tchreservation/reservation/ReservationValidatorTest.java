@@ -21,7 +21,7 @@ import java.util.List;
 import static org.mockito.Mockito.mock;
 
 class ReservationValidatorTest extends ValidatorTest {
-    static final int SYSTEM_CONFIG_ID = 100;
+    static final long SYSTEM_CONFIG_ID = 100L;
     static final int TYPE = 2345;
 
     private final OccupationRepository occupationRepositoryMock = mock(OccupationRepository.class);
@@ -101,7 +101,6 @@ class ReservationValidatorTest extends ValidatorTest {
 
     private SystemConfigReservationType createType(int maxDuration, UserRole... roles) {
         return new SystemConfigReservationType(
-                0,
                 TYPE,
                 "Type" + TYPE,
                 maxDuration,
