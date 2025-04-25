@@ -52,9 +52,9 @@ public class ReservationServiceTest extends ProtocolTest {
     private SystemConfigRepository systemConfigRepository;
     @Autowired
     private ReservationTypeRepository reservationTypeRepository;
+
     private UserEntity user;
     private UserEntity trainer;
-    private UserEntity admin;
 
     @BeforeEach
     public void init() {
@@ -67,7 +67,7 @@ public class ReservationServiceTest extends ProtocolTest {
 
         user = addUser(UserRole.REGISTERED);
         trainer = addUser(UserRole.TRAINER);
-        admin = addUser(UserRole.ADMIN);
+        addUser(UserRole.ADMIN);
 
         var system1 = new SystemConfigEntity();
         system1.setId(1L);
@@ -79,6 +79,7 @@ public class ReservationServiceTest extends ProtocolTest {
         system1.setOpeningHour(8);
         system1.setClosingHour(22);
         system1.setTypes(Set.of(createReservationType(0, "Quickbuchung", 3, 60, 0, UserRole.REGISTERED, UserRole.TRAINER, UserRole.KIOSK, UserRole.TECHNICAL, UserRole.TEAMSTER), createReservationType(1, "Training", UserRole.TRAINER, UserRole.TEAMSTER), createReservationType(2, "Meisterschaft", UserRole.TRAINER, UserRole.TEAMSTER), createReservationType(3, "Dauerbuchung"), createReservationType(4, "Gesperrt", UserRole.TRAINER)));
+        system1.setNew(true);
         systemConfigRepository.save(system1);
         saveTypes(system1);
 
@@ -92,6 +93,7 @@ public class ReservationServiceTest extends ProtocolTest {
         system2.setOpeningHour(8);
         system2.setClosingHour(22);
         system2.setTypes(Set.of(createReservationType(0, "Quickbuchung", 1, 14, 8, UserRole.REGISTERED, UserRole.TRAINER, UserRole.KIOSK, UserRole.TECHNICAL, UserRole.TEAMSTER, UserRole.GUEST), createReservationType(1, "Training", UserRole.TRAINER, UserRole.TEAMSTER), createReservationType(2, "Meisterschaft", UserRole.TRAINER, UserRole.TEAMSTER), createReservationType(3, "Dauerbuchung)"), createReservationType(4, "Gesperrt", UserRole.TRAINER), createReservationType(5, "Jugendtraining", 1, 1, 0, UserRole.REGISTERED, UserRole.TEAMSTER)));
+        system2.setNew(true);
         systemConfigRepository.save(system2);
         saveTypes(system2);
 
@@ -105,15 +107,9 @@ public class ReservationServiceTest extends ProtocolTest {
         system3.setOpeningHour(8);
         system3.setClosingHour(10);
         system3.setTypes(Set.of(createReservationType(0, "Quickbuchung", 1, 0, 0, UserRole.TRAINER, UserRole.REGISTERED)));
+        system3.setNew(true);
         systemConfigRepository.save(system3);
         saveTypes(system3);
-    }
-
-    private void saveTypes(SystemConfigEntity systemConfig) {
-        systemConfig.getTypes().forEach(type -> {
-            type.setSystemConfig(systemConfig);
-            reservationTypeRepository.save(type);
-        });
     }
 
     @Test
@@ -131,7 +127,7 @@ public class ReservationServiceTest extends ProtocolTest {
     @Test
     @WithMockUser(username = "TRAINER")
     public void addReservationWithWrongUser() throws Exception {
-        addReservationError(createReservation(1, user, 1, 10, 2), HttpStatus.UNAUTHORIZED, "Der an der Reservierung angegebene Benutzer ist nicht der angemeldete Benutzer.");
+        addReservationError(createReservation(1, user, 1, 10, 2), HttpStatus.UNAUTHORIZED, "Der an der Reservierung angegebene Benutzer ist nicht der angemeldete Benutzer");
     }
 
     @Test
@@ -227,7 +223,7 @@ public class ReservationServiceTest extends ProtocolTest {
     @WithMockUser(username = "TRAINER")
     public void addReservationBeforeOpeningHour() throws Exception {
         var reservation = createReservation(1, 1, 6, 2);
-        addReservationWithOccupationFieldError(reservation, "start", "Startzeit 06:00 liegt vor der Öffnungszeit 08:00.");
+        addReservationWithOccupationFieldError(reservation, "start", "Startzeit 06:00 liegt vor der Öffnungszeit 08:00");
     }
 
     @Test
@@ -242,14 +238,14 @@ public class ReservationServiceTest extends ProtocolTest {
     public void addReservationInvalidDurationUnits() throws Exception {
         var reservation = createReservation(1, 1, 0, 2);
         reservation.setStart(LocalTime.of(9, 25));
-        addReservationWithOccupationFieldError(reservation, "start", "fehlerhafte Startzeit mit 25 Minuten.");
+        addReservationWithOccupationFieldError(reservation, "start", "fehlerhafte Startzeit mit 25 Minuten");
     }
 
     @Test
     @WithMockUser(username = "TRAINER")
     public void addReservationExtendsClosingHour() throws Exception {
         var reservation = createReservation(2, 1, 22, 1);
-        addReservationWithOccupationFieldError(reservation, "start", "Startzeit + Dauer zu spät.");
+        addReservationWithOccupationFieldError(reservation, "start", "Startzeit + Dauer zu spät");
     }
 
     @Test
@@ -264,7 +260,7 @@ public class ReservationServiceTest extends ProtocolTest {
     public void addReservationDurationTooBig() throws Exception {
         var reservation = createReservation(3, 1, 8, 4);
         reservation.setDate(reservation.getDate().plusDays(1));
-        addReservationWithOccupationFieldError(reservation, "duration", "Der Benutzer REGISTERED hat nicht die Rechte, eine Reservierung der Dauer 4 anzulegen.");
+        addReservationWithOccupationFieldError(reservation, "duration", "Der Benutzer REGISTERED hat nicht die Rechte, eine Reservierung der Dauer 4 anzulegen");
     }
 
     @Test
@@ -272,7 +268,7 @@ public class ReservationServiceTest extends ProtocolTest {
     public void addReservationDurationEvenTooBigForAdmin() throws Exception {
         var reservation = createReservation(3, 1, 8, 4);
         reservation.setDate(reservation.getDate().plusDays(1));
-        addReservationWithOccupationFieldError(reservation, "duration", "Der Benutzer TRAINER hat nicht die Rechte, eine Reservierung der Dauer 4 anzulegen.");
+        addReservationWithOccupationFieldError(reservation, "duration", "Der Benutzer TRAINER hat nicht die Rechte, eine Reservierung der Dauer 4 anzulegen");
     }
 
     @Test
@@ -288,7 +284,7 @@ public class ReservationServiceTest extends ProtocolTest {
     public void addReservationTooManyCourts() throws Exception {
         var reservation = createReservation(1, 0, 8, 2);
         reservation.setCourtsFromInteger(1, 2, 3, 4, 5, 6, 7);
-        addReservationWithFieldError(reservation, "court", "Platznummer 7 zu groß. Mehr als 6 Plätze gibt es nicht.");
+        addReservationWithFieldError(reservation, "court", "Platznummer 7 zu groß. Mehr als 6 Plätze gibt es nicht");
     }
 
     @Test
@@ -302,7 +298,7 @@ public class ReservationServiceTest extends ProtocolTest {
     @WithMockUser(username = "TRAINER")
     public void addReservationCourtTooBig() throws Exception {
         var reservation = createReservation(1, 7, 8, 2);
-        addReservationWithFieldError(reservation, "court", "Platznummer 7 zu groß. Mehr als 6 Plätze gibt es nicht.");
+        addReservationWithFieldError(reservation, "court", "Platznummer 7 zu groß. Mehr als 6 Plätze gibt es nicht");
     }
 
     @Test
@@ -313,6 +309,13 @@ public class ReservationServiceTest extends ProtocolTest {
         checkReservationMultipleCourts(10, 2, 1, 3);
         checkReservationMultipleCourts(11, 2, 1, 2, 4, 5, 6);
         checkReservationMultipleCourts(12, 3, 2, 4, 6);
+    }
+
+    private void saveTypes(SystemConfigEntity systemConfig) {
+        systemConfig.getTypes().forEach(type -> {
+            type.setSystemConfig(systemConfig);
+            reservationTypeRepository.save(type);
+        });
     }
 
     private void checkReservationMultipleCourts(int start, int expectedOccupations, int... courts) throws Exception {
@@ -409,7 +412,7 @@ public class ReservationServiceTest extends ProtocolTest {
         unknownUser.setStatus(ActivationStatus.ACTIVE);
         addReservationError(createReservation(1, unknownUser, 1, 8, 2),
                 HttpStatus.UNAUTHORIZED,
-                "Der an der Reservierung angegebene Benutzer ist nicht der angemeldete Benutzer.");
+                "Der an der Reservierung angegebene Benutzer ist nicht der angemeldete Benutzer");
     }
 
     @Test
@@ -421,7 +424,7 @@ public class ReservationServiceTest extends ProtocolTest {
         unknownUser.setStatus(ActivationStatus.ACTIVE);
         addReservationError(createReservation(1, unknownUser, 1, 8, 2),
                 HttpStatus.UNAUTHORIZED,
-                "Der an der Reservierung angegebene Benutzer ist nicht der angemeldete Benutzer.");
+                "Der an der Reservierung angegebene Benutzer ist nicht der angemeldete Benutzer");
     }
 
     @Test
@@ -433,7 +436,7 @@ public class ReservationServiceTest extends ProtocolTest {
         unknownUser.setStatus(ActivationStatus.CREATED);
         addReservationError(createReservation(1, unknownUser, 1, 8, 2),
                 HttpStatus.UNAUTHORIZED,
-                "Der an der Reservierung angegebene Benutzer ist nicht der angemeldete Benutzer.");
+                "Der an der Reservierung angegebene Benutzer ist nicht der angemeldete Benutzer");
     }
 
     @Test
@@ -442,7 +445,7 @@ public class ReservationServiceTest extends ProtocolTest {
         addReservationError(createReservation(1, insertUser(UserRole.REGISTERED, ActivationStatus.CREATED),
                         1, 8, 2),
                 HttpStatus.UNAUTHORIZED,
-                "Der Benutzer REGISTERED.CREATED ist nicht aktiviert.");
+                "Der Benutzer REGISTERED.CREATED ist nicht aktiviert");
     }
 
     @Test
@@ -451,7 +454,7 @@ public class ReservationServiceTest extends ProtocolTest {
         addReservationError(createReservation(1, insertUser(UserRole.REGISTERED, ActivationStatus.LOCKED),
                         1, 8, 2),
                 HttpStatus.UNAUTHORIZED,
-                "Der Benutzer REGISTERED.LOCKED ist nicht aktiviert.");
+                "Der Benutzer REGISTERED.LOCKED ist nicht aktiviert");
     }
 
     @Test
@@ -460,7 +463,7 @@ public class ReservationServiceTest extends ProtocolTest {
         addReservationError(createReservation(1, insertUser(UserRole.REGISTERED, ActivationStatus.REMOVED),
                         1, 8, 2),
                 HttpStatus.UNAUTHORIZED,
-                "Der Benutzer REGISTERED.REMOVED ist nicht aktiviert.");
+                "Der Benutzer REGISTERED.REMOVED ist nicht aktiviert");
     }
 
     @Test
@@ -469,7 +472,7 @@ public class ReservationServiceTest extends ProtocolTest {
         addReservationError(createReservation(1, insertUser(UserRole.REGISTERED, ActivationStatus.VERIFIED_BY_USER),
                         1, 8, 2),
                 HttpStatus.UNAUTHORIZED,
-                "Der Benutzer REGISTERED.VERIFIED_BY_USER ist nicht aktiviert.");
+                "Der Benutzer REGISTERED.VERIFIED_BY_USER ist nicht aktiviert");
     }
 
     @Test
@@ -478,7 +481,7 @@ public class ReservationServiceTest extends ProtocolTest {
         addReservationError(createReservation(1, insertUser(UserRole.ANONYMOUS, ActivationStatus.CREATED),
                         1, 8, 2),
                 HttpStatus.UNAUTHORIZED,
-                "Der Benutzer ANONYMOUS.CREATED ist nicht aktiviert.");
+                "Der Benutzer ANONYMOUS.CREATED ist nicht aktiviert");
     }
 
     @Test
@@ -486,7 +489,7 @@ public class ReservationServiceTest extends ProtocolTest {
     public void addReservationUnauthorizedDateInThePast() throws Exception {
         var reservation = createReservation(2, 1, 10, 1);
         reservation.setDate(LocalDate.now().minusDays(1));
-        addReservationWithOccupationFieldError(reservation, "date", "Das Datum darf nicht in der Vergangenheit liegen.");
+        addReservationWithOccupationFieldError(reservation, "date", "Das Datum darf nicht in der Vergangenheit liegen");
     }
 
     @Test
@@ -497,7 +500,7 @@ public class ReservationServiceTest extends ProtocolTest {
         if (hour > systemConfig.openingHour() + 2 && hour < systemConfig.closingHour() - 1) {
             var reservation = createReservation(2, 1, hour - 2, 1);
             reservation.setDate(LocalDate.now());
-            addReservationWithOccupationFieldError(reservation, "date", "Das Datum darf nicht in der Vergangenheit liegen.");
+            addReservationWithOccupationFieldError(reservation, "date", "Das Datum darf nicht in der Vergangenheit liegen");
         }
     }
 
@@ -506,7 +509,7 @@ public class ReservationServiceTest extends ProtocolTest {
     public void addReservationUnauthorizedInTheFarFuture() throws Exception {
         var reservation = createReservation(1, 1, 8, 1);
         reservation.setDate(LocalDate.now().plusDays(65));
-        addReservationWithOccupationFieldError(reservation, "date", "Das Datum liegt zu weit in der Zukunft.");
+        addReservationWithOccupationFieldError(reservation, "date", "Das Datum liegt zu weit in der Zukunft");
     }
 
     @Test
@@ -516,7 +519,7 @@ public class ReservationServiceTest extends ProtocolTest {
         reservation.setType(3);
 
         addReservationWithOccupationFieldError(reservation, //
-                "type", "Der Benutzer REGISTERED hat nicht die Rechte, eine Reservierung vom Typ Dauerbuchung anzulegen.");
+                "type", "Der Benutzer REGISTERED hat nicht die Rechte, eine Reservierung vom Typ Dauerbuchung anzulegen");
     }
 
     @Test
@@ -524,7 +527,7 @@ public class ReservationServiceTest extends ProtocolTest {
     public void addReservationUnauthorizedTypeTournament() throws Exception {
         var reservation = createReservation(1, 1, 8, 2, 2);
         addReservationWithOccupationFieldError(reservation, //
-                "type", "Der Benutzer REGISTERED hat nicht die Rechte, eine Reservierung vom Typ Meisterschaft anzulegen.");
+                "type", "Der Benutzer REGISTERED hat nicht die Rechte, eine Reservierung vom Typ Meisterschaft anzulegen");
     }
 
     @Test
@@ -532,7 +535,7 @@ public class ReservationServiceTest extends ProtocolTest {
     public void addReservationUnauthorizedTypeTraining() throws Exception {
         var reservation = createReservation(1, 1, 8, 2, 1);
         addReservationWithOccupationFieldError(reservation, //
-                "type", "Der Benutzer REGISTERED hat nicht die Rechte, eine Reservierung vom Typ Training anzulegen.");
+                "type", "Der Benutzer REGISTERED hat nicht die Rechte, eine Reservierung vom Typ Training anzulegen");
     }
 
     @Test
@@ -686,7 +689,7 @@ public class ReservationServiceTest extends ProtocolTest {
 
     private void addReservationOverlap(Reservation reservation) throws Exception {
         addReservationWithOccupationFieldError(reservation, null,
-                "Reservierung am %tF %tR nicht möglich, weil Platz %s belegt ist."
+                "Reservierung am %tF %tR nicht möglich, weil Platz %s belegt ist"
                         .formatted(reservation.getDate(), reservation.getStart(), reservation.getCourts()));
     }
 

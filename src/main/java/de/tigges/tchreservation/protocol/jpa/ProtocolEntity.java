@@ -2,6 +2,7 @@ package de.tigges.tchreservation.protocol.jpa;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.tigges.tchreservation.exception.ErrorCode;
 import de.tigges.tchreservation.exception.RestException;
 import de.tigges.tchreservation.protocol.ActionType;
 import de.tigges.tchreservation.protocol.EntityType;
@@ -83,6 +84,7 @@ public class ProtocolEntity {
             return new ObjectMapper().writeValueAsString(o);
         } catch (JsonProcessingException e) {
             throw new RestException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    ErrorCode.JSON_SERIALIZATION,
                     "error writing protocol element %s:%s".formatted(o.toString(), e.getMessage()));
         }
     }

@@ -1,7 +1,6 @@
 package de.tigges.tchreservation.systemconfig;
 
-import de.tigges.tchreservation.exception.AuthorizationException;
-import de.tigges.tchreservation.exception.BadRequestException;
+import de.tigges.tchreservation.exception.ErrorCode;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 import de.tigges.tchreservation.reservation.model.SystemConfigReservationType;
 import de.tigges.tchreservation.user.UserUtils;
@@ -11,6 +10,7 @@ import de.tigges.tchreservation.user.model.UserRole;
 import de.tigges.tchreservation.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 
 @Component
 @RequiredArgsConstructor
@@ -20,10 +20,10 @@ public class SystemConfigValidator {
     private static final int MIN_STRING_LENGTH = 3;
     private static final int MAX_STRING_LENGTH = 50;
 
-    private final Validator validator;
+    public final Validator validator;
 
     public void validate(ReservationSystemConfig config, UserEntity loggedInUser) {
-        validator.startValidation();
+        validator.clearErrorMessages();
         checkConfigId(config);
         checkUser(loggedInUser);
         checkString("name", config.name());
@@ -37,11 +37,9 @@ public class SystemConfigValidator {
     }
 
     private void checkCourts(ReservationSystemConfig config) {
-        if (config.courts() == null || config.courts().isEmpty()) {
-            validator.addFieldErrorMessage("courts", "error_null_not_allowed");
-        } else {
+        if (validator.checkNotEmpty("courts", config.courts())) {
             if (config.courts().size() > MAX_COURTS) {
-                validator.addFieldErrorMessage("courts", "error_too_many_courts");
+                validator.addFieldErrorMessage("courts", ErrorCode.TOO_MANY_COURTS);
             }
             config.courts().forEach(court -> checkString("court", court));
         }
@@ -49,17 +47,17 @@ public class SystemConfigValidator {
 
     private void checkConfigId(ReservationSystemConfig config) {
         if (config.id() < 1) {
-            throw new BadRequestException(validator.msg("error_no_id"));
+            throw validator.badRequestException(ErrorCode.NO_SYSTEM_CONFIG_ID);
         }
     }
 
     private void checkUser(UserEntity loggedInUser) {
         if (!UserUtils.hasRole(loggedInUser.getRole(), UserRole.ADMIN)) {
-            throw new AuthorizationException(validator.msg("error_not_authorized"));
+            throw validator.authorizationException(ErrorCode.USER_NOT_AUTHORIZED);
         }
 
         if (!ActivationStatus.ACTIVE.equals(loggedInUser.getStatus())) {
-            throw new AuthorizationException(validator.msg("error_not_authorized"));
+            throw validator.authorizationException(ErrorCode.USER_NOT_AUTHORIZED);
         }
     }
 
@@ -67,13 +65,13 @@ public class SystemConfigValidator {
         validator.checkInt("openingHour", config.openingHour(), 0, 24);
         validator.checkInt("closingHour", config.closingHour(), 0, 24);
         if (config.openingHour() >= config.closingHour()) {
-            validator.addFieldErrorMessage("openingHour", "error_opening_hour_after_closing_hour");
+            validator.addFieldErrorMessage("openingHour", ErrorCode.OPENING_HOUR_AFTER_CLOSING_HOUR);
         }
     }
 
     private void checkTypes(ReservationSystemConfig config) {
-        if (config.types() == null || config.types().isEmpty()) {
-            validator.addFieldErrorMessage("reservationTypes", "error_no_reservation_types");
+        if (ObjectUtils.isEmpty(config.types())) {
+            validator.addFieldErrorMessage("reservationTypes", ErrorCode.NO_RESERVATION_TYPES);
         } else {
             config.types().forEach(this::checkType);
         }

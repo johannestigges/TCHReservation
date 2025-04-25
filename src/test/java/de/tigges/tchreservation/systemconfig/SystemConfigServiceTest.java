@@ -9,7 +9,6 @@ import de.tigges.tchreservation.systemconfig.jpa.ReservationTypeEntity;
 import de.tigges.tchreservation.systemconfig.jpa.ReservationTypeRepository;
 import de.tigges.tchreservation.systemconfig.jpa.SystemConfigEntity;
 import de.tigges.tchreservation.systemconfig.jpa.SystemConfigRepository;
-import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.model.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,7 +18,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.Arrays;
@@ -27,20 +25,17 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import static de.tigges.tchreservation.systemconfig.SystemConfigMapper.map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = TchReservationApplication.class)
 @ActiveProfiles("test")
-@WebAppConfiguration
 class SystemConfigServiceTest extends ProtocolTest {
 
     @Autowired
     private SystemConfigRepository systemConfigRepository;
-
-    private UserEntity user;
-    private UserEntity admin;
     @Autowired
     private ReservationTypeRepository reservationTypeRepository;
 
@@ -50,89 +45,110 @@ class SystemConfigServiceTest extends ProtocolTest {
         userRepository.deleteAll();
         reservationTypeRepository.deleteAll();
         systemConfigRepository.deleteAll();
-        user = addUser(UserRole.REGISTERED);
-        admin = addUser(UserRole.ADMIN);
+        addUser(UserRole.REGISTERED);
+        addUser(UserRole.ADMIN);
     }
 
     @Test
     void getOne() throws Exception {
-        SystemConfigEntity entity = createSystemConfigEntity(1L, "Platz 1");
-        verifyEquals(get(entity.getId()), SystemConfigMapper.map(entity));
+        var entity1 = createSystemConfigEntity(1L, "Platz 1");
+
+        var readEntity = get(1L);
+
+        verifyEqualsEntities(readEntity, map(entity1));
     }
 
     @Test
     void testGetAll() throws Exception {
-        var config1 = createSystemConfigEntity(1L, "Platz 1");
-        var config2 = createSystemConfigEntity(2L, "Center Court,Roland Garros,Nebenplatz");
+        var entity1 = createSystemConfigEntity(1L, "Platz 1");
+        var entity2 = createSystemConfigEntity(2L,
+                "Center Court,Roland Garros,Nebenplatz");
 
-        var response = responseAll(getAll().andExpect(status().is2xxSuccessful()));
+        var result = getAll().andExpect(status().is2xxSuccessful());
 
+        var response = responseAll(result);
         assertThat(response).hasSize(2);
-        verifyEquals(response.get(0), SystemConfigMapper.map(config1));
-        verifyEquals(response.get(1), SystemConfigMapper.map(config2));
+        verifyEqualsEntities(response.get(0), map(entity1));
+        verifyEqualsEntities(response.get(1), map(entity2));
     }
 
     @Test
     @WithMockUser(username = "REGISTERED")
     void testAddNotAllowed() throws Exception {
-        performPost("/rest/systemconfig", SystemConfigMapper.map(createSystemConfigEntity(1, ""))).andExpect(status().isUnauthorized());
+        var config = map(createSystemConfigEntity(1L, "Platz 1"));
+
+        performPost("/rest/systemconfig", config)
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     @WithMockUser(username = "REGISTERED")
     void testUpdateNotAllowed() throws Exception {
-        performPut("/rest/systemconfig", SystemConfigMapper.map(createSystemConfigEntity(1, ""))).andExpect(status().isUnauthorized());
+        var config = map(createSystemConfigEntity(1L, "Platz 1"));
+
+        performPut("/rest/systemconfig", config)
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     @WithMockUser(username = "REGISTERED")
     void testDeleteNotAllowed() throws Exception {
-        performDelete("/rest/systemconfig/1").andExpect(status().isUnauthorized());
+        performDelete("/rest/systemconfig/1")
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     @WithMockUser(username = "ADMIN")
     void testAdd() throws Exception {
-        ReservationSystemConfig config = new ReservationSystemConfig(1, "unit test 1", "title unit test 1",
+        var config = new ReservationSystemConfig(2L, "unit test 1", "title unit test 1",
                 Arrays.asList("Platz 1", "Platz 2", "Platz 3", "Platz 4", "Platz 5", "Platz 6"),
                 30, 2, 3, 8, 22,
                 List.of(
-                        new SystemConfigReservationType(1L, 1, "Quickbuchung", 3, 1, 0, false, false,
-                                Collections.emptyList(), null,Arrays.asList(UserRole.REGISTERED, UserRole.KIOSK, UserRole.TECHNICAL, UserRole.TEAMSTER, UserRole.TRAINER)),
-                        new SystemConfigReservationType(2L, 2, "Training", 0, 0, 0, true, true,
+                        new SystemConfigReservationType(1, "Quickbuchung", 3, 1, 0, false, false,
+                                Collections.emptyList(), null, Arrays.asList(UserRole.REGISTERED, UserRole.KIOSK, UserRole.TECHNICAL, UserRole.TEAMSTER, UserRole.TRAINER)),
+                        new SystemConfigReservationType(2, "Training", 0, 0, 0, true, true,
                                 Collections.emptyList(), null, Arrays.asList(UserRole.TEAMSTER, UserRole.TRAINER)),
-                        new SystemConfigReservationType(3L, 3, "Meisterschaft", 0, 0, 0, false, true,
+                        new SystemConfigReservationType(3, "Meisterschaft", 0, 0, 0, false, true,
                                 Collections.emptyList(), null, Arrays.asList(UserRole.TEAMSTER, UserRole.TRAINER)),
-                        new SystemConfigReservationType(3L, 3, "Dauerbuchung", 0, 0, 0, true, false,
+                        new SystemConfigReservationType(4, "Dauerbuchung", 0, 0, 0, true, false,
                                 Collections.emptyList(), null, List.of(UserRole.TRAINER))
                 ));
-        verifyEquals(config, performPost("/rest/systemconfig", config).andExpect(status().isCreated()));
-        verifyEquals(config, get(1L));
+
+        var result = performPost("/rest/systemconfig", config)
+                .andExpect(status().isCreated());
+
+        verifyEqualsEntities(config, response(result));
+        verifyEqualsEntities(config, get(config.id()));
     }
 
     @Test
     @WithMockUser(username = "ADMIN")
     void testUpdate() throws Exception {
-        createSystemConfigEntity(1L, "Platz 1");
-        var c = get(1L);
-        var config = new ReservationSystemConfig(c.id(), "new name", "new title", Arrays.asList(c.courts().getFirst(), "Platz 2", "Platz 3"), 30, 7, 10, 10, 20, c.types());
+        var entity1 = createSystemConfigEntity(1L, "Platz 1");
+        var config1 = map(entity1);
+        var config = new ReservationSystemConfig(config1.id(), "new name", "new title", Arrays.asList(config1.courts().getFirst(), "Platz 2", "Platz 3"), 30, 7, 10, 10, 20, config1.types());
 
-        verifyEquals(config, performPut("/rest/systemconfig", config).andExpect(status().is2xxSuccessful()));
-        verifyEquals(config, get(1L));
+        var result = performPut("/rest/systemconfig", config)
+                .andExpect(status().is2xxSuccessful());
+
+        verifyEqualsEntities(config, response(result));
+        verifyEqualsEntities(config, get(config1.id()));
     }
 
     @Test
     @WithMockUser(username = "ADMIN")
     void testDelete() throws Exception {
-        ReservationSystemConfig config1 = SystemConfigMapper.map(createSystemConfigEntity(1L, "Platz 1"));
-        ReservationSystemConfig config2 = SystemConfigMapper
-                .map(createSystemConfigEntity(2L, "Center Court,Roland Garros,Nebenplatz"));
+        var entity1 = createSystemConfigEntity(1L, "Platz 1");
+        var entity2 = createSystemConfigEntity(2L,
+                "Center Court,Roland Garros,Nebenplatz");
 
-        verifyEquals(config2, performDelete("/rest/systemconfig/2").andExpect(status().is2xxSuccessful()));
-        List<ReservationSystemConfig> configs = responseAll(getAll().andExpect(status().is2xxSuccessful()));
+        var result = performDelete("/rest/systemconfig/2")
+                .andExpect(status().is2xxSuccessful());
+
+        verifyEqualsEntities(map(entity2), response(result));
+        var configs = responseAll(getAll());
         assertThat(configs).hasSize(1);
-        ReservationSystemConfig config3 = configs.getFirst();
-        verifyEquals(config1, config3);
+        assertThat(configs.getFirst().id()).isEqualTo(entity1.getId());
     }
 
     private ReservationSystemConfig get(long id) throws Exception {
@@ -154,11 +170,7 @@ class SystemConfigServiceTest extends ProtocolTest {
         return Arrays.asList(new ObjectMapper().readValue(contentAsString, ReservationSystemConfig[].class));
     }
 
-    private void verifyEquals(ReservationSystemConfig config, ResultActions resultActions) throws Exception {
-        verifyEquals(config, response(resultActions));
-    }
-
-    private void verifyEquals(ReservationSystemConfig c1, ReservationSystemConfig c2) {
+    private void verifyEqualsEntities(ReservationSystemConfig c1, ReservationSystemConfig c2) {
         assertThat(c1.id()).isEqualTo(c2.id());
         assertThat(c1.name()).isEqualTo(c2.name());
         if (c1.title() == null) {
@@ -184,6 +196,7 @@ class SystemConfigServiceTest extends ProtocolTest {
         e.setMaxDuration(3);
         e.setOpeningHour(8);
         e.setClosingHour(22);
+        e.setNew(true);
         systemConfigRepository.save(e);
 
         ReservationTypeEntity type = new ReservationTypeEntity();

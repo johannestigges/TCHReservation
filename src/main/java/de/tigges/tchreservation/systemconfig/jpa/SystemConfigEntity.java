@@ -5,6 +5,7 @@ import de.tigges.tchreservation.protocol.Protocollable;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.domain.Persistable;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -14,59 +15,67 @@ import java.util.Set;
 @Table(name = "systemconfig")
 @Data
 @NoArgsConstructor
-public class SystemConfigEntity implements Protocollable {
+public class SystemConfigEntity implements Protocollable, Persistable<Long> {
 
-    @Id
-    private Long id;
+	@Transient
+	private boolean isNew = false;
 
-    @Column(nullable = false)
-    private String name;
+	@Id
+	private Long id;
 
-    @Column()
-    private String title;
+	@Column(nullable = false)
+	private String name;
 
-    @Column(nullable = false)
-    private String courts;
+	@Column()
+	private String title;
 
-    @Column(nullable = false)
-    private int durationUnitInMinutes;
+	@Column(nullable = false)
+	private String courts;
 
-    @Column(nullable = false)
-    private int maxDaysReservationInFuture;
+	@Column(nullable = false)
+	private int durationUnitInMinutes;
 
-    @Column(nullable = false)
-    private int maxDuration;
+	@Column(nullable = false)
+	private int maxDaysReservationInFuture;
 
-    @Column(nullable = false)
-    private int openingHour;
+	@Column(nullable = false)
+	private int maxDuration;
 
-    @Column(nullable = false)
-    private int closingHour;
+	@Column(nullable = false)
+	private int openingHour;
 
-    @Transient
-    private Set<ReservationTypeEntity> types = new HashSet<>();
+	@Column(nullable = false)
+	private int closingHour;
 
-    @Override
-    public Map<String, String> protocolFields() {
-        return protocolFields( //
-                "id", Long.toString(id), //
-                "name", name, //
-                "title", title, //
-                "courts", courts, //
-                "durationUnitInMinutes", Integer.toString(durationUnitInMinutes), //
-                "maxDaysReservationInFuture", Integer.toString(maxDaysReservationInFuture), //
-                "maxDuration", Integer.toString(maxDuration), //
-                "openingHour", Integer.toString(openingHour), //
-                "closingHour", Integer.toString(closingHour));
-    }
+	@Transient
+	private Set<ReservationTypeEntity> types = new HashSet<>();
 
-    @Override
-    public EntityType protocolEntityType() {
-        return EntityType.SYSTEM_CONFIGURATION;
-    }
+	@Override
+	public Map<String, String> protocolFields() {
+		return protocolFields( //
+				"id", Long.toString(id), //
+				"name", name, //
+				"title", title, //
+				"courts", courts, //
+				"durationUnitInMinutes", Integer.toString(durationUnitInMinutes), //
+				"maxDaysReservationInFuture", Integer.toString(maxDaysReservationInFuture), //
+				"maxDuration", Integer.toString(maxDuration), //
+				"openingHour", Integer.toString(openingHour), //
+				"closingHour", Integer.toString(closingHour));
+	}
 
-    @Override
-    public long protocolEntityId() {
-        return id;
-    }
+	@Override
+	public EntityType protocolEntityType() {
+		return EntityType.SYSTEM_CONFIGURATION;
+	}
+
+	@Override
+	public long protocolEntityId() {
+		return id;
+	}
+
+	@Override
+	public boolean isNew() {
+		return isNew;
+	}
 }

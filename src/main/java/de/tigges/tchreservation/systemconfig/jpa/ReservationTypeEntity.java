@@ -15,7 +15,8 @@ import java.util.Map;
 public class ReservationTypeEntity implements Protocollable {
 
     @Id
-    private long id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @ManyToOne(optional = false)
     private SystemConfigEntity systemConfig;
@@ -41,7 +42,7 @@ public class ReservationTypeEntity implements Protocollable {
     @Override
     public Map<String, String> protocolFields() {
         return protocolFields(
-                "systemConfig", Long.toString(systemConfig.getId()),
+                "systemConfig", systemConfig.getId() == null ? "" : Long.toString(systemConfig.getId()),
                 "type", Integer.toString(type),
                 "name", name,
                 "maxDuration", Integer.toString(maxDuration),

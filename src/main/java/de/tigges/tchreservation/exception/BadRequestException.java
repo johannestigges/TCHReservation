@@ -15,7 +15,7 @@ public class BadRequestException extends RestException {
 		super(HttpStatus.BAD_REQUEST, errorMessages);
 	}
 
-	public BadRequestException(String message) {
-		super(HttpStatus.BAD_REQUEST, message);
+	public BadRequestException(ErrorCode code, String message) {
+		super(HttpStatus.BAD_REQUEST, code, message);
 	}
 }
