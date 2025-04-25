@@ -1,14 +1,15 @@
 package de.tigges.tchreservation.user;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
-
+import de.tigges.tchreservation.ProtocolTest;
+import de.tigges.tchreservation.TchReservationApplication;
+import de.tigges.tchreservation.protocol.ActionType;
+import de.tigges.tchreservation.user.jpa.UserDeviceEntity;
+import de.tigges.tchreservation.user.jpa.UserDeviceRepository;
+import de.tigges.tchreservation.user.jpa.UserEntity;
+import de.tigges.tchreservation.user.model.ActivationStatus;
+import de.tigges.tchreservation.user.model.User;
+import de.tigges.tchreservation.user.model.UserDevice;
+import de.tigges.tchreservation.user.model.UserRole;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,16 +22,14 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.ResultActions;
 
-import de.tigges.tchreservation.ProtocolTest;
-import de.tigges.tchreservation.TchReservationApplication;
-import de.tigges.tchreservation.protocol.ActionType;
-import de.tigges.tchreservation.user.jpa.UserDeviceEntity;
-import de.tigges.tchreservation.user.jpa.UserDeviceRepository;
-import de.tigges.tchreservation.user.jpa.UserEntity;
-import de.tigges.tchreservation.user.model.ActivationStatus;
-import de.tigges.tchreservation.user.model.User;
-import de.tigges.tchreservation.user.model.UserDevice;
-import de.tigges.tchreservation.user.model.UserRole;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = TchReservationApplication.class)
@@ -56,7 +55,7 @@ public class UserServiceTest extends ProtocolTest {
     @WithMockUser(username = "ADMIN")
     public void addUser() throws Exception {
         User user = createUser(0, UserRole.REGISTERED, ActivationStatus.ACTIVE);
-        checkUser(performPost("/rest/user", user).andExpect(status().isOk()), user, false, ActionType.CREATE);
+        checkUser(performPost("/rest/user", user).andExpect(status().isOk()), user, false, false,ActionType.CREATE);
     }
 
     @Test
@@ -81,7 +80,7 @@ public class UserServiceTest extends ProtocolTest {
             user.getDevices().add(createDevice(UserMapper.map(user), i, ActivationStatus.CREATED));
         }
 
-        checkUser(performPost("/rest/user", user).andExpect(status().isOk()), user, false, ActionType.CREATE);
+        checkUser(performPost("/rest/user", user).andExpect(status().isOk()), user, false, false,ActionType.CREATE);
     }
 
     @Test
@@ -233,6 +232,7 @@ public class UserServiceTest extends ProtocolTest {
         registeredUser.setEmail("mynew@email.de");
         performPut("/rest/user", registeredUser).andExpect(status().isOk());
     }
+
     @Test
     @WithMockUser(username = "REGISTERED")
     public void updateMyNameNotAuthorized() throws Exception {
@@ -257,7 +257,7 @@ public class UserServiceTest extends ProtocolTest {
     @Test
     @WithMockUser(username = "ADMIN")
     public void updateUserNotFound() throws Exception {
-        registeredUser.setId(666);
+        registeredUser.setId(666L);
         performPut("/rest/user", registeredUser).andExpect(status().isNotFound());
     }
 
@@ -339,9 +339,9 @@ public class UserServiceTest extends ProtocolTest {
         u.getDevices().add(UserDeviceMapper.map(device0));
         u.getDevices().add(UserDeviceMapper.map(device1));
 
-        checkUser(performGet("/rest/user/getByDevice/" + device0.getId()).andExpect(status().isOk()), u, false, null);
+        checkUser(performGet("/rest/user/getByDevice/" + device0.getId()).andExpect(status().isOk()), u, false, true,null);
 
-        checkUser(performGet("/rest/user/getByDevice/" + device1.getId()).andExpect(status().isOk()), u, false, null);
+        checkUser(performGet("/rest/user/getByDevice/" + device1.getId()).andExpect(status().isOk()), u, false, true,null);
     }
 
     @Test
@@ -441,16 +441,24 @@ public class UserServiceTest extends ProtocolTest {
     }
 
     private void checkUser(ResultActions resultActions, UserEntity user) throws Exception {
-        checkUser(resultActions, UserMapper.map(user), false, null);
+        checkUser(resultActions, UserMapper.map(user), false, true, null);
     }
 
-    private void checkUser(ResultActions resultActions, User user, boolean checkPassword,
+    private void checkUser(ResultActions resultActions, User user, boolean checkPassword, boolean checkId,
                            ActionType actionType) throws Exception {
-        resultActions.andExpect(jsonPath("$.id").isNotEmpty()).andExpect(jsonPath("$.email").value(user.getEmail()))
+        resultActions
+                .andExpect(jsonPath("$.email").value(user.getEmail()))
                 .andExpect(jsonPath("$.name").value(user.getName()))
                 .andExpect(jsonPath("$.role").value(user.getRole().name()))
                 .andExpect(jsonPath("$.status").value(user.getStatus().name()));
 
+        if (checkId) {
+            if (user.getId() == null) {
+                resultActions.andExpect(jsonPath("$.id").isEmpty());
+            } else {
+                resultActions.andExpect(jsonPath("$.id").value(user.getId()));
+            }
+        }
         if (checkPassword) {
             resultActions.andExpect(jsonPath("$.password").value(user.getPassword()));
         }

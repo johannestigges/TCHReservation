@@ -155,28 +155,28 @@ public class ReservationServiceTest extends ProtocolTest {
     @WithMockUser(username = "TRAINER")
     public void addReservationOverlap() throws Exception {
         addReservation(createReservation(1, 1, 10, 3));
-        addReservationOverlap(createReservation(1, 1, 11, 2), 0);
+        addReservationOverlap(createReservation(1, 1, 11, 2));
     }
 
     @Test
     @WithMockUser(username = "TRAINER")
     public void addReservationDuplicate() throws Exception {
         addReservation(createReservation(1, 1, 10, 3));
-        addReservationOverlap(createReservation(1, 1, 10, 3), 0);
+        addReservationOverlap(createReservation(1, 1, 10, 3));
     }
 
     @Test
     @WithMockUser(username = "TRAINER")
     public void addReservationOverlap2() throws Exception {
         addReservation(createReservation(1, 1, 10, 6, 1));
-        addReservationOverlap(createReservation(1, 1, 11, 2, 1), 0);
+        addReservationOverlap(createReservation(1, 1, 11, 2, 1));
     }
 
     @Test
     @WithMockUser(username = "TRAINER")
     public void addReservationOverlap3() throws Exception {
         addReservation(createReservation(2, 1, 17, 1, 1));
-        addReservationOverlap(createReservation(2, 1, 16, 3, 1), 0);
+        addReservationOverlap(createReservation(2, 1, 16, 3, 1));
     }
 
     @Test
@@ -687,7 +687,7 @@ public class ReservationServiceTest extends ProtocolTest {
                 .andExpect(jsonPath("$[" + i + "].message").value(message));
     }
 
-    private void addReservationOverlap(Reservation reservation, int nrOccupation) throws Exception {
+    private void addReservationOverlap(Reservation reservation) throws Exception {
         addReservationWithOccupationFieldError(reservation, null,
                 "Reservierung am %tF %tR nicht möglich, weil Platz %s belegt ist"
                         .formatted(reservation.getDate(), reservation.getStart(), reservation.getCourts()));

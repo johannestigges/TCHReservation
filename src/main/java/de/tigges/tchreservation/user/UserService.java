@@ -20,6 +20,7 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.StreamSupport;
 
@@ -183,7 +184,7 @@ public class UserService {
             email = "INVALID EMAIL IGNORE IN SEARCH";
         }
         var dbUser = userRepository.findByNameOrEmail(user.getName(), email);
-        if (dbUser.isPresent() && dbUser.get().getId() != user.getId()) {
+        if (dbUser.isPresent() && !Objects.equals(dbUser.get().getId(), user.getId())) {
             throw validator.badRequestException(ErrorCode.USER_EXISTS,
                     user.getName(), user.getEmail());
         }

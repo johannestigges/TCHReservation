@@ -13,7 +13,7 @@ import java.util.Set;
 @Data
 public class User {
 
-    private long id;
+    private Long id;
 
     @Nullable
     private String email;
