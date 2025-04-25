@@ -55,7 +55,6 @@ public class ReservationServiceTest extends ProtocolTest {
 
     private UserEntity user;
     private UserEntity trainer;
-    private UserEntity admin;
 
     @BeforeEach
     public void init() {
@@ -68,7 +67,7 @@ public class ReservationServiceTest extends ProtocolTest {
 
         user = addUser(UserRole.REGISTERED);
         trainer = addUser(UserRole.TRAINER);
-        admin = addUser(UserRole.ADMIN);
+        addUser(UserRole.ADMIN);
 
         var system1 = new SystemConfigEntity();
         system1.setId(1L);
@@ -80,6 +79,7 @@ public class ReservationServiceTest extends ProtocolTest {
         system1.setOpeningHour(8);
         system1.setClosingHour(22);
         system1.setTypes(Set.of(createReservationType(0, "Quickbuchung", 3, 60, 0, UserRole.REGISTERED, UserRole.TRAINER, UserRole.KIOSK, UserRole.TECHNICAL, UserRole.TEAMSTER), createReservationType(1, "Training", UserRole.TRAINER, UserRole.TEAMSTER), createReservationType(2, "Meisterschaft", UserRole.TRAINER, UserRole.TEAMSTER), createReservationType(3, "Dauerbuchung"), createReservationType(4, "Gesperrt", UserRole.TRAINER)));
+        system1.setNew(true);
         systemConfigRepository.save(system1);
         saveTypes(system1);
 
@@ -93,6 +93,7 @@ public class ReservationServiceTest extends ProtocolTest {
         system2.setOpeningHour(8);
         system2.setClosingHour(22);
         system2.setTypes(Set.of(createReservationType(0, "Quickbuchung", 1, 14, 8, UserRole.REGISTERED, UserRole.TRAINER, UserRole.KIOSK, UserRole.TECHNICAL, UserRole.TEAMSTER, UserRole.GUEST), createReservationType(1, "Training", UserRole.TRAINER, UserRole.TEAMSTER), createReservationType(2, "Meisterschaft", UserRole.TRAINER, UserRole.TEAMSTER), createReservationType(3, "Dauerbuchung)"), createReservationType(4, "Gesperrt", UserRole.TRAINER), createReservationType(5, "Jugendtraining", 1, 1, 0, UserRole.REGISTERED, UserRole.TEAMSTER)));
+        system2.setNew(true);
         systemConfigRepository.save(system2);
         saveTypes(system2);
 
@@ -106,6 +107,7 @@ public class ReservationServiceTest extends ProtocolTest {
         system3.setOpeningHour(8);
         system3.setClosingHour(10);
         system3.setTypes(Set.of(createReservationType(0, "Quickbuchung", 1, 0, 0, UserRole.TRAINER, UserRole.REGISTERED)));
+        system3.setNew(true);
         systemConfigRepository.save(system3);
         saveTypes(system3);
     }
@@ -679,7 +681,7 @@ public class ReservationServiceTest extends ProtocolTest {
         assertFieldError(resultActions, i, field, message);
     }
 
-    private void assertFieldError(ResultActions resultActions, int i,  String field, String message) throws Exception {
+    private void assertFieldError(ResultActions resultActions, int i, String field, String message) throws Exception {
         resultActions
                 .andExpect(jsonPath("$[" + i + "].field").value(field))
                 .andExpect(jsonPath("$[" + i + "].message").value(message));
@@ -788,7 +790,6 @@ public class ReservationServiceTest extends ProtocolTest {
 
     private ReservationTypeEntity createReservationType(int type, String name, UserRole... roles) {
         var systemConfigReservationType = new ReservationTypeEntity();
-        systemConfigReservationType.setId(Double.valueOf(Math.random() * 100_000).longValue());
         systemConfigReservationType.setType(type);
         systemConfigReservationType.setName(name);
         systemConfigReservationType.setRoles(roles(roles));

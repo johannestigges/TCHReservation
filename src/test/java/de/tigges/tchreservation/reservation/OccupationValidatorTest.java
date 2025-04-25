@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 public class OccupationValidatorTest extends ValidatorTest {
-    static final int SYSTEM_CONFIG_ID = 100;
+    static final long SYSTEM_CONFIG_ID = 100L;
     static final int TYPE = 2345;
 
     private final OccupationRepository occupationRepositoryMock = mock(OccupationRepository.class);
@@ -250,7 +250,6 @@ public class OccupationValidatorTest extends ValidatorTest {
 
     private SystemConfigReservationType createType(int maxDuration, UserRole... roles) {
         return new SystemConfigReservationType(
-                0,
                 TYPE,
                 "Type" + TYPE,
                 maxDuration,
@@ -269,7 +268,6 @@ public class OccupationValidatorTest extends ValidatorTest {
 
     private SystemConfigReservationType createType(UserRole role, Collection<DayOfWeek> forbiddenDays) {
         return new SystemConfigReservationType(
-                0,
                 TYPE,
                 "Type" + TYPE,
                 0,

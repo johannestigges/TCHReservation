@@ -10,7 +10,7 @@ import java.util.List;
 public class SystemConfigMapper {
     public static ReservationSystemConfig map(SystemConfigEntity entity) {
         return new ReservationSystemConfig(
-                entity.getId(),
+                entity.getId() != null ? entity.getId() : 0,
                 entity.getName(),
                 entity.getTitle(),
                 splitCourts(entity.getCourts()),
@@ -23,7 +23,7 @@ public class SystemConfigMapper {
         );
     }
 
-    public static SystemConfigEntity map(ReservationSystemConfig c) {
+    public static SystemConfigEntity map(ReservationSystemConfig c, boolean isNew) {
         var entity = new SystemConfigEntity();
         entity.setId(c.id());
         entity.setName(c.name());
@@ -34,6 +34,7 @@ public class SystemConfigMapper {
         entity.setMaxDuration(c.maxDuration());
         entity.setOpeningHour(c.openingHour());
         entity.setClosingHour(c.closingHour());
+        entity.setNew(isNew);
         entity.setTypes(ReservationTypeMapper.mapTypes(c.types()));
         return entity;
     }

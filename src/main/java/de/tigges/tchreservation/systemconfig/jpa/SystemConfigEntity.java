@@ -5,6 +5,7 @@ import de.tigges.tchreservation.protocol.Protocollable;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.domain.Persistable;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -14,10 +15,13 @@ import java.util.Set;
 @Table(name = "systemconfig")
 @Data
 @NoArgsConstructor
-public class SystemConfigEntity implements Protocollable {
+public class SystemConfigEntity implements Protocollable, Persistable<Long> {
+
+	@Transient
+	private boolean isNew = false;
 
 	@Id
-	private long id;
+	private Long id;
 
 	@Column(nullable = false)
 	private String name;
@@ -68,5 +72,10 @@ public class SystemConfigEntity implements Protocollable {
 	@Override
 	public long protocolEntityId() {
 		return id;
+	}
+
+	@Override
+	public boolean isNew() {
+		return isNew;
 	}
 }
