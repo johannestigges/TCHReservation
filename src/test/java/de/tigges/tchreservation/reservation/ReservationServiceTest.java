@@ -600,7 +600,7 @@ public class ReservationServiceTest extends ProtocolTest {
         var reservation = createReservation(1, 1, 10, 2);
         reservation.setDate(LocalDate.now());
         reservation = getReservation(addReservation(reservation));
-        checkOccupations(performGet("/rest/reservation/getOccupations/1/0")
+        checkOccupations(performGet("/rest/reservation/occupations/1/0")
                 .andExpect(status().isOk()), reservation.getOccupations());
     }
 
@@ -614,7 +614,7 @@ public class ReservationServiceTest extends ProtocolTest {
                 .atStartOfDay()
                 .toInstant(ZoneOffset.UTC)
                 .toEpochMilli();
-        checkOccupations(performGet("/rest/reservation/getOccupations/2/" + epochMilli)
+        checkOccupations(performGet("/rest/reservation/occupations/2/" + epochMilli)
                 .andExpect(status().isOk()), reservation.getOccupations());
     }
 
@@ -624,7 +624,7 @@ public class ReservationServiceTest extends ProtocolTest {
         var reservation = reservationRepository.save(ReservationMapper.map(
                 createReservation(1, user, 1, 10, 2)));
 
-        performGet("/rest/reservation/" + reservation.getId()).andExpect(status().isOk());
+        performGet("/rest/reservation/id/" + reservation.getId()).andExpect(status().isOk());
     }
 
     private ResultActions addReservationNoCheck(Reservation reservation) throws Exception {

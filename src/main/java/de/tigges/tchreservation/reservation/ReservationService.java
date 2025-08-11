@@ -240,7 +240,7 @@ public class ReservationService {
      * @param id reservationId
      * @return all reservations belonging to that user
      */
-    @GetMapping("/{id}")
+    @GetMapping("/id/{id}")
     public Optional<Reservation> getReservation(@PathVariable long id) {
         return reservationRepository.findById(id).map(this::map);
     }
@@ -268,7 +268,7 @@ public class ReservationService {
      *
      * @return list of all occupations for one day
      */
-    @GetMapping("/getOccupations/{systemConfigId}/{date}")
+    @GetMapping("/occupations/{systemConfigId}/{date}")
     public Iterable<Occupation> getOccupations(@PathVariable Long systemConfigId, @PathVariable Long date) {
 
         var searchDate = date.equals(0L)
@@ -279,6 +279,23 @@ public class ReservationService {
 
         return StreamSupport.stream(occupations.spliterator(), false)
                 .map(OccupationMapper::map)
+                .toList();
+    }
+
+    /**
+     * get my reservations
+     *
+     * @return list of all reservations created or modified by the logged in user
+     */
+    @GetMapping("/my")
+    public Iterable<Reservation> getMyReservations() {
+        var user = loggedinUserService.getLoggedInUser();
+        return StreamSupport.stream(
+                        reservationRepository
+                                .findByUserOrderByDateDesc(user)
+                                .spliterator(),
+                        false)
+                .map(ReservationMapper::map)
                 .toList();
     }
 

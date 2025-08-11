@@ -5,7 +5,7 @@
 
     <groupId>de.tigges</groupId>
     <artifactId>TCHReservation</artifactId>
-    <version>1.4.9</version>
+    <version>1.4.10</version>
     <packaging>jar</packaging>
 
     <name>TCHReservation</name>
