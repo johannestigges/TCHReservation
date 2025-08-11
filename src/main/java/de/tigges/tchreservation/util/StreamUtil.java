@@ -1,10 +1,10 @@
-package de.tigges.tchreservation;
+package de.tigges.tchreservation.util;
 
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public final class JpaUtil {
-    private JpaUtil() {
+public final class StreamUtil {
+    private StreamUtil() {
         super();
     }
 

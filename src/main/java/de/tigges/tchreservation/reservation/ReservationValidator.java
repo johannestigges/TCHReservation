@@ -1,13 +1,14 @@
 package de.tigges.tchreservation.reservation;
 
-import de.tigges.tchreservation.exception.BadRequestException;
-import de.tigges.tchreservation.exception.ErrorCode;
+import de.tigges.tchreservation.util.exception.AuthorizationException;
+import de.tigges.tchreservation.util.exception.BadRequestException;
+import de.tigges.tchreservation.util.exception.ErrorCode;
 import de.tigges.tchreservation.reservation.model.RepeatType;
 import de.tigges.tchreservation.reservation.model.Reservation;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.model.User;
-import de.tigges.tchreservation.validation.Validator;
+import de.tigges.tchreservation.util.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -57,7 +58,7 @@ public class ReservationValidator {
 
     private void validateUser(Reservation reservation, UserEntity loggedInUser) {
         if (!checkUser(reservation.getUser(), loggedInUser)) {
-            throw validator.authorizationException(ErrorCode.WRONG_USER);
+            throw new AuthorizationException(validator.messageUtil,ErrorCode.WRONG_USER);
         }
     }
 

@@ -1,4 +1,4 @@
-package de.tigges.tchreservation.converter;
+package de.tigges.tchreservation.util.converter;
 
 import java.io.IOException;
 import java.time.LocalDate;

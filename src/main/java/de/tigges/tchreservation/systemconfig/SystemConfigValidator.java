@@ -1,13 +1,15 @@
 package de.tigges.tchreservation.systemconfig;
 
-import de.tigges.tchreservation.exception.ErrorCode;
+import de.tigges.tchreservation.util.exception.AuthorizationException;
+import de.tigges.tchreservation.util.exception.BadRequestException;
+import de.tigges.tchreservation.util.exception.ErrorCode;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 import de.tigges.tchreservation.reservation.model.SystemConfigReservationType;
 import de.tigges.tchreservation.user.UserUtils;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.UserRole;
-import de.tigges.tchreservation.validation.Validator;
+import de.tigges.tchreservation.util.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
@@ -47,17 +49,17 @@ public class SystemConfigValidator {
 
     private void checkConfigId(ReservationSystemConfig config) {
         if (config.id() < 1) {
-            throw validator.badRequestException(ErrorCode.NO_SYSTEM_CONFIG_ID);
+            throw new BadRequestException(validator.messageUtil,ErrorCode.NO_SYSTEM_CONFIG_ID);
         }
     }
 
     private void checkUser(UserEntity loggedInUser) {
         if (!UserUtils.hasRole(loggedInUser.getRole(), UserRole.ADMIN)) {
-            throw validator.authorizationException(ErrorCode.USER_NOT_AUTHORIZED);
+            throw new AuthorizationException(validator.messageUtil,ErrorCode.USER_NOT_AUTHORIZED);
         }
 
         if (!ActivationStatus.ACTIVE.equals(loggedInUser.getStatus())) {
-            throw validator.authorizationException(ErrorCode.USER_NOT_AUTHORIZED);
+            throw new AuthorizationException(validator.messageUtil,ErrorCode.USER_NOT_AUTHORIZED);
         }
     }
 

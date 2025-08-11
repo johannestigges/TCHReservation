@@ -1,6 +1,6 @@
 package de.tigges.tchreservation.reservation;
 
-import de.tigges.tchreservation.exception.NotFoundException;
+import de.tigges.tchreservation.util.exception.NotFoundException;
 import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 import de.tigges.tchreservation.systemconfig.SystemConfigMapper;

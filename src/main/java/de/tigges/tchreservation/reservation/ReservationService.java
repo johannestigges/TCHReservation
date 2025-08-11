@@ -1,8 +1,9 @@
 package de.tigges.tchreservation.reservation;
 
-import de.tigges.tchreservation.exception.BadRequestException;
-import de.tigges.tchreservation.exception.ErrorCode;
-import de.tigges.tchreservation.exception.NotFoundException;
+import de.tigges.tchreservation.util.exception.AuthorizationException;
+import de.tigges.tchreservation.util.exception.BadRequestException;
+import de.tigges.tchreservation.util.exception.ErrorCode;
+import de.tigges.tchreservation.util.exception.NotFoundException;
 import de.tigges.tchreservation.protocol.ActionType;
 import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.protocol.jpa.ProtocolEntity;
@@ -228,8 +229,8 @@ public class ReservationService {
         reservationRepository.delete(reservation);
     }
 
-    private Supplier<NotFoundException> notFoundException(EntityType reservation, long id) {
-        return () -> reservationValidator.validator.notFoundException(reservation, id);
+    private Supplier<NotFoundException> notFoundException(EntityType entityType, long id) {
+        return () -> new NotFoundException(reservationValidator.validator.messageUtil,entityType, id);
     }
 
     /**
@@ -371,6 +372,6 @@ public class ReservationService {
                 && (UserUtils.is(loggedInUser, userId) || UserUtils.hasRole(loggedInUser, UserRole.ADMIN, UserRole.TRAINER))) {
             return loggedInUser;
         }
-        throw reservationValidator.validator.authorizationException(ErrorCode.USER_NOT_AUTHORIZED);
+        throw new AuthorizationException(reservationValidator.validator.messageUtil,ErrorCode.USER_NOT_AUTHORIZED);
     }
 }

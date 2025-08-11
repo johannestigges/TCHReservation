@@ -1,8 +1,9 @@
 package de.tigges.tchreservation;
 
-import de.tigges.tchreservation.exception.BadRequestException;
-import de.tigges.tchreservation.exception.ErrorCode;
-import de.tigges.tchreservation.validation.Validator;
+import de.tigges.tchreservation.util.exception.BadRequestException;
+import de.tigges.tchreservation.util.exception.ErrorCode;
+import de.tigges.tchreservation.util.message.MessageUtil;
+import de.tigges.tchreservation.util.validation.Validator;
 import org.junit.jupiter.api.function.Executable;
 import org.springframework.context.MessageSource;
 
@@ -38,6 +39,6 @@ public class ValidatorTest {
     }
 
     public Validator createValidator() {
-        return new Validator(messageSourceMock);
+        return new Validator(new MessageUtil(messageSourceMock));
     }
 }

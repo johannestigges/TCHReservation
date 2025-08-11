@@ -1,4 +1,4 @@
-package de.tigges.tchreservation.exception;
+package de.tigges.tchreservation.util.exception;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;

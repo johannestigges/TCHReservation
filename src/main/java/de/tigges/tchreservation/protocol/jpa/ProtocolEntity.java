@@ -2,8 +2,8 @@ package de.tigges.tchreservation.protocol.jpa;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.tigges.tchreservation.exception.ErrorCode;
-import de.tigges.tchreservation.exception.RestException;
+import de.tigges.tchreservation.util.exception.ErrorCode;
+import de.tigges.tchreservation.util.exception.RestException;
 import de.tigges.tchreservation.protocol.ActionType;
 import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.protocol.Protocollable;

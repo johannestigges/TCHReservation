@@ -1,5 +1,6 @@
-package de.tigges.tchreservation.exception;
+package de.tigges.tchreservation.util.exception;
 
+import de.tigges.tchreservation.util.message.MessageUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
@@ -17,5 +18,9 @@ public class BadRequestException extends RestException {
 
 	public BadRequestException(ErrorCode code, String message) {
 		super(HttpStatus.BAD_REQUEST, code, message);
+	}
+
+	public BadRequestException(MessageUtil messageUtil, ErrorCode errorCode, Object...args) {
+		this(errorCode, messageUtil.msg(errorCode, args));
 	}
 }

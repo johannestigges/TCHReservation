@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Collections;
 import java.util.List;
 
-import static de.tigges.tchreservation.JpaUtil.stream;
+import static de.tigges.tchreservation.util.StreamUtil.stream;
 
 @RestController
 @RequestMapping("/rest/news/user")

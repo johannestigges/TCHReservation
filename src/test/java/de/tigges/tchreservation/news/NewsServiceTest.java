@@ -1,8 +1,8 @@
 package de.tigges.tchreservation.news;
 
 import de.tigges.tchreservation.ValidatorTest;
-import de.tigges.tchreservation.exception.ErrorCode;
-import de.tigges.tchreservation.exception.NotFoundException;
+import de.tigges.tchreservation.util.exception.ErrorCode;
+import de.tigges.tchreservation.util.exception.NotFoundException;
 import de.tigges.tchreservation.news.jpa.NewsEntity;
 import de.tigges.tchreservation.news.jpa.NewsRepository;
 import de.tigges.tchreservation.news.model.News;

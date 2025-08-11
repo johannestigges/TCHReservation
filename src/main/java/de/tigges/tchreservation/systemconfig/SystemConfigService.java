@@ -1,6 +1,7 @@
 package de.tigges.tchreservation.systemconfig;
 
-import de.tigges.tchreservation.exception.NotFoundException;
+import de.tigges.tchreservation.util.exception.ExistsException;
+import de.tigges.tchreservation.util.exception.NotFoundException;
 import de.tigges.tchreservation.protocol.ActionType;
 import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.protocol.jpa.ProtocolEntity;
@@ -24,7 +25,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import static de.tigges.tchreservation.JpaUtil.stream;
+import static de.tigges.tchreservation.util.StreamUtil.stream;
 
 @RestController
 @RequestMapping("/rest/systemconfig")
@@ -58,7 +59,7 @@ public class SystemConfigService {
     public @ResponseBody ReservationSystemConfig add(@RequestBody ReservationSystemConfig config) {
         var loggedInUser = loggedinUserService.verifyHasRole(UserRole.ADMIN);
         systemConfigRepository.findById(config.id()).ifPresent(e -> {
-            throw systemConfigValidator.validator.foundException(
+            throw new ExistsException(systemConfigValidator.validator.messageUtil,
                     EntityType.SYSTEM_CONFIGURATION, config.id());
         });
         systemConfigValidator.validate(config, loggedInUser);
@@ -123,6 +124,6 @@ public class SystemConfigService {
     }
 
     private Supplier<NotFoundException> notFoundException(long id) {
-        return () -> systemConfigValidator.validator.notFoundException(EntityType.SYSTEM_CONFIGURATION, id);
+        return () -> new NotFoundException(systemConfigValidator.validator.messageUtil,EntityType.SYSTEM_CONFIGURATION, id);
     }
 }

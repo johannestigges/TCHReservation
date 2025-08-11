@@ -6,6 +6,7 @@ import de.tigges.tchreservation.news.user.jpa.UserNewsRepository;
 import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.user.LoggedinUserService;
 import de.tigges.tchreservation.user.model.UserRole;
+import de.tigges.tchreservation.util.exception.NotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-import static de.tigges.tchreservation.JpaUtil.stream;
+import static de.tigges.tchreservation.util.StreamUtil.stream;
 import static de.tigges.tchreservation.news.NewsMapper.map;
 
 @RestController
@@ -37,8 +38,7 @@ public class NewsService {
     public News getOne(@PathVariable long id) {
         return newsRepository.findById(id)
                 .map(NewsMapper::map)
-                .orElseThrow(() -> newsValidator.validator
-                        .notFoundException(EntityType.NEWS, id));
+                .orElseThrow(() -> notFoundException(id));
     }
 
     @PostMapping("")
@@ -54,8 +54,7 @@ public class NewsService {
         newsValidator.validate(news);
         return newsRepository.findById(news.id())
                 .map(db -> map(newsRepository.save(map(news))))
-                .orElseThrow(() -> newsValidator.validator
-                        .notFoundException(EntityType.NEWS, news.id()));
+                .orElseThrow(() -> notFoundException(news.id()));
     }
 
     @DeleteMapping("/id/{newsId}")
@@ -65,10 +64,13 @@ public class NewsService {
         newsRepository.findById(newsId).ifPresentOrElse(
                 (id) -> deleteNews(newsId),
                 () -> {
-                    throw newsValidator.validator
-                            .notFoundException(EntityType.NEWS, newsId);
+                    throw notFoundException(newsId);
                 }
         );
+    }
+
+    private NotFoundException notFoundException(Long newsId) {
+        return new NotFoundException(newsValidator.validator.messageUtil,EntityType.NEWS, newsId);
     }
 
     private void deleteNews(long newsId) {

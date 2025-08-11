@@ -1,7 +1,9 @@
 package de.tigges.tchreservation.user;
 
-import de.tigges.tchreservation.exception.ErrorCode;
-import de.tigges.tchreservation.exception.NotFoundException;
+import de.tigges.tchreservation.util.exception.AuthorizationException;
+import de.tigges.tchreservation.util.exception.BadRequestException;
+import de.tigges.tchreservation.util.exception.ErrorCode;
+import de.tigges.tchreservation.util.exception.NotFoundException;
 import de.tigges.tchreservation.protocol.ActionType;
 import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.protocol.jpa.ProtocolEntity;
@@ -14,7 +16,7 @@ import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.User;
 import de.tigges.tchreservation.user.model.UserDevice;
 import de.tigges.tchreservation.user.model.UserRole;
-import de.tigges.tchreservation.validation.Validator;
+import de.tigges.tchreservation.util.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -137,13 +139,13 @@ public class UserService {
 
         if (!UserUtils.hasRole(loggedInUser, UserRole.ADMIN)) {
             if (!user.getName().equals(dbUser.getName())) {
-                throw validator.authorizationException(ErrorCode.USER_CANNOT_MODIFY_NAME);
+                throw new AuthorizationException(validator.messageUtil,ErrorCode.USER_CANNOT_MODIFY_NAME);
             }
             if (user.getRole() != dbUser.getRole()) {
-                throw validator.authorizationException(ErrorCode.USER_CANNOT_MODIFY_ROLE);
+                throw new AuthorizationException(validator.messageUtil,ErrorCode.USER_CANNOT_MODIFY_ROLE);
             }
             if (user.getStatus() != dbUser.getStatus()) {
-                throw validator.authorizationException(ErrorCode.USER_CANNOT_MODIFY_STATUS);
+                throw new AuthorizationException(validator.messageUtil,ErrorCode.USER_CANNOT_MODIFY_STATUS);
             }
         }
 
@@ -170,14 +172,14 @@ public class UserService {
 
     private void checkUser(User user) {
         if (isEmpty(user.getName())) {
-            throw validator.badRequestException(ErrorCode.USER_NAME_EMPTY);
+            throw new BadRequestException(validator.messageUtil,ErrorCode.USER_NAME_EMPTY);
         }
     }
 
     private void checkNewUser(User user) {
         checkUser(user);
         if (isEmpty(user.getPassword())) {
-            throw validator.badRequestException(ErrorCode.PASSWORD_EMPTY);
+            throw new BadRequestException(validator.messageUtil,ErrorCode.PASSWORD_EMPTY);
         }
         var email = user.getEmail();
         if (isEmpty(email)) {
@@ -185,8 +187,8 @@ public class UserService {
         }
         var dbUser = userRepository.findByNameOrEmail(user.getName(), email);
         if (dbUser.isPresent() && !Objects.equals(dbUser.get().getId(), user.getId())) {
-            throw validator.badRequestException(ErrorCode.USER_EXISTS,
-                    user.getName(), user.getEmail());
+            throw new BadRequestException(validator.messageUtil,ErrorCode.USER_EXISTS,
+                    user.getName(), user.getEmail(), validator);
         }
     }
 

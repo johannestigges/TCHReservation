@@ -1,4 +1,4 @@
-package de.tigges.tchreservation.exception;
+package de.tigges.tchreservation.util.exception;
 
 import java.io.Serial;
 import java.util.Collection;

@@ -1,4 +1,4 @@
-package de.tigges.tchreservation.converter;
+package de.tigges.tchreservation.util.converter;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
