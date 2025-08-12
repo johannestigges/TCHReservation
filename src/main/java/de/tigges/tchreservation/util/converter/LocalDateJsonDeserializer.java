@@ -15,19 +15,19 @@ import lombok.extern.log4j.Log4j2;
 public class LocalDateJsonDeserializer extends JsonDeserializer<LocalDate> {
 
 	@Override
-	public LocalDate deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+	public LocalDate deserialize(JsonParser jsonParser, DeserializationContext context) throws IOException {
 
-		if (p.currentToken().isNumeric()) {
-			return toLocalDate(p.getLongValue());
+		if (jsonParser.currentToken().isNumeric()) {
+			return toLocalDate(jsonParser.getLongValue());
 		}
 
-		var stringValue = p.getText();
+		var stringValue = jsonParser.getText();
 		if (stringValue != null && !stringValue.isEmpty()) {
 			return toLocalDate(Long.parseLong(stringValue));
 		}
 
-		log.error("cannot deserialize local date {}", p.getCurrentToken());
-		throw new IllegalArgumentException("cannot deserialize token to Local Date " + p.getCurrentToken());
+		log.error("cannot deserialize local date {}", jsonParser.getCurrentToken());
+		throw new IllegalArgumentException("cannot deserialize token to Local Date " + jsonParser.getCurrentToken());
 	}
 
 	private LocalDate toLocalDate(long value) {

@@ -1,9 +1,8 @@
 package de.tigges.tchreservation.util.exception;
 
-import org.springframework.http.HttpStatus;
-
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 
 import java.io.Serial;
 import java.util.Collection;

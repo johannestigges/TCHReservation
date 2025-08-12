@@ -3,7 +3,7 @@ package de.tigges.tchreservation.news.user;
 import de.tigges.tchreservation.news.model.UserNews;
 import de.tigges.tchreservation.news.user.jpa.UserNewsEntity;
 import de.tigges.tchreservation.news.user.jpa.UserNewsRepository;
-import de.tigges.tchreservation.user.LoggedinUserService;
+import de.tigges.tchreservation.user.LoggedInUserService;
 import de.tigges.tchreservation.user.UserUtils;
 import de.tigges.tchreservation.user.model.UserRole;
 import jakarta.transaction.Transactional;
@@ -20,7 +20,7 @@ import static de.tigges.tchreservation.util.StreamUtil.stream;
 @RequiredArgsConstructor
 public class UserNewsService {
     private final UserNewsRepository userNewsRepository;
-    private final LoggedinUserService loggedinUserService;
+    private final LoggedInUserService loggedinUserService;
 
     @GetMapping("")
     public List<UserNews> getMyNews() {

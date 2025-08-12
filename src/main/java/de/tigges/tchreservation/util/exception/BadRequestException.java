@@ -12,15 +12,11 @@ public class BadRequestException extends RestException {
 	@Serial
 	private static final long serialVersionUID = 1L;
 
-	public BadRequestException(Collection<ErrorMessage> errorMessages) {
+	protected BadRequestException(Collection<ErrorMessage> errorMessages) {
 		super(HttpStatus.BAD_REQUEST, errorMessages);
 	}
 
-	public BadRequestException(ErrorCode code, String message) {
-		super(HttpStatus.BAD_REQUEST, code, message);
-	}
-
 	public BadRequestException(MessageUtil messageUtil, ErrorCode errorCode, Object...args) {
-		this(errorCode, messageUtil.msg(errorCode, args));
+		super(HttpStatus.BAD_REQUEST,errorCode, messageUtil.msg(errorCode, args));
 	}
 }

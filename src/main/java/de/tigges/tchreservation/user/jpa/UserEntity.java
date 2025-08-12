@@ -18,63 +18,61 @@ import java.util.Set;
 @NoArgsConstructor
 public class UserEntity implements Protocollable {
 
-	public UserEntity(String email, String name, String password, UserRole role, ActivationStatus status) {
-		setEmail(email);
-		setName(name);
-		setPassword(password);
-		setRole(role);
-		setStatus(status);
-	}
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @Column()
+    private String email;
+    @Column(nullable = false)
+    private String name;
+    @Column(nullable = false)
+    private String password;
+    @Column(nullable = false)
+    private UserRole role;
+    @Column(nullable = false)
+    private ActivationStatus status;
+    @Transient
+    private Set<UserDeviceEntity> devices = new HashSet<>();
 
-	public UserEntity(UserEntity user) {
-		this(user.getEmail(), user.getName(), user.getPassword(), user.getRole(), user.getStatus());
-		setId(user.getId());
-	}
+    public UserEntity(String email, String name, String password, UserRole role, ActivationStatus status) {
+        setEmail(email);
+        setName(name);
+        setPassword(password);
+        setRole(role);
+        setStatus(status);
+    }
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    public UserEntity(UserEntity user) {
+        this(user.getEmail(),
+                user.getName(),
+                user.getPassword(),
+                user.getRole(),
+                user.getStatus());
+        setId(user.getId());
+    }
 
-	@Column()
-	private String email;
+    public void setStatus(ActivationStatus status) {
+        ActivationStatus.checkStatusChange(this.status, status, "user " + id);
+        this.status = status;
+    }
 
-	@Column(nullable = false)
-	private String name;
+    @Override
+    public Map<String, String> protocolFields() {
+        return protocolFields(//
+                "name", name, //
+                "email", email, //
+                "role", role.name(), //
+                "status", status.name() //
+        );
+    }
 
-	@Column(nullable = false)
-	private String password;
+    @Override
+    public EntityType protocolEntityType() {
+        return EntityType.USER;
+    }
 
-	@Column(nullable = false)
-	private UserRole role;
-
-	@Column(nullable = false)
-	private ActivationStatus status;
-
-	@Transient
-	private Set<UserDeviceEntity> devices = new HashSet<>();
-
-	public void setStatus(ActivationStatus status) {
-		ActivationStatus.checkStatusChange(this.status, status, "user " + id);
-		this.status = status;
-	}
-
-	@Override
-	public Map<String, String> protocolFields() {
-		return protocolFields(//
-				"name", name, //
-				"email", email, //
-				"role", role.name(), //
-				"status", status.name() //
-		);
-	}
-
-	@Override
-	public EntityType protocolEntityType() {
-		return EntityType.USER;
-	}
-
-	@Override
-	public long protocolEntityId() {
-		return id;
-	}
+    @Override
+    public long protocolEntityId() {
+        return id;
+    }
 }

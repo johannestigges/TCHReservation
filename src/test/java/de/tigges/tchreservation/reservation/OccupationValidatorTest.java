@@ -183,7 +183,7 @@ public class OccupationValidatorTest extends ValidatorTest {
         user.setStatus(ActivationStatus.LOCKED);
         var systemConfig = createSystemConfig(60, createType(UserRole.REGISTERED));
         var occupation = createOccupation();
-        initMessageSource(ErrorCode.USER_NOT_ACTIVE, "Pfui! %s");
+        initMessageSource(ErrorCode.USER_NOT_ACTIVE, "Pfui! JUnit user");
 
         var exception = assertThrows(AuthorizationException.class,
                 () -> occupationValidator.validateOccupation(occupation, user, systemConfig));

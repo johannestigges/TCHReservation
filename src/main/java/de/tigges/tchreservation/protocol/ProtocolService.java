@@ -2,7 +2,7 @@ package de.tigges.tchreservation.protocol;
 
 import de.tigges.tchreservation.protocol.jpa.ProtocolEntity;
 import de.tigges.tchreservation.protocol.jpa.ProtocolRepository;
-import de.tigges.tchreservation.user.LoggedinUserService;
+import de.tigges.tchreservation.user.LoggedInUserService;
 import de.tigges.tchreservation.user.model.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,7 +20,7 @@ import java.util.TimeZone;
 public class ProtocolService {
 
     private final ProtocolRepository protocolRepository;
-    private final LoggedinUserService loggedinUserService;
+    private final LoggedInUserService loggedinUserService;
 
     @GetMapping("/{time}")
     public Iterable<ProtocolEntity> getSince(@PathVariable Long time) {

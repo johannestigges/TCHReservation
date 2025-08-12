@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class LoggedinUserService {
+public class LoggedInUserService {
 
     private final UserRepository userRepository;
     private final Validator validator;

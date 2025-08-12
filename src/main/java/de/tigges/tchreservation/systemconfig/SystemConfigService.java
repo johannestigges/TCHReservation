@@ -12,7 +12,7 @@ import de.tigges.tchreservation.systemconfig.jpa.ReservationTypeMapper;
 import de.tigges.tchreservation.systemconfig.jpa.ReservationTypeRepository;
 import de.tigges.tchreservation.systemconfig.jpa.SystemConfigEntity;
 import de.tigges.tchreservation.systemconfig.jpa.SystemConfigRepository;
-import de.tigges.tchreservation.user.LoggedinUserService;
+import de.tigges.tchreservation.user.LoggedInUserService;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.model.UserRole;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +36,7 @@ public class SystemConfigService {
     private final ReservationTypeRepository reservationTypeRepository;
     private final SystemConfigValidator systemConfigValidator;
     private final ProtocolRepository protocolRepository;
-    private final LoggedinUserService loggedinUserService;
+    private final LoggedInUserService loggedinUserService;
 
     @GetMapping("/getone/{id}")
     Optional<ReservationSystemConfig> getOne(@PathVariable Long id) {

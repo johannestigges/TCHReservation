@@ -223,7 +223,7 @@ public class ReservationServiceTest extends ProtocolTest {
     @WithMockUser(username = "TRAINER")
     public void addReservationBeforeOpeningHour() throws Exception {
         var reservation = createReservation(1, 1, 6, 2);
-        addReservationWithOccupationFieldError(reservation, "start", "Startzeit 06:00 liegt vor der Öffnungszeit 08:00");
+        addReservationWithOccupationFieldError(reservation, "start", "Startzeit 6:00 liegt vor der Öffnungszeit 8:00");
     }
 
     @Test
@@ -392,7 +392,7 @@ public class ReservationServiceTest extends ProtocolTest {
     @Test
     @WithMockUser(username = "TRAINER")
     public void addReservationNoSystemConfig() throws Exception {
-        addReservationError(createReservation(0, 1, 10, 6), HttpStatus.NOT_FOUND, "SYSTEM_CONFIGURATION with id 0 not found");
+        addReservationError(createReservation(0, 1, 10, 6), HttpStatus.NOT_FOUND, "SYSTEM_CONFIGURATION mit id 0 nicht gefunden");
     }
 
     @Test
@@ -400,7 +400,7 @@ public class ReservationServiceTest extends ProtocolTest {
     public void addReservationUnknownSystemConfig() throws Exception {
         addReservationError(createReservation(10, 1, 10, 6),
                 HttpStatus.NOT_FOUND,
-                "SYSTEM_CONFIGURATION with id 10 not found");
+                "SYSTEM_CONFIGURATION mit id 10 nicht gefunden");
     }
 
     @Test
