@@ -1,4 +1,4 @@
-package de.tigges.tchreservation.exception;
+package de.tigges.tchreservation.util.exception;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -12,7 +12,7 @@ import java.util.Collection;
 public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(RestException.class)
-    public final ResponseEntity<Collection<ErrorMessage>> handleRestException(RestException e, WebRequest request) {
-        return new ResponseEntity<>(e.getErrorMessages(), e.getStatus());
+    public final ResponseEntity<Collection<ErrorMessage>> handleRestException(RestException restException, WebRequest request) {
+        return new ResponseEntity<>(restException.getErrorMessages(), restException.getStatus());
     }
 }

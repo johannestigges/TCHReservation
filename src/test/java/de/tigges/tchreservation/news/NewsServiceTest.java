@@ -1,13 +1,14 @@
 package de.tigges.tchreservation.news;
 
 import de.tigges.tchreservation.ValidatorTest;
-import de.tigges.tchreservation.exception.ErrorCode;
-import de.tigges.tchreservation.exception.NotFoundException;
 import de.tigges.tchreservation.news.jpa.NewsEntity;
 import de.tigges.tchreservation.news.jpa.NewsRepository;
 import de.tigges.tchreservation.news.model.News;
 import de.tigges.tchreservation.news.user.jpa.UserNewsRepository;
-import de.tigges.tchreservation.user.LoggedinUserService;
+import de.tigges.tchreservation.user.LoggedInUserService;
+import de.tigges.tchreservation.user.model.UserRole;
+import de.tigges.tchreservation.util.exception.ErrorCode;
+import de.tigges.tchreservation.util.exception.NotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,12 +24,12 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class NewsServiceTest extends ValidatorTest {
     @Mock
-    private LoggedinUserService loggedinUserService;
+    private LoggedInUserService loggedinUserService;
     @Mock
     private NewsRepository newsRepository;
     @Mock
@@ -57,6 +58,10 @@ class NewsServiceTest extends ValidatorTest {
 
         assertThat(news).isNotNull();
         assertThat(news).hasSize(2);
+        assertThat(news.getFirst().subject()).isEqualTo("Subject 1");
+        assertThat(news.getFirst().text()).isEqualTo("Text 1");
+        assertThat(news.get(1).subject()).isEqualTo("Subject 2");
+        assertThat(news.get(1).text()).isEqualTo("Text 2");
     }
 
     @Test
@@ -73,9 +78,7 @@ class NewsServiceTest extends ValidatorTest {
     @Test
     void getOne() {
         when(newsRepository.findById(1L))
-                .thenReturn(Optional.of(new NewsEntity(
-                        "my subject",
-                        "my text")));
+                .thenReturn(Optional.of(new NewsEntity("my subject", "my text")));
 
         var news = newsService.getOne(1L);
 
@@ -101,9 +104,7 @@ class NewsServiceTest extends ValidatorTest {
     void add() {
         var captor = ArgumentCaptor.forClass(NewsEntity.class);
         when(newsRepository.save(captor.capture()))
-                .thenReturn(new NewsEntity(
-                        "my saved subject",
-                        "my saved text"));
+                .thenReturn(new NewsEntity("my saved subject", "my saved text"));
 
         var news = newsService.add(new News(
                 1L,
@@ -125,13 +126,9 @@ class NewsServiceTest extends ValidatorTest {
     void update() {
         var captor = ArgumentCaptor.forClass(NewsEntity.class);
         when(newsRepository.save(captor.capture()))
-                .thenReturn(new NewsEntity(
-                        "my saved subject",
-                        "my saved text"));
+                .thenReturn(new NewsEntity("my saved subject", "my saved text"));
         when(newsRepository.findById(2L))
-                .thenReturn(Optional.of(new NewsEntity(
-                        "my subject",
-                        "my text")));
+                .thenReturn(Optional.of(new NewsEntity("my subject", "my text")));
 
         var news = newsService.update(new News(
                 2L,
@@ -161,5 +158,33 @@ class NewsServiceTest extends ValidatorTest {
         assertThat(exception.getErrorMessages()).hasSize(1);
         assertThat(exception.getErrorMessages().stream().toList().getFirst()
                 .message()).isEqualTo("NEWS with id 3 not found");
+    }
+
+    @Test
+    void deleteByNewsId() {
+        when(newsRepository.findById(1L))
+                .thenReturn(Optional.of(new NewsEntity("", "")));
+
+        newsService.deleteByNewsId(1L);
+
+        verify(loggedinUserService, times(1))
+                .verifyHasRole(UserRole.ADMIN);
+        verify(userNewsRepository, times(1)).deleteByIdNewsId(1L);
+        verify(newsRepository, times(1))
+                .deleteById(1L);
+    }
+
+    @Test
+    void deleteByNewsIdNotFound() {
+        initMessageSource(ErrorCode.NOT_FOUND, "NEWS with id 1 not found");
+        when(newsRepository.findById(1L)).thenReturn(Optional.empty());
+
+        var exception = assertThrows(NotFoundException.class,
+                () -> newsService.deleteByNewsId(1L));
+
+        assertThat(exception.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(exception.getErrorMessages()).hasSize(1);
+        assertThat(exception.getErrorMessages().stream().toList().getFirst()
+                .message()).isEqualTo("NEWS with id 1 not found");
     }
 }

@@ -1,6 +1,7 @@
 package de.tigges.tchreservation.systemconfig;
 
-import de.tigges.tchreservation.exception.NotFoundException;
+import de.tigges.tchreservation.util.exception.ExistsException;
+import de.tigges.tchreservation.util.exception.NotFoundException;
 import de.tigges.tchreservation.protocol.ActionType;
 import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.protocol.jpa.ProtocolEntity;
@@ -11,7 +12,7 @@ import de.tigges.tchreservation.systemconfig.jpa.ReservationTypeMapper;
 import de.tigges.tchreservation.systemconfig.jpa.ReservationTypeRepository;
 import de.tigges.tchreservation.systemconfig.jpa.SystemConfigEntity;
 import de.tigges.tchreservation.systemconfig.jpa.SystemConfigRepository;
-import de.tigges.tchreservation.user.LoggedinUserService;
+import de.tigges.tchreservation.user.LoggedInUserService;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.model.UserRole;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import static de.tigges.tchreservation.JpaUtil.stream;
+import static de.tigges.tchreservation.util.StreamUtil.stream;
 
 @RestController
 @RequestMapping("/rest/systemconfig")
@@ -35,7 +36,7 @@ public class SystemConfigService {
     private final ReservationTypeRepository reservationTypeRepository;
     private final SystemConfigValidator systemConfigValidator;
     private final ProtocolRepository protocolRepository;
-    private final LoggedinUserService loggedinUserService;
+    private final LoggedInUserService loggedinUserService;
 
     @GetMapping("/getone/{id}")
     Optional<ReservationSystemConfig> getOne(@PathVariable Long id) {
@@ -58,7 +59,7 @@ public class SystemConfigService {
     public @ResponseBody ReservationSystemConfig add(@RequestBody ReservationSystemConfig config) {
         var loggedInUser = loggedinUserService.verifyHasRole(UserRole.ADMIN);
         systemConfigRepository.findById(config.id()).ifPresent(e -> {
-            throw systemConfigValidator.validator.foundException(
+            throw new ExistsException(systemConfigValidator.validator.messageUtil,
                     EntityType.SYSTEM_CONFIGURATION, config.id());
         });
         systemConfigValidator.validate(config, loggedInUser);
@@ -123,6 +124,6 @@ public class SystemConfigService {
     }
 
     private Supplier<NotFoundException> notFoundException(long id) {
-        return () -> systemConfigValidator.validator.notFoundException(EntityType.SYSTEM_CONFIGURATION, id);
+        return () -> new NotFoundException(systemConfigValidator.validator.messageUtil,EntityType.SYSTEM_CONFIGURATION, id);
     }
 }

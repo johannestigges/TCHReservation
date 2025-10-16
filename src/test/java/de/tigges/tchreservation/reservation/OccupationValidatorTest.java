@@ -1,8 +1,8 @@
 package de.tigges.tchreservation.reservation;
 
 import de.tigges.tchreservation.ValidatorTest;
-import de.tigges.tchreservation.exception.AuthorizationException;
-import de.tigges.tchreservation.exception.ErrorCode;
+import de.tigges.tchreservation.util.exception.AuthorizationException;
+import de.tigges.tchreservation.util.exception.ErrorCode;
 import de.tigges.tchreservation.reservation.jpa.OccupationRepository;
 import de.tigges.tchreservation.reservation.model.Occupation;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
@@ -183,7 +183,7 @@ public class OccupationValidatorTest extends ValidatorTest {
         user.setStatus(ActivationStatus.LOCKED);
         var systemConfig = createSystemConfig(60, createType(UserRole.REGISTERED));
         var occupation = createOccupation();
-        initMessageSource(ErrorCode.USER_NOT_ACTIVE, "Pfui! %s");
+        initMessageSource(ErrorCode.USER_NOT_ACTIVE, "Pfui! JUnit user");
 
         var exception = assertThrows(AuthorizationException.class,
                 () -> occupationValidator.validateOccupation(occupation, user, systemConfig));

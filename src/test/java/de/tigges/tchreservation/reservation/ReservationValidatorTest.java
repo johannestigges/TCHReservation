@@ -1,7 +1,7 @@
 package de.tigges.tchreservation.reservation;
 
 import de.tigges.tchreservation.ValidatorTest;
-import de.tigges.tchreservation.exception.ErrorCode;
+import de.tigges.tchreservation.util.exception.ErrorCode;
 import de.tigges.tchreservation.reservation.jpa.OccupationRepository;
 import de.tigges.tchreservation.reservation.model.Reservation;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;

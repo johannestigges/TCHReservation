@@ -1,7 +1,5 @@
 package de.tigges.tchreservation.user;
 
-import de.tigges.tchreservation.exception.ErrorCode;
-import de.tigges.tchreservation.exception.NotFoundException;
 import de.tigges.tchreservation.protocol.ActionType;
 import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.protocol.jpa.ProtocolEntity;
@@ -14,7 +12,11 @@ import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.User;
 import de.tigges.tchreservation.user.model.UserDevice;
 import de.tigges.tchreservation.user.model.UserRole;
-import de.tigges.tchreservation.validation.Validator;
+import de.tigges.tchreservation.util.exception.AuthorizationException;
+import de.tigges.tchreservation.util.exception.BadRequestException;
+import de.tigges.tchreservation.util.exception.ErrorCode;
+import de.tigges.tchreservation.util.exception.NotFoundException;
+import de.tigges.tchreservation.util.message.MessageUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,9 +34,9 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserDeviceRepository userDeviceRepository;
     private final ProtocolRepository protocolRepository;
-    private final LoggedinUserService loggedinUserService;
+    private final LoggedInUserService loggedinUserService;
     private final PasswordEncoder encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
-    private final Validator validator;
+    private final MessageUtil messageUtil;
 
     @GetMapping("/me")
     public User getMyUser() {
@@ -64,7 +66,7 @@ public class UserService {
         var userId = device.getUser().getId();
         loggedinUserService.verifyHasRoleOrSelf(userId, UserRole.ADMIN);
         var user = userRepository.findById(userId).map(UserMapper::map)
-                .orElseThrow(() -> new NotFoundException(EntityType.USER, userId));
+                .orElseThrow(() -> new NotFoundException(messageUtil, EntityType.USER, userId));
         return addDevices(user);
     }
 
@@ -72,7 +74,7 @@ public class UserService {
     public @ResponseBody UserDevice getDevice(@PathVariable Long deviceId) {
         loggedinUserService.verifyHasRole(UserRole.ADMIN);
         return userDeviceRepository.findById(deviceId).map(UserDeviceMapper::map)
-                .orElseThrow(() -> new NotFoundException(EntityType.USER_DEVICE, deviceId));
+                .orElseThrow(() -> new NotFoundException(messageUtil, EntityType.USER_DEVICE, deviceId));
     }
 
     @PostMapping("")
@@ -105,7 +107,7 @@ public class UserService {
     public @ResponseBody void setStatus(@PathVariable long userId, @PathVariable ActivationStatus status) {
         var loggedInUser = loggedinUserService.verifyHasRole(UserRole.ADMIN);
         var dbUser = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(EntityType.USER, userId));
+                .orElseThrow(() -> new NotFoundException(messageUtil, EntityType.USER, userId));
         var saveUser = new UserEntity(dbUser);
         saveUser.setStatus(status);
         userRepository.save(saveUser);
@@ -116,7 +118,7 @@ public class UserService {
     public @ResponseBody void setDeviceStatus(@PathVariable long deviceId, @PathVariable ActivationStatus status) {
         var loggedInUser = loggedinUserService.verifyHasRole(UserRole.ADMIN);
         var device = userDeviceRepository.findById(deviceId)
-                .orElseThrow(() -> new NotFoundException(EntityType.USER_DEVICE, deviceId));
+                .orElseThrow(() -> new NotFoundException(messageUtil, EntityType.USER_DEVICE, deviceId));
         device.setStatus(status);
         userDeviceRepository.save(device);
         protocolRepository.save(new ProtocolEntity(device, ActionType.MODIFY, loggedInUser));
@@ -127,7 +129,7 @@ public class UserService {
         var loggedInUser = loggedinUserService.verifyHasRoleOrSelf(user.getId(), UserRole.ADMIN);
         checkUser(user);
         var dbUser = userRepository.findById(user.getId())
-                .orElseThrow(() -> new NotFoundException(EntityType.USER, user.getId()));
+                .orElseThrow(() -> new NotFoundException(messageUtil, EntityType.USER, user.getId()));
 
         if (user.getPassword() == null || user.getPassword().isEmpty()) {
             user.setPassword(dbUser.getPassword());
@@ -137,13 +139,13 @@ public class UserService {
 
         if (!UserUtils.hasRole(loggedInUser, UserRole.ADMIN)) {
             if (!user.getName().equals(dbUser.getName())) {
-                throw validator.authorizationException(ErrorCode.USER_CANNOT_MODIFY_NAME);
+                throw new AuthorizationException(messageUtil, ErrorCode.USER_CANNOT_MODIFY_NAME);
             }
             if (user.getRole() != dbUser.getRole()) {
-                throw validator.authorizationException(ErrorCode.USER_CANNOT_MODIFY_ROLE);
+                throw new AuthorizationException(messageUtil, ErrorCode.USER_CANNOT_MODIFY_ROLE);
             }
             if (user.getStatus() != dbUser.getStatus()) {
-                throw validator.authorizationException(ErrorCode.USER_CANNOT_MODIFY_STATUS);
+                throw new AuthorizationException(messageUtil, ErrorCode.USER_CANNOT_MODIFY_STATUS);
             }
         }
 
@@ -170,14 +172,14 @@ public class UserService {
 
     private void checkUser(User user) {
         if (isEmpty(user.getName())) {
-            throw validator.badRequestException(ErrorCode.USER_NAME_EMPTY);
+            throw new BadRequestException(messageUtil, ErrorCode.USER_NAME_EMPTY);
         }
     }
 
     private void checkNewUser(User user) {
         checkUser(user);
         if (isEmpty(user.getPassword())) {
-            throw validator.badRequestException(ErrorCode.PASSWORD_EMPTY);
+            throw new BadRequestException(messageUtil, ErrorCode.PASSWORD_EMPTY);
         }
         var email = user.getEmail();
         if (isEmpty(email)) {
@@ -185,7 +187,7 @@ public class UserService {
         }
         var dbUser = userRepository.findByNameOrEmail(user.getName(), email);
         if (dbUser.isPresent() && !Objects.equals(dbUser.get().getId(), user.getId())) {
-            throw validator.badRequestException(ErrorCode.USER_EXISTS,
+            throw new BadRequestException(messageUtil, ErrorCode.USER_EXISTS,
                     user.getName(), user.getEmail());
         }
     }

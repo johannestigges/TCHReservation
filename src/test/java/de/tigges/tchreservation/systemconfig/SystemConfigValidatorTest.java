@@ -1,9 +1,9 @@
 package de.tigges.tchreservation.systemconfig;
 
 import de.tigges.tchreservation.TchReservationApplication;
-import de.tigges.tchreservation.exception.AuthorizationException;
-import de.tigges.tchreservation.exception.BadRequestException;
-import de.tigges.tchreservation.exception.InvalidDataException;
+import de.tigges.tchreservation.util.exception.AuthorizationException;
+import de.tigges.tchreservation.util.exception.BadRequestException;
+import de.tigges.tchreservation.util.exception.InvalidDataException;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;
 import de.tigges.tchreservation.reservation.model.SystemConfigReservationType;
 import de.tigges.tchreservation.user.jpa.UserEntity;

@@ -1,20 +1,18 @@
-package de.tigges.tchreservation.validation;
+package de.tigges.tchreservation.util.validation;
 
-import de.tigges.tchreservation.exception.*;
-import de.tigges.tchreservation.protocol.EntityType;
+import de.tigges.tchreservation.util.exception.*;
+import de.tigges.tchreservation.util.message.MessageUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.Locale;
 
 @Component
 @RequiredArgsConstructor
 public class Validator {
-    public final MessageSource messageSource;
+    public final MessageUtil messageUtil;
     private final Collection<ErrorMessage> errorMessages = new LinkedList<>();
 
     public void clearErrorMessages() {
@@ -32,12 +30,7 @@ public class Validator {
     }
 
     public void addFieldErrorMessage(String field, ErrorCode code, Object... args) {
-        errorMessages.add(new ErrorMessage(code, msg(code, args), field));
-    }
-
-    public String msg(ErrorCode code, Object... args) {
-        var message = messageSource.getMessage("error_" + code.name().toLowerCase(), null, Locale.getDefault());
-        return args.length > 0 ? message.formatted(args) : message;
+        errorMessages.add(new ErrorMessage(code, messageUtil.msg(code, args), field));
     }
 
     public void checkString(String field, String value, int minLen, int maxLen) {
@@ -65,19 +58,5 @@ public class Validator {
         if (value > maxValue) {
             addFieldErrorMessage(field, ErrorCode.NUMBER_TOO_BIG, maxValue);
         }
-    }
-
-    public AuthorizationException authorizationException(ErrorCode code, Object... args) {
-        return new AuthorizationException(code, msg(code, args));
-    }
-
-    public BadRequestException badRequestException(ErrorCode code, Object... args) {
-        return new BadRequestException(code, msg(code, args));
-    }
-    public FoundException foundException(EntityType entityType, long id) {
-        return new FoundException(ErrorCode.EXISTS, msg(ErrorCode.EXISTS, entityType,id));
-    }
-    public NotFoundException notFoundException(EntityType entityType, long id) {
-        return new NotFoundException(ErrorCode.NOT_FOUND, msg(ErrorCode.NOT_FOUND, entityType,id));
     }
 }

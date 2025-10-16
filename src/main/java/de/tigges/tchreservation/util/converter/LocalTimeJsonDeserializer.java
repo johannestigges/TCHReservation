@@ -1,4 +1,4 @@
-package de.tigges.tchreservation.converter;
+package de.tigges.tchreservation.util.converter;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -15,20 +15,20 @@ import lombok.extern.log4j.Log4j2;
 public class LocalTimeJsonDeserializer extends JsonDeserializer<LocalTime> {
 
 	@Override
-	public LocalTime deserialize(JsonParser p, DeserializationContext ctxt)
+	public LocalTime deserialize(JsonParser jsonParser, DeserializationContext context)
 			throws IOException {
 
-		if (p.currentToken().isNumeric()) {
-			return toLocalTime(p.getLongValue());
+		if (jsonParser.currentToken().isNumeric()) {
+			return toLocalTime(jsonParser.getLongValue());
 		}
 
-		var stringValue = p.getText();
+		var stringValue = jsonParser.getText();
 		if (stringValue != null && !stringValue.isEmpty()) {
 			return toLocalTime(Long.parseLong(stringValue));
 		}
 
-		log.error("cannot deserialize local time {}", p.getCurrentToken());
-		throw new IllegalArgumentException("cannot deserialize token to local time " + p.getCurrentToken());
+		log.error("cannot deserialize local time {}", jsonParser.getCurrentToken());
+		throw new IllegalArgumentException("cannot deserialize token to local time " + jsonParser.getCurrentToken());
 	}
 
 	private LocalTime toLocalTime(long timeValue) {

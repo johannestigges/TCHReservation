@@ -1,6 +1,8 @@
 package de.tigges.tchreservation.reservation;
 
-import de.tigges.tchreservation.exception.ErrorCode;
+import de.tigges.tchreservation.util.exception.AuthorizationException;
+import de.tigges.tchreservation.util.exception.BadRequestException;
+import de.tigges.tchreservation.util.exception.ErrorCode;
 import de.tigges.tchreservation.reservation.jpa.OccupationEntity;
 import de.tigges.tchreservation.reservation.jpa.OccupationRepository;
 import de.tigges.tchreservation.reservation.model.Occupation;
@@ -9,7 +11,7 @@ import de.tigges.tchreservation.reservation.model.SystemConfigReservationType;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.model.ActivationStatus;
 import de.tigges.tchreservation.user.model.UserRole;
-import de.tigges.tchreservation.validation.Validator;
+import de.tigges.tchreservation.util.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -75,7 +77,7 @@ public class OccupationValidator {
         }
         // check time overlap
         if (getStart(o1).isBefore(getEnd(o2, systemConfig)) && getEnd(o1, systemConfig).isAfter(getStart(o2))) {
-            throw validator.badRequestException(ErrorCode.OCCUPIED,
+            throw new BadRequestException(validator.messageUtil,ErrorCode.OCCUPIED,
                     o1.getDate(), o1.getStart(), o1.getCourt());
         }
     }
@@ -122,7 +124,7 @@ public class OccupationValidator {
 
     private void validateUserIsActive(UserEntity loggedInUser) {
         if (!ActivationStatus.ACTIVE.equals(loggedInUser.getStatus())) {
-            throw validator.authorizationException(ErrorCode.USER_NOT_ACTIVE, loggedInUser.getName());
+            throw new AuthorizationException(validator.messageUtil,ErrorCode.USER_NOT_ACTIVE, loggedInUser.getName());
         }
     }
 
@@ -130,12 +132,12 @@ public class OccupationValidator {
         return systemConfig.types().stream()
                 .filter(type -> type.type() == occupation.getType())
                 .findAny()
-                .orElseThrow(() -> validator.badRequestException(ErrorCode.INVALID_RESERVATION_TYPE));
+                .orElseThrow(() -> new BadRequestException(validator.messageUtil,ErrorCode.INVALID_RESERVATION_TYPE));
     }
 
     private void validateSystemConfigId(Occupation occupation) {
         if (occupation.getSystemConfigId() <= 0) {
-            throw validator.badRequestException(ErrorCode.NO_RESERVATION_SYSTEM);
+            throw new BadRequestException(validator.messageUtil,ErrorCode.NO_RESERVATION_SYSTEM);
         }
     }
 

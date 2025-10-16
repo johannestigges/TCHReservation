@@ -31,7 +31,7 @@ public class UserDeviceEntity implements Protocollable {
 	private UserEntity user;
 
 	@Column()
-	private String deviceId; // unique device id, such as ISME or MAC address
+	private String deviceId;
 
 	@Column(nullable = false)
 	private ActivationStatus status;

@@ -1,4 +1,4 @@
-package de.tigges.tchreservation.exception;
+package de.tigges.tchreservation.util.exception;
 
 public enum ErrorCode {
     USER_EXISTS,
