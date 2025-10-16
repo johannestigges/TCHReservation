@@ -12,12 +12,8 @@ public class AuthorizationException extends RestException {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public AuthorizationException(ErrorCode code,String message) {
-        super(HttpStatus.UNAUTHORIZED, code, message);
-    }
-
-    public AuthorizationException(MessageUtil messageUtil, ErrorCode errorCode, Object...args) {
-        this(errorCode, messageUtil.msg(errorCode, args));
+    public AuthorizationException(MessageUtil messageUtil, ErrorCode errorCode, Object... args) {
+        super(HttpStatus.UNAUTHORIZED, errorCode, messageUtil.msg(errorCode, args));
     }
 
 }

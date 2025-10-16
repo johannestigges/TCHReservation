@@ -1,9 +1,5 @@
 package de.tigges.tchreservation.reservation;
 
-import de.tigges.tchreservation.util.exception.AuthorizationException;
-import de.tigges.tchreservation.util.exception.BadRequestException;
-import de.tigges.tchreservation.util.exception.ErrorCode;
-import de.tigges.tchreservation.util.exception.NotFoundException;
 import de.tigges.tchreservation.protocol.ActionType;
 import de.tigges.tchreservation.protocol.EntityType;
 import de.tigges.tchreservation.protocol.jpa.ProtocolEntity;
@@ -13,11 +9,14 @@ import de.tigges.tchreservation.reservation.jpa.OccupationRepository;
 import de.tigges.tchreservation.reservation.jpa.ReservationEntity;
 import de.tigges.tchreservation.reservation.jpa.ReservationRepository;
 import de.tigges.tchreservation.reservation.model.*;
-import de.tigges.tchreservation.user.LoggedinUserService;
+import de.tigges.tchreservation.user.LoggedInUserService;
 import de.tigges.tchreservation.user.UserMapper;
 import de.tigges.tchreservation.user.UserUtils;
 import de.tigges.tchreservation.user.jpa.UserEntity;
 import de.tigges.tchreservation.user.model.UserRole;
+import de.tigges.tchreservation.util.exception.AuthorizationException;
+import de.tigges.tchreservation.util.exception.ErrorCode;
+import de.tigges.tchreservation.util.exception.NotFoundException;
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -45,7 +44,7 @@ public class ReservationService {
     private final ProtocolRepository protocolRepository;
     private final ReservationValidator reservationValidator;
     private final OccupationValidator occupationValidator;
-    private final LoggedinUserService loggedinUserService;
+    private final LoggedInUserService loggedinUserService;
 
     private static int plusDays(@Nullable RepeatType repeatType) {
         if (weekly.equals(repeatType)) {
@@ -59,15 +58,6 @@ public class ReservationService {
         return (repeatUntil != null) ? repeatUntil : reservation.getDate();
     }
 
-    /**
-     * add one Reservation to the system
-     * <p>
-     * If the reservation has no Occupations, then all Occupations will be
-     * generated.
-     *
-     * @param reservation {@link Reservation}
-     * @return {@link ResponseBody}
-     */
     @PostMapping("")
     @ResponseStatus(HttpStatus.CREATED)
     public @ResponseBody Reservation addReservation(@RequestBody Reservation reservation) {
@@ -97,29 +87,17 @@ public class ReservationService {
         return r;
     }
 
-    /**
-     * checks all Occupations of one Reservation
-     *
-     * @param reservation {@link Reservation}
-     * @return checked Reservation or {@link BadRequestException}
-     */
     @PostMapping("/check")
     public @ResponseBody Reservation checkOccupations(@RequestBody Reservation reservation) {
         if (reservation.getOccupations().isEmpty()) {
             createOccupations(reservation);
         }
-        var loggedinUser = loggedinUserService.getLoggedInUser();
+        var loggedInUser = loggedinUserService.getLoggedInUser();
         var systemConfig = getSystemConfig(reservation.getSystemConfigId());
-        reservationValidator.validateOccupations(reservation, loggedinUser, systemConfig);
+        reservationValidator.validateOccupations(reservation, loggedInUser, systemConfig);
         return reservation;
     }
 
-    /**
-     * update one Occupation
-     *
-     * @param occupation {@link Occupation}
-     * @return saved occupation or {@link BadRequestException} or {@link NotFoundException}
-     */
     @PutMapping("/occupation")
     @Transactional
     public @ResponseBody Occupation updateOccupation(@RequestBody Occupation occupation) {
@@ -141,15 +119,6 @@ public class ReservationService {
         return OccupationMapper.map(savedOccupation);
     }
 
-    /**
-     * update one reservation with all included occupations
-     * <p>
-     * Occupations with belong to this reservation but are not included in this call
-     * are not updated
-     *
-     * @param reservation {@link Reservation}
-     * @return saved reservation
-     */
     @PutMapping("")
     @Transactional
     public @ResponseBody Reservation updateReservation(@RequestBody Reservation reservation) {
@@ -180,11 +149,6 @@ public class ReservationService {
         return response;
     }
 
-    /**
-     * remove one Occupation
-     *
-     * @param id technical id of occupation
-     */
     @DeleteMapping("/occupation/{id}")
     @ResponseStatus(HttpStatus.OK)
     public void deleteOccupation(@PathVariable long id) {
@@ -197,11 +161,6 @@ public class ReservationService {
         occupationRepository.delete(occupation);
     }
 
-    /**
-     * remove multiple occupations
-     *
-     * @param ids comma separated list of occupation ids
-     */
     @DeleteMapping("/occupations/{ids}")
     @ResponseStatus(HttpStatus.OK)
     public void deleteOccupations(@PathVariable String ids) {
@@ -210,11 +169,6 @@ public class ReservationService {
         }
     }
 
-    /**
-     * delete one Reservation with all Occupations
-     *
-     * @param id technical id of reservation
-     */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     public void deleteReservation(@PathVariable long id) {
@@ -230,17 +184,9 @@ public class ReservationService {
     }
 
     private Supplier<NotFoundException> notFoundException(EntityType entityType, long id) {
-        return () -> new NotFoundException(reservationValidator.validator.messageUtil,entityType, id);
+        return () -> new NotFoundException(reservationValidator.validator.messageUtil, entityType, id);
     }
 
-    /**
-     * get one reservation by id
-     * <p>
-     * All occupations of the reservation are included
-     *
-     * @param id reservationId
-     * @return all reservations belonging to that user
-     */
     @GetMapping("/id/{id}")
     public Optional<Reservation> getReservation(@PathVariable long id) {
         return reservationRepository.findById(id).map(this::map);
@@ -253,22 +199,11 @@ public class ReservationService {
         return reservation;
     }
 
-    /**
-     * get one occupation by id
-     *
-     * @param id technical id of occupation
-     * @return {@link Occupation}
-     */
     @GetMapping("/occupation/{id}")
     public Optional<Occupation> getOccupation(@PathVariable long id) {
         return occupationRepository.findById(id).map(OccupationMapper::map);
     }
 
-    /**
-     * get all occupations of one day
-     *
-     * @return list of all occupations for one day
-     */
     @GetMapping("/occupations/{systemConfigId}/{date}")
     public Iterable<Occupation> getOccupations(@PathVariable Long systemConfigId, @PathVariable Long date) {
 
@@ -283,11 +218,6 @@ public class ReservationService {
                 .toList();
     }
 
-    /**
-     * get my reservations
-     *
-     * @return list of all reservations created or modified by the logged in user
-     */
     @GetMapping("/my")
     public Iterable<Reservation> getMyReservations() {
         var user = loggedinUserService.getLoggedInUser();
@@ -300,12 +230,6 @@ public class ReservationService {
                 .toList();
     }
 
-    /**
-     * get the reservation system configuration
-     *
-     * @param id systemId
-     * @return reservation system config
-     */
     @GetMapping("/systemconfig/{id}")
     public @ResponseBody ReservationSystemConfig getSystemConfig(@PathVariable long id) {
         return systemConfigRepository.get(id);
@@ -372,6 +296,6 @@ public class ReservationService {
                 && (UserUtils.is(loggedInUser, userId) || UserUtils.hasRole(loggedInUser, UserRole.ADMIN, UserRole.TRAINER))) {
             return loggedInUser;
         }
-        throw new AuthorizationException(reservationValidator.validator.messageUtil,ErrorCode.USER_NOT_AUTHORIZED);
+        throw new AuthorizationException(reservationValidator.validator.messageUtil, ErrorCode.USER_NOT_AUTHORIZED);
     }
 }

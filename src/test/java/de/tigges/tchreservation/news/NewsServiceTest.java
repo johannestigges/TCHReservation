@@ -1,13 +1,14 @@
 package de.tigges.tchreservation.news;
 
 import de.tigges.tchreservation.ValidatorTest;
-import de.tigges.tchreservation.util.exception.ErrorCode;
-import de.tigges.tchreservation.util.exception.NotFoundException;
 import de.tigges.tchreservation.news.jpa.NewsEntity;
 import de.tigges.tchreservation.news.jpa.NewsRepository;
 import de.tigges.tchreservation.news.model.News;
 import de.tigges.tchreservation.news.user.jpa.UserNewsRepository;
-import de.tigges.tchreservation.user.LoggedinUserService;
+import de.tigges.tchreservation.user.LoggedInUserService;
+import de.tigges.tchreservation.user.model.UserRole;
+import de.tigges.tchreservation.util.exception.ErrorCode;
+import de.tigges.tchreservation.util.exception.NotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,12 +24,12 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class NewsServiceTest extends ValidatorTest {
     @Mock
-    private LoggedinUserService loggedinUserService;
+    private LoggedInUserService loggedinUserService;
     @Mock
     private NewsRepository newsRepository;
     @Mock
@@ -161,5 +162,33 @@ class NewsServiceTest extends ValidatorTest {
         assertThat(exception.getErrorMessages()).hasSize(1);
         assertThat(exception.getErrorMessages().stream().toList().getFirst()
                 .message()).isEqualTo("NEWS with id 3 not found");
+    }
+
+    @Test
+    void deleteByNewsId() {
+        when(newsRepository.findById(1L))
+                .thenReturn(Optional.of(new NewsEntity("", "")));
+
+        newsService.deleteByNewsId(1L);
+
+        verify(loggedinUserService, times(1))
+                .verifyHasRole(UserRole.ADMIN);
+        verify(userNewsRepository, times(1)).deleteByIdNewsId(1L);
+        verify(newsRepository, times(1))
+                .deleteById(1L);
+    }
+
+    @Test
+    void deleteByNewsIdNotFound() {
+        initMessageSource(ErrorCode.NOT_FOUND, "NEWS with id 1 not found");
+        when(newsRepository.findById(1L)).thenReturn(Optional.empty());
+
+        var exception = assertThrows(NotFoundException.class,
+                () -> newsService.deleteByNewsId(1L));
+
+        assertThat(exception.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(exception.getErrorMessages()).hasSize(1);
+        assertThat(exception.getErrorMessages().stream().toList().getFirst()
+                .message()).isEqualTo("NEWS with id 1 not found");
     }
 }

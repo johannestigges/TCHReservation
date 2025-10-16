@@ -4,7 +4,7 @@ import de.tigges.tchreservation.news.jpa.NewsRepository;
 import de.tigges.tchreservation.news.model.News;
 import de.tigges.tchreservation.news.user.jpa.UserNewsRepository;
 import de.tigges.tchreservation.protocol.EntityType;
-import de.tigges.tchreservation.user.LoggedinUserService;
+import de.tigges.tchreservation.user.LoggedInUserService;
 import de.tigges.tchreservation.user.model.UserRole;
 import de.tigges.tchreservation.util.exception.NotFoundException;
 import jakarta.transaction.Transactional;
@@ -14,15 +14,15 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-import static de.tigges.tchreservation.util.StreamUtil.stream;
 import static de.tigges.tchreservation.news.NewsMapper.map;
+import static de.tigges.tchreservation.util.StreamUtil.stream;
 
 @RestController
 @RequestMapping("/rest/news")
 @RequiredArgsConstructor
 @Slf4j
 public class NewsService {
-    private final LoggedinUserService loggedinUserService;
+    private final LoggedInUserService loggedinUserService;
     private final NewsValidator newsValidator;
     private final NewsRepository newsRepository;
     private final UserNewsRepository userNewsRepository;
@@ -70,7 +70,7 @@ public class NewsService {
     }
 
     private NotFoundException notFoundException(Long newsId) {
-        return new NotFoundException(newsValidator.validator.messageUtil,EntityType.NEWS, newsId);
+        return new NotFoundException(newsValidator.validator.messageUtil, EntityType.NEWS, newsId);
     }
 
     private void deleteNews(long newsId) {

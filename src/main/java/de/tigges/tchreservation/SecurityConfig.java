@@ -34,6 +34,7 @@ public class SecurityConfig {
     };
 
     private static final String ANGULAR_URL = "/angular/index.html";
+    public static final String LOGIN_PROCESSING_URL = "/login";
 
     @Value("${login.remember-me.key}")
     private String rememberMeKey;
@@ -60,7 +61,7 @@ public class SecurityConfig {
 
     private static void formLoginConfiguration(FormLoginConfigurer<HttpSecurity> formLogin) {
         formLogin.loginPage(ANGULAR_URL)
-                .loginProcessingUrl("/login")
+                .loginProcessingUrl(LOGIN_PROCESSING_URL)
                 .failureHandler(new AppAuthenticationFailureHandler());
     }
 
