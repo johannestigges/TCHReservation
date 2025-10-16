@@ -22,14 +22,14 @@ class NewsValidatorTest extends ValidatorTest {
 
     @Test
     void noSubject() {
-        var news = createNews("", null);
+        var news = createNews("");
 
         checkNewsFieldErrorNullNotAllowed(news, "subject");
     }
 
     @Test
     void noText() {
-        var news = createNews("my subject", null);
+        var news = createNews("my subject");
 
         checkNewsFieldErrorNullNotAllowed(news, "text");
     }
@@ -38,7 +38,7 @@ class NewsValidatorTest extends ValidatorTest {
         checkFieldError(() -> newsValidator.validate(news), ErrorCode.NULL_NOT_ALLOWED, expectedField);
     }
 
-    private News createNews(String subject, String text) {
-        return new News(1L, subject, "url", text, LocalDateTime.now());
+    private News createNews(String subject) {
+        return new News(1L, subject, "url", "", LocalDateTime.now());
     }
 }

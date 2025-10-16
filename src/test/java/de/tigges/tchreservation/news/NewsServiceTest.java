@@ -58,6 +58,10 @@ class NewsServiceTest extends ValidatorTest {
 
         assertThat(news).isNotNull();
         assertThat(news).hasSize(2);
+        assertThat(news.getFirst().subject()).isEqualTo("Subject 1");
+        assertThat(news.getFirst().text()).isEqualTo("Text 1");
+        assertThat(news.get(1).subject()).isEqualTo("Subject 2");
+        assertThat(news.get(1).text()).isEqualTo("Text 2");
     }
 
     @Test
@@ -74,9 +78,7 @@ class NewsServiceTest extends ValidatorTest {
     @Test
     void getOne() {
         when(newsRepository.findById(1L))
-                .thenReturn(Optional.of(new NewsEntity(
-                        "my subject",
-                        "my text")));
+                .thenReturn(Optional.of(new NewsEntity("my subject", "my text")));
 
         var news = newsService.getOne(1L);
 
@@ -102,9 +104,7 @@ class NewsServiceTest extends ValidatorTest {
     void add() {
         var captor = ArgumentCaptor.forClass(NewsEntity.class);
         when(newsRepository.save(captor.capture()))
-                .thenReturn(new NewsEntity(
-                        "my saved subject",
-                        "my saved text"));
+                .thenReturn(new NewsEntity("my saved subject", "my saved text"));
 
         var news = newsService.add(new News(
                 1L,
@@ -126,13 +126,9 @@ class NewsServiceTest extends ValidatorTest {
     void update() {
         var captor = ArgumentCaptor.forClass(NewsEntity.class);
         when(newsRepository.save(captor.capture()))
-                .thenReturn(new NewsEntity(
-                        "my saved subject",
-                        "my saved text"));
+                .thenReturn(new NewsEntity("my saved subject", "my saved text"));
         when(newsRepository.findById(2L))
-                .thenReturn(Optional.of(new NewsEntity(
-                        "my subject",
-                        "my text")));
+                .thenReturn(Optional.of(new NewsEntity("my subject", "my text")));
 
         var news = newsService.update(new News(
                 2L,
