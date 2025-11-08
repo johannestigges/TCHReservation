@@ -204,7 +204,7 @@ public class ReservationService {
         return occupationRepository.findById(id).map(OccupationMapper::map);
     }
 
-    @GetMapping("/occupations/{systemConfigId}/{date}")
+    @GetMapping("/getOccupations/{systemConfigId}/{date}")
     public Iterable<Occupation> getOccupations(@PathVariable Long systemConfigId, @PathVariable Long date) {
 
         var searchDate = date.equals(0L)
