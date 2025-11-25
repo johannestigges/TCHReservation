@@ -187,7 +187,7 @@ public class OccupationValidator {
                 validator.addFieldErrorMessage("start", ErrorCode.START_TIME_PLUS_DURATION);
             }
             if (isOccupationTooFarInFuture(occupation, type)) {
-                validator.addFieldErrorMessage("date", ErrorCode.DATE_TOO_FAR_IN_FUTURE);
+                validator.addFieldErrorMessage("date", ErrorCode.DATE_TOO_FAR_IN_FUTURE, type.maxDaysReservationInFuture());
             }
         }
     }
