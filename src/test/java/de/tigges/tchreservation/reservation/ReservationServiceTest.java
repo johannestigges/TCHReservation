@@ -1,6 +1,6 @@
 package de.tigges.tchreservation.reservation;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import de.tigges.tchreservation.ProtocolTest;
 import de.tigges.tchreservation.protocol.ActionType;
 import de.tigges.tchreservation.reservation.jpa.OccupationRepository;
@@ -592,7 +592,7 @@ public class ReservationServiceTest extends ProtocolTest {
     @WithMockUser(username = "TRAINER")
     public void updateOccupationNotFound() throws Exception {
         var occupation = new Occupation();
-        occupation.setId(0);
+        occupation.setId(0L);
         updateOccupation(occupation).andExpect(status().isNotFound());
     }
 

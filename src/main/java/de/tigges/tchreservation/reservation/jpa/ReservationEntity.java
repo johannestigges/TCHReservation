@@ -21,7 +21,7 @@ public class ReservationEntity implements Protocollable {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private long id;
+	private Long id;
 
 	@Column(nullable = false)
 	private long systemConfigId;

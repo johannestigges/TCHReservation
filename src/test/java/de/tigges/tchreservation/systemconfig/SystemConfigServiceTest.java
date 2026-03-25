@@ -1,6 +1,6 @@
 package de.tigges.tchreservation.systemconfig;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import de.tigges.tchreservation.ProtocolTest;
 import de.tigges.tchreservation.TchReservationApplication;
 import de.tigges.tchreservation.reservation.model.ReservationSystemConfig;

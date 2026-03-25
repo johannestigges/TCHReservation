@@ -3,7 +3,7 @@ package de.tigges.tchreservation.reservation.model;
 import java.util.List;
 
 public record ReservationSystemConfig(
-        long id,
+        Long id,
         String name,
         String title,
         List<String> courts,

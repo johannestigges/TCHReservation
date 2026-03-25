@@ -1,16 +1,16 @@
 package de.tigges.tchreservation.util.converter;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueSerializer;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
-public class LocalDateTimeJsonSerializer extends JsonSerializer<LocalDateTime> {
+public class LocalDateTimeJsonSerializer extends ValueSerializer<LocalDateTime> {
     @Override
-    public void serialize(LocalDateTime value, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+    public void serialize(LocalDateTime value, JsonGenerator jsonGenerator, SerializationContext serializerProvider) throws JacksonException {
         if (value != null) {
             jsonGenerator.writeString(Long.toString(value.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
         }

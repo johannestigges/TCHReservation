@@ -8,7 +8,7 @@ import lombok.Data;
 @Data
 public class Occupation {
 
-	private long id;
+	private Long id;
 
 	private String text;
 	private LocalDate date;

@@ -25,7 +25,7 @@ public class UserDeviceEntity implements Protocollable {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private long id;
+	private Long id;
 
 	@ManyToOne(optional = false)
 	private UserEntity user;
