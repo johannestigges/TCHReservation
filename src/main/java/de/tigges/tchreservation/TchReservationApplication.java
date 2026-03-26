@@ -8,7 +8,7 @@ import de.tigges.tchreservation.util.converter.*;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import tools.jackson.databind.module.SimpleModule;
 
 @SpringBootApplication
 public class TchReservationApplication
@@ -18,19 +18,17 @@ public class TchReservationApplication
 	 * <p>
 	 * all date and time data is transferred in json as unix epoch timestamps
 	 * (milliseconds since 1970-01-01)
-	 * <p>
-	 * return {@link Jackson2ObjectMapperBuilder}
 	 */
 	@Bean
-	public Jackson2ObjectMapperBuilder objectMapperBuilder() {
-		Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
-		builder.serializerByType(LocalDate.class, new LocalDateJsonSerializer());
-		builder.deserializerByType(LocalDate.class, new LocalDateJsonDeserializer());
-		builder.serializerByType(LocalTime.class, new LocalTimeJsonSerializer());
-		builder.deserializerByType(LocalTime.class, new LocalTimeJsonDeserializer());
-		builder.serializerByType(LocalDateTime.class, new LocalDateTimeJsonSerializer());
-		builder.deserializerByType(LocalDateTime.class, new LocalDateTimeJsonDeserializer());
-		return builder;
+	public SimpleModule dateConvertersModule() {
+		SimpleModule module = new SimpleModule();
+		module.addSerializer(LocalDate.class, new LocalDateJsonSerializer());
+		module.addDeserializer(LocalDate.class, new LocalDateJsonDeserializer());
+		module.addSerializer(LocalTime.class, new LocalTimeJsonSerializer());
+		module.addDeserializer(LocalTime.class, new LocalTimeJsonDeserializer());
+		module.addSerializer(LocalDateTime.class, new LocalDateTimeJsonSerializer());
+		module.addDeserializer(LocalDateTime.class, new LocalDateTimeJsonDeserializer());
+		return module;
 	}
 
 	public static void main(String[] args) {

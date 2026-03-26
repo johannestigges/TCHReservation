@@ -17,7 +17,7 @@ public class OccupationEntity implements Protocollable {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private long id;
+	private Long id;
 
 	@Column(nullable = false)
 	private String text;

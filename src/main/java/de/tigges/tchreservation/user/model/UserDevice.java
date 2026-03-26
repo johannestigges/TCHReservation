@@ -14,7 +14,7 @@ public class UserDevice {
 		setPublicKey(publicKey);
 	}
 
-	private long id;
+	private Long id;
 
 	private User user;
 

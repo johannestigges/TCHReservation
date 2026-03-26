@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 public class Reservation {
 
-    private long id;
+    private Long id;
 
     private long systemConfigId;
     private String text;
@@ -53,7 +53,7 @@ public class Reservation {
     public void setCourtsFromInteger(int... courts) {
         this.courts = toCourts(courts);
     }
-    
+
     public int[] getCourtsAsArray() {
         return toCourts(this.courts);
     }
