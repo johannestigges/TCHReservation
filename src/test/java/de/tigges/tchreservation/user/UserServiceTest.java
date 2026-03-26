@@ -416,8 +416,7 @@ public class UserServiceTest extends ProtocolTest {
     @Test
     @WithMockUser(username = "ADMIN")
     public void deleteDeviceUnknown() throws Exception {
-        UserDevice device = createDevice(registeredUser, 0, ActivationStatus.CREATED);
-        performDelete("/rest/user/device/" + device.getId()).andExpect(status().isNotFound());
+       performDelete("/rest/user/device/100").andExpect(status().isNotFound());
     }
 
     @Test
