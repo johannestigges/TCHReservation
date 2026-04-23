@@ -5,7 +5,7 @@
 
     <groupId>de.tigges</groupId>
     <artifactId>TCHReservation</artifactId>
-    <version>1.4.15</version>
+    <version>1.4.16</version>
     <packaging>jar</packaging>
 
     <name>TCHReservation</name>
@@ -93,6 +93,14 @@
             </plugin>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
